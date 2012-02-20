@@ -9,6 +9,7 @@
 # pragma warn -8057
 # pragma warn -8060
 # pragma warn -8065
+#define strcasecmp(p, q) stricmp(p, q)
 #endif
 
 #ifdef _MSC_VER

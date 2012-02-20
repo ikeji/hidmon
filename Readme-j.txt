@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 3月17日（最新更新）
+                                                2009年 3月30日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -46,9 +46,10 @@ hidspx コマンド共に互換性はありませんので区別して扱ってください。
 │	hidspx-gcc.exe	… MinGW-GCCでコンパイルしたもの
 │	hidspx.exe	… Borland C++ ver 5.5.1でコンパイルしたもの
 │	hidspx.ini	… hidspxの初期化ファイル
-│	fuse.txt	… FUSE情報を詳細表示する為のテキストファイル
-│	fuse_en.txt
-│	fuse_j.txt
+│	fuse.txt	… FUSE情報を詳細表示する為のテキストファイル（hidspxが参照）
+│	fuse_j.txt	… FUSE情報を詳細表示する為のテキストファイル（日本語表示）
+│	fuse_en.txt	… FUSE情報を詳細表示する為のテキストファイル（英字表示）
+│	fuse_en_orig.txt… FUSE情報を詳細表示する為のテキストファイル（英語環境用）
 │	hidmon.exe	… HIDaspxのテスト時に利用
 │
 ├─bin
@@ -1015,4 +1016,31 @@ EEPROM Size       = 128 bytes
 ■2009-03-17 -rIオプションを追加
 	* 「Engbedded Atmel AVR(R) Fuse Calculator」の新版に対応
 	* hidspx_tips.pdfの追加（HIDaspx.pdfからhidspxのtipsを分離）
+
+■2009-03-30 空のHEXファイルを表示する機能を追加
+	* hidspx_tips.pdfの更新
+	* fuse_en.txtを日本語向けに修正(純英語環境用はfuse_en_orig.txt)
+	* 今までは、書き込みデータを含まないファイルを指定すると HELP メッセージ
+	  を表示していたが、これを以下のように修正
+	- この修正で、HEX ファイルは'.' を含むファイル名である（HEX以外も可）こと、
+	  EEPROM 用のファイルは、.EEP(大文字小文字は問わない) の拡張子であること
+	  をチェックする。（今まではファイル名の一部に含んでいれば EEPROM 用と判
+	  断していたため、ABC.EEP.HEX というファイルは、EEPROM 用のファイルに解釈
+	  された）
+
+ >cat a.hex
+ :00000001FF
+ 
+ >cat a.eep
+ :00000001FF
+ 
+ これらの書き込みを実行すると
+ 
+ >hidspx a.hex a.eep
+ a.hex : HEX File is empty.
+ a.eep : HEX File is empty.
+ 
+上記の表示を行ない書き込みをスキップします。従来の版も同じ動作ですが、usage メッ
+セージを表示するため、コマンド指定を間違ったと誤認する可能性があります。（私も、
+このメッセージの意味を理解するのにしばらく悩みました）
 

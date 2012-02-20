@@ -106,7 +106,7 @@ typedef struct _DEVPROP {
 
 const DEVPROP DevLst[] =	/* Device property list */
 {
-	/* Name,         ID,    Signature,              FS,  PS,   ES, EP*,FW, EW,   PV,   LB, FT, Cals, FuseMasks, DocNum */
+	/* Name,         ID,    Signature,              FS,  PS,   ES, EP*,FW, EW,   PV,   LB, FT, Cals, FuseMasks, DocNum, part_id */
 //------- AT90S
 	{ "90S1200",     S1200, {0x1E, 0x90, 0x01},   1024,   0,   64,  0, 11, 11, 0xFF, 0xF9, 0 ,0, {0},                 8, "1200"},
 	{ "90S2313",     S2313, {0x1E, 0x91, 0x01},   2048,   0,  128,  0, 11, 11, 0x7F, 0xF9, 0 ,0, {0},                 9, "2313"},
@@ -136,12 +136,12 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "tiny861",     T861,  {0x1E, 0x93, 0x0D},   8192,  64,  512,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},144, "t861"},
 //------- ATmega
 	{ "mega48",      M48,   {0x1E, 0x92, 0x05},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01}, 76, "m48"},
-	{ "mega48P",     M48P,  {0x1E, 0x92, 0x0A},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01}, 76, "m48"},
+	{ "mega48P",     M48P,  {0x1E, 0x92, 0x0A},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01}, 76, "m48p"},
 	{ "mega8",       M8,    {0x1E, 0x93, 0x07},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       52, "m8"},
 	{ "mega8515",    M8515, {0x1E, 0x93, 0x06},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       63, "m8515"},
 	{ "mega8535",    M8535, {0x1E, 0x93, 0x08},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       64, "m8535"},
 	{ "mega88",      M88,   {0x1E, 0x93, 0x0A},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 77, "m88"},
-	{ "mega88P",     M88P,  {0x1E, 0x93, 0x0F},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 77, "m88"},
+	{ "mega88P",     M88P,  {0x1E, 0x93, 0x0F},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 77, "m88p"},
 	{ "mega16",      M16,   {0x1E, 0x94, 0x03},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       56, "m16"},
 	{ "mega161",     M161,  {0x1E, 0x94, 0x01},  16384, 128,  512,  0, 20,  5, 0xFF, 0xFC, 4, 0, {0x7F},             41, "m161"},
 	{ "mega162",     M162,  {0x1E, 0x94, 0x04},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x1E}, 67, "m162"},
@@ -149,17 +149,17 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "mega164P",    M164P, {0x1E, 0x94, 0x0A},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 99, "m164p"},
 	{ "mega165",     M165,  {0x1E, 0x94, 0x07},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0E}, 79, "m165"},
 	{ "mega168",     M168,  {0x1E, 0x94, 0x06},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78, "m168"},
-	{ "mega168P",    M168P, {0x1E, 0x94, 0x0B},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78, "m168"},
+	{ "mega168P",    M168P, {0x1E, 0x94, 0x0B},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78, "m168p"},
 	{ "mega169",     M169,  {0x1E, 0x94, 0x05},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 73, "m169"},
 	{ "mega323",     M323,  {0x1E, 0x95, 0x01},  32768, 128, 1024,  4, 18,  5, 0xFF, 0xFC, 5, 1, {0xCF, 0xEF},       50, "m323"},
 	{ "mega325/9",   M325,  {0x1E, 0x95, 0x03},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 83, "m325"},
 	{ "mega3250/90", M3250, {0x1E, 0x95, 0x04},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 84, "m3250"},
 /**/{ "mega325P",    M325P, {0x1E, 0x95, 0x0D},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 83, "m325"},
-/**/{ "mega3250P",   M3250P,{0x1E, 0x95, 0x0E},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 84, "m3250P"},
+/**/{ "mega3250P",   M3250P,{0x1E, 0x95, 0x0E},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 84, "m3250p"},
 	{ "mega328P",    M328P, {0x1E, 0x95, 0x0F},  32768, 128, 1024,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},  0, "m328P"},
 	{ "mega32",      M32,   {0x1E, 0x95, 0x02},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       69, "m32"},
-	{ "mega324P",    M324P, {0x1E, 0x95, 0x08},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104, "m324P"},
-/**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104, "m324PA"},
+	{ "mega324P",    M324P, {0x1E, 0x95, 0x08},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104, "m324p"},
+/**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104, "m324pa"},
 	{ "mega603",     M603,  {0x1E, 0x96, 0x01},  65536, 256, 2048,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B},              0, "m603"},
 	{ "mega644",     M644,  {0x1E, 0x96, 0x09},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106, "m644"},
 	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106, "m644p"},
@@ -305,6 +305,9 @@ static long total_bytes = 0L;
 static long total_size = 0L;
 static long total_size_kb = 0L;
 static double step_size = 0.0;
+
+static int hex_file_is_empty = 0;
+
 
 char report_msg[128];
 
@@ -1074,7 +1077,7 @@ int load_commands (int argc, char **argv)
 	char *cp, c, *cmdlst[OPT_MAX], cmdbuff[LINE_SIZE];
 	int cmd;
 	FILE *fp;
-	DWORD ln;
+	DWORD ln = 0;
 #if AVRSPX
 	char *s;
 #if USER_BOOKMARKS
@@ -1461,15 +1464,28 @@ int load_commands (int argc, char **argv)
 		} /* if */
 
 		else {	/* HEX Files (Write command) */
+			char *dot;
+
 			if((fp = fopen(cp, "rt")) == NULL) {
 				fprintf(stderr, "%s : Unable to open.\n", cp);
 				return RC_FILE;
 			}
+			dot = strrchr(cp, '.');
 			/* .eep files are read as EEPROM data, others are read as program code */
-			if((strstr(cp, ".EEP") == NULL) && (strstr(cp, ".eep") == NULL)) {
-				ln = input_hexfile(fp, CodeBuff, sizeof(CodeBuff), &CmdWrite.CodeSize);
-			} else {
-				ln = input_hexfile(fp, DataBuff, sizeof(DataBuff), &CmdWrite.DataSize);
+			if(*dot) {
+				if (strcasecmp(dot, ".EEP") == 0) {
+					ln = input_hexfile(fp, DataBuff, sizeof(DataBuff), &CmdWrite.DataSize);
+					if(CmdWrite.DataSize==0) {
+						hex_file_is_empty++;
+						fprintf(stderr, "%s : HEX File is empty.\n", cp);
+					}
+				} else {
+					ln = input_hexfile(fp, CodeBuff, sizeof(CodeBuff), &CmdWrite.CodeSize);
+					if(CmdWrite.CodeSize==0) {
+						hex_file_is_empty++;
+						fprintf(stderr, "%s : HEX File is empty.\n", cp);
+					}
+				}
 			}
 			fclose(fp);
 			if(ln) {
@@ -2905,7 +2921,12 @@ int main (int argc, char **argv)
 		}
 	}
 
-	if(Device == NULL) {
+#if AVRSPX
+	if (!hex_file_is_empty && Device == NULL)
+#else
+	if(Device == NULL)
+#endif
+	{
 		rc = RC_SYNTAX;
 		output_usage(false);
 	}
