@@ -1126,12 +1126,10 @@ int load_commands (int argc, char **argv)
 	cmdlst[cmd] = NULL;
 
 #if 1	/* Requst from miyamae , @@@ by senshu */
+	/* Show Option Values */
 	{
-
-		int i, found, len;
-		char *mess_str = "#### %s command line ####\n";
-		char *show_options = "--show-options";
-		int opt_len;
+		int i, found, opt_len;
+		char * show_options = "--show-options";
 
 		opt_len = strlen(show_options);
 		found = 0;
@@ -1146,20 +1144,13 @@ int load_commands (int argc, char **argv)
 		}
 
 		if (found) {
-			printf(mess_str, progname);
-
-			len = 0;
-			len += printf("%s ", progname);
+			printf("# %s ", progname);
 
 			/* list options */
 			for (i=0; i<cmd; i++){
 				if (strncmp(cmdlst[i], show_options, opt_len) != 0) {
-					len += printf("%s ", cmdlst[i]);
+					printf("%s ", cmdlst[i]);
 				}
-			}
-			printf("\n");
-			for (i=0; i < (len-1); i++) {
-				printf("-");
 			}
 			printf("\n");
 		}
