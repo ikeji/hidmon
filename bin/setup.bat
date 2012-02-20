@@ -1,6 +1,7 @@
 @echo off
 REM 2008-11-13 (c) written by senshu
 REM 2009-08-07 Windows 98用のチェックを追加
+REM 2010-06-28 libusb0.dll の名前を変更
 REM set COPY=echo (copy)
 set COPY=copy
 
@@ -63,7 +64,7 @@ IF NOT EXIST %TARGET% (
   mkdir %TARGET%
 )
 echo ==== [COPY to %TARGET%] ====
-echo hidspx.exe, hidspx-gcc.exe hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe,
+echo hidspx.exe, hidspx-gcc.exe hidspx.ini, libusb0_.dll, fuse.txt, usbtool.exe,
 echo hidspxG.exe, hidspx-GUI.exe
 echo firmware\regserial.awk , firmware\addserial.awk, firmware\main-12.hex , 
 echo firmware\firmprog.bat, firmware\hexcleanup.bat
@@ -76,7 +77,7 @@ IF EXIST %TARGET%\hidspx.ini (
   %COPY% %TARGET%\hidspx.ini %TARGET%\hidspx-save.ini
 )
 %COPY% hidspx.ini %TARGET% > NUL
-%COPY% libusb0.dll %TARGET% > NUL
+%COPY% libusb0_.dll %TARGET% > NUL
 %COPY% fuse.txt %TARGET% > NUL
 %COPY% usbtool.exe %TARGET% > NUL
 %COPY% hidmon.exe %TARGET% > NUL

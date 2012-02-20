@@ -811,3 +811,14 @@ Type = HIDaspx, Delay = 4
 	    表示する不具合を修正
 
 
+■2010-08-04
+
+	(1) hidspx-GUI の [Save] ボタンでの保存時、新規の名前で保存できない不具
+	    合を修正
+
+	(2) hidspxをavrsp (2010-7-21) の更新に追随し、サポートマイコンの拡大と
+	    統合HEX ファイル（Flash/EEPROM/Fuse/Lock)の書込み機能を追加しました。
+
+	(3) hidspx -rd で開くWebページをATMEL社のページに変更
+
+

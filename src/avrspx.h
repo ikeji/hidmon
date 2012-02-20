@@ -53,11 +53,21 @@ enum {
 };
 
 
-/* Buffer size for flash/eeprom */
+/* Buffer size for flash/eeprom/fuse */
 
-#define	MAX_FLASH	(256*1024)	/* Max Flash size */
-#define	MAX_EEPROM	(  4*1024)	/* Max EEPROM size */
+#define BASE_FLASH	0			/* Flash base offset in hex file */
+#define	MAX_FLASH	(256*1024)	/* Flash buffer size (256K) */
+#define	BASE_EEPROM	0x810000	/* EEPROM base offset in hex file */
+#define	MAX_EEPROM	(  4*1024)	/* EEPROM buffer size (4K) */
+#define BASE_FUSE	0x820000	/* Fuse base offset in hex file */
+#define BASE_LOCK	0x830000	/* Lock bits base offset in hex file */
+#define	MAX_FUSE	3			/* Fuse buffer size (3) */
+
+
+/* SPI bridge pipelined operation */
+
 #define	PIPE_WINDOW	256			/* Pipe window for SPI bridge (must be power of 2) */
+
 
 
 /* Device property structure */
@@ -65,11 +75,12 @@ enum {
 enum _devid {	/* Device ID */
 	N0000, L0000,	/* Unknown, Locked */
 	S1200, S2313, S4414, S8515, S2333, S4433, S4434, S8535, S2323, S2343,
-	T12, T13, T22, T25, T45, T85, T24, T44, T84, T26, T261, T461, T861, T2313, T15,
-	M161, M162, M8515, M8535, M163, M323, M48, M48P, M88, M88P, M168, M168P, M328P,
-	M8, M16, M32, M164P, M324P, M644P, M1284P, M644, M325, M3250, M165, M169, M603,
-	M645, M6450, M103, M64, M128, M640, M1280, M1281, M2560, M2561, M325P, M3250P, M324PA,
-	CAN32, CAN64, CAN128, PWM2, PWM216
+	T12, T13, T15, T167, T22, T2313, T24, T25, T26, T261,
+	T43U, T44, T45, T461, T48, T84, T85, T861, T87, T88,
+	M103, M128, M1280, M1281, M1284P, M16, M161, M162, M163, M164P, M165, M168, M168P,
+	M169, M2560, M2561, M32, M323, M324P, M324PA, M325, M3250, M3250P, M325P, M328P,
+	M48, M48P, M603, M64, M640, M644, M644P, M645, M6450, M8, M8515, M8535, M88, M88P,
+	CAN128, CAN32, CAN64, PWM2, PWM216,
 };
 
 #if 1	/* by senshu */

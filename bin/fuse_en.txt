@@ -355,6 +355,9 @@ High:76543210
 ;-----------------------------------------------------------------------------;
 Device: ATmega48
 Device: ATmega48P
+Device: ATtiny43U
+Device: ATtiny87
+Device: ATtiny167
 Mode: ISP/Parallel
 Low: 76543210
      ||||++++-- CKSEL[3:0] Clock source selection

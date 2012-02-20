@@ -1,0 +1,29 @@
+diff -urw avrxtool32-2008/src/avrsp/avrsp.h avrxtool32-2010/src/avrsp/avrsp.h
+--- avrxtool32-2008/src/avrsp/avrsp.h	Mon Feb  8 21:28:38 2010
++++ avrxtool32-2010/src/avrsp/avrsp.h	Wed Jul 21 20:32:10 2010
+@@ -21,13 +21,22 @@
+ #define	RC_SYNTAX	5
+ 
+ 
+-/* Buffer size for flash/eeprom */
++/* Buffer size for flash/eeprom/fuse */
++
++#define BASE_FLASH	0			/* Flash base offset in hex file */
++#define	MAX_FLASH	(256*1024)	/* Flash buffer size (256K) */
++#define	BASE_EEPROM	0x810000	/* EEPROM base offset in hex file */
++#define	MAX_EEPROM	(  4*1024)	/* EEPROM buffer size (4K) */
++#define BASE_FUSE	0x820000	/* Fuse base offset in hex file */
++#define	MAX_FUSE	3			/* Fuse buffer size (3) */
++
++
++/* SPI bridge pipelined operation */
+ 
+-#define	MAX_FLASH	(256*1024)	/* Max Flash size */
+-#define	MAX_EEPROM	(  4*1024)	/* Max EEPROM size */
+ #define	PIPE_WINDOW	256			/* Pipe window for SPI bridge (must be power of 2) */
+ 
+ 
++
+ /* Device property structure */
+ 
+ enum _devid {	/* Device ID */
