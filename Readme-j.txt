@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2010年 2月14日（最新更新）
+                                                2010年 2月16日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1637,4 +1637,14 @@ Type = HIDaspx, Delay = 4
 
 	(4) hidmon.exe のbenchコマンドのテスト機能を強化しました。
 	送受信のバイト数と全転送内容の突き合わせを実施します。
+
+■2010-02-16
+
+	(1) hidspxG.exe のレイアウトを修正（進捗窓の拡大）
+
+	(2) hidspx や hidmon は指定しなければ、省略時は、無償版に対応する仕様にな
+	    っています。商用版のファームを利用する場合には、オプションを追加する
+	    必要があります。(hidspx -php, hidmon -ppのように指定)
+	    hidspxG や hidspx-GUIでも同様です。 「Command line option」窓にて、
+	    「-php」を追加して利用してください。
 
