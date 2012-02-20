@@ -466,12 +466,15 @@ static char *uni_to_string(char *t, unsigned short *u)
 /*  Manufacturer & Product name check.
  *  名前チェック : 成功=1  失敗=0 読み取り不能=(-1)
  */
-static int check_product_string(HANDLE handle, const char *serial, int verbose)
+static int check_product_string(HANDLE handle, const char *serial, int list_mode)
 {
+	static int first = 1;
+	int i;
 	unsigned short unicode[BUFF_SIZE*2];
 	char string1[BUFF_SIZE];
 	char string2[BUFF_SIZE];
 	char string3[BUFF_SIZE];
+	char tmp[3][BUFF_SIZE];
 
 	Sleep(20);
 	if (!HidD_GetManufacturerString(handle, unicode, sizeof(unicode))) {
@@ -485,19 +488,38 @@ static int check_product_string(HANDLE handle, const char *serial, int verbose)
 	}
 	uni_to_string(string2, unicode);
 
-	Sleep(20);
-	if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
-		return -1;
-	}
-	uni_to_string(string3, unicode);
-
+	// シリアル番号のチェックを厳密化 (2010/02/12 13:24:08)
 	if (serial[0]=='*') {
-		if (verbose) {
-			fprintf(stderr,
-				"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s]\n",
-				MY_VID, MY_PID, string1,  string2, string3);
+		for (i=0; i<3; i++) {
+			Sleep(40);
+			if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
+				return -1;
+			}
+			uni_to_string(tmp[i], unicode);
 		}
+		if (strcmp(tmp[0], tmp[1])==0 && strcmp(tmp[0], tmp[2])==0) {
+			strcpy(string3, tmp[0]);	// OK
+		} else {
+			return -1;
+		}
+		if (list_mode) {
+			if (first) {
+				fprintf(stderr,
+				"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s] (*)\n", MY_VID, MY_PID, string1,  string2, string3);
+				first = 0;
+			} else {
+				fprintf(stderr,
+				"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s]\n", MY_VID, MY_PID, string1,  string2, string3);
+			}
+		}
+	} else {
+		Sleep(40);
+		if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
+			return -1;
+		}
+		uni_to_string(string3, unicode);
 	}
+
 
 #ifdef	MY_Manufacturer
 	if (strcmp(string1, MY_Manufacturer) != 0)
@@ -525,7 +547,7 @@ static int check_product_string(HANDLE handle, const char *serial, int verbose)
 
 ////////////////////////////////////////////////////////////////////////
 // HIDディバイス一覧からUSB-IOを検索
-static int OpenTheHid(const char *serial, int verbose)
+static int OpenTheHid(const char *serial, int list_mode)
 {
 	int f, i, rc;
 	ULONG Needed, l;
@@ -572,10 +594,13 @@ static int OpenTheHid(const char *serial, int verbose)
 		// HIDaspかどうか調べる.
 		if (DeviceAttributes.VendorID == MY_VID && DeviceAttributes.ProductID == MY_PID) {
 			int rc;
-			rc = check_product_string(hHID, serial, verbose);
+			rc = check_product_string(hHID, serial, list_mode);
 			if ( rc == 1) {
 				f++;				// 見つかった
-				break;
+				// 複数個をリストする (2010/02/12 13:19:38)
+				if (list_mode == 0) {
+					break;			// 自動認識時は、最初の候補を利用する
+				}
 			}
 		} else {
 			// 違ったら閉じる
