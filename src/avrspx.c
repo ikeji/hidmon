@@ -2805,7 +2805,9 @@ int write_fuse ()
 
 	if(CmdFuse.Cmd.Flag.High && (Device->FuseType >= 5)) {
 #if AVRSPX
-		if (f_ISP_DISBL_prog == 0 && (Device->ISP_DISBL[ISP_DIS_BYTE] == 1 && Device->ISP_DISBL[ISP_DIS_RST] != 0)) {
+		if (f_ISP_DISBL_prog == 0
+		&& (Device->ISP_DISBL[ISP_DIS_BYTE] == 1
+		&& Device->ISP_DISBL[ISP_DIS_RST] != 0)) {
 			if ((CmdFuse.Data[HIGH] & Device->ISP_DISBL[ISP_DIS_RST]) == 0) {
 				fprintf(stderr, "WARNING: ISP disable FUSE bit (RSTDISBL) detected.\n"
 								"If you hope for the writing, Enter the -f#H0x%02x option.\n",
@@ -2814,9 +2816,12 @@ int write_fuse ()
 			}
 		}
 		vfuse = fuse = CmdFuse.Data[HIGH] & Device->FuseMask[HIGH];
-		if ((fuse & Device->ISP_DISBL[ISP_DIS_DWEN]) == 0) {
+		if ((Device->ISP_DISBL[ISP_DIS_BYTE] != 0
+		&& (fuse & Device->ISP_DISBL[ISP_DIS_DWEN]) == 0) ) {
 			fprintf(stderr, "WARNING: ISP disable FUSE bit (DWEN) detected, Unprogrammed DWEN bit.\n");
 			vfuse = fuse = (fuse | Device->ISP_DISBL[ISP_DIS_DWEN]);
+		} else {
+			vfuse = fuse;
 		}
 
 		/* -v : Skip programming process when verify mode */

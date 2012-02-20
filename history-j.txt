@@ -804,3 +804,10 @@ Type = HIDaspx, Delay = 4
 	    ださい。
 
 	(3) hidmon.exe のD（ダンプ）コマンドにASCII文字表示を追加
+
+■2010-06-02
+
+	(1) ATmega644pなどで、DWEN機能を持たないAVRマイコンでDEWNの警告を
+	    表示する不具合を修正
+
+
