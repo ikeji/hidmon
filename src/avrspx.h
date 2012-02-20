@@ -69,7 +69,6 @@ enum {
 #define	PIPE_WINDOW	256			/* Pipe window for SPI bridge (must be power of 2) */
 
 
-
 /* Device property structure */
 
 enum _devid {	/* Device ID */

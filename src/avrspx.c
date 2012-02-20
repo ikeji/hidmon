@@ -26,6 +26,7 @@
 /* R0.44  Dec  7, '08  ATmega325P/3250P/324PA, AT90PWM216/316                */
 /* R0.45  Feb  8, '10  ATtiny43U/48/88/87/167                                */
 /* R0.46 (C)ChaN, 2010                                                       */
+/* R0.46  Jul 21, '10  Supported Flash/EEPROM/Fuse combined hex file         */
 /*---------------------------------------------------------------------------*/
 /* R0.43b Base                                                                */
 /*   b2   2006-05-06  USBasp support, by mutech,t.kuroki                     */
@@ -67,7 +68,6 @@
 /* b11.4  2009-09-28 avrdudeとの互換性を強化（-e, Lock bit）*/
 /* b11.5  2010-02-13 HIDaspxのシリアル番号自動認識機能の追加 */
 /* b11.6  2010-04-13 ATtiny84追加, hidspx-gccへの対応強化 */
-/* R0.46  Jul 21, '10  Supported Flash/EEPROM/Fuse combined hex file         */
 /* TAB-SIZE = 4 */
 
 #define VERSION "b11.6"
@@ -432,7 +432,7 @@ void report_update(int bytes)
             }
         }
     } else {
-        if (report_msg) {
+        if (report_msg[0]) {
             total_bytes += bytes;
             if (total_size <= MAX_BYTES) {
                 fprintf(stderr, report_msg, total_bytes, total_size);
@@ -579,7 +579,7 @@ void output_usage (bool detail)
         "@ATtiny 12,13,15,22,24,25,26,44,45,84,85,261,461,861,2313\n",
         "@ATmega 8,16,32,48,48P,64,88,88P,103,128,161,162,163,164P,165,168,168P,\n",
         "@       169,323,324P,324PA,325/9,325P,3250P,328P,3250/90,603,640,644,644P,\n",
-        "@       645/9,1280,1281,2560,2561,6450/90,8515,8535\n",
+        "@       645/9,1280,1281,1284P,2560,2561,6450/90,8515,8535\n",
         "@AT90CAN 32,64,128, AT90PWM 2,3,216,316\n",
 
         "\n",
@@ -663,7 +663,7 @@ void output_usage (bool detail)
         "ATtiny 12,13,15,22,24,25,26,44,45,84,85,261,461,861,2313\n",
         "ATmega 8,16,32,48,48P,64,88,88P,103,128,161,162,163,164P,165,168,168P,169,323,\n"
         "       324P,324PA,325/329,325P,3250P,328P,406,603,640,644,644P,645/649,\n"
-        "       1280,1281,2560,2561,3250/3290,6450/6490,8515,8535\n",
+        "       1280,1281,1284P,2560,2561,3250/3290,6450/6490,8515,8535\n",
         "AT90CAN32,64,128, AT90PWM 2,3,216,316\n",
         "Supported Adapter:\n",
         "AVRSP adapter (COM/LPT), SPI Bridge (COM), STK200 ISP dongle (LPT)\n",
@@ -731,8 +731,14 @@ void put_fuseval (BYTE val, BYTE mask, const char *head, FILE *fp)
 void open_url(char *str)
 {
     char url[512];
+    int r;
 
-    sprintf(url, "start %s", str);
+    r = snprintf(url, sizeof url,  "start %s", str);
+    if (r < 0) {
+        MESS("open_url(), URL buffer error");
+        return;
+    }
+
     if (system(url) >= 0) {
         MESS(url);
         MESS("\n");
@@ -747,9 +753,9 @@ void open_device_url(int number)
     char url[512];
 
     if (number == 0) {
-        sprintf(url, "start http://www.avrfreaks.net/index.php?module=Freaks%%20Devices^&func=viewDev");
+        snprintf(url, sizeof url,  "start http://www.avrfreaks.net/index.php?module=Freaks%%20Devices^&func=viewDev");
     } else {
-        sprintf(url, "start http://www.avrfreaks.net/index.php?module=Freaks%%20Devices"
+        snprintf(url, sizeof url,  "start http://www.avrfreaks.net/index.php?module=Freaks%%20Devices"
                     "^&func=displayDev^&objectid=%d", number);
     }
     if (system(url) >= 0) {
@@ -763,8 +769,13 @@ void open_device_url(int number)
 void open_atmel_url(char *pn)
 {
     char url[512];
+    int r;
 
-    sprintf(url, "start http://atmel.com/dyn/products/product_card_mcu.asp?PN=AT%s", pn);
+    r = snprintf(url, sizeof url,  "start http://atmel.com/dyn/products/product_card_mcu.asp?PN=AT%s", pn);
+    if (r < 0) {
+        MESS("open_atmel_url(), URL buffer error(0)");
+        return;
+    }
     if (system(url) >= 0) {
         MESS(url);  MESS("\n");
     } else {
@@ -967,19 +978,41 @@ ATtiny88
         } else {
             chip = Device->Name;
         }
-        len = sprintf(url, "start http://www.engbedded.com/cgi-bin/fc%s.cgi/?P=AT%s^&V_LOW=%02X",
+        len = snprintf(url, sizeof url,  "start http://www.engbedded.com/cgi-bin/fc%s.cgi/?P=AT%s^&V_LOW=%02X",
                     (mode == RD_DEV_OPT_I)?"x":"", chip, FuseBuff[LOW]);
-        if(Device->FuseType >= 5)
-            len += sprintf(url+len, "^&V_HIGH=%02X", FuseBuff[HIGH]);
-        if(Device->FuseType >= 6)
-            len += sprintf(url+len, "^&V_EXTENDED=%02X", FuseBuff[EXT]);
+        if (Device->FuseType >= 5) {
+            r = snprintf(url+len, sizeof url, "^&V_HIGH=%02X", FuseBuff[HIGH]);
+            if (r > 0) {
+	            len += r;
+            } else {
+	            MESS("output_fuse(), URL buffer error(1)");
+	            return;
+            }
+        }
+        if (Device->FuseType >= 6) {
+            r = snprintf(url+len, sizeof url, "^&V_EXTENDED=%02X", FuseBuff[EXT]);
+            if (r > 0) {
+	            len += r;
+            } else {
+	            MESS("URL buffer error(2)");
+	            return;
+            }
+        }
 
-        sprintf(url+len, "^&O_HEX=Apply+user+values");
+        r = snprintf(url+len, sizeof url, "^&O_HEX=Apply+user+values");
+        if (r < 0) {
+            MESS("output_fuse(), URL buffer error(3)");
+            return;
+        }
+
         r = system(url);    /* Start web browser */
-
         if (r >= 0) {   /* success */
-            sprintf(url, "start http://www.engbedded.com/cgi-bin/fc%s.cgi/\n",
+            r = snprintf(url, sizeof url,  "start http://www.engbedded.com/cgi-bin/fc%s.cgi/\n",
                                 (mode == RD_DEV_OPT_I)?"x":"");
+		    if (r < 0) {
+		        MESS("output_fuse(), URL buffer error(4)");
+		        return;
+		    }
             MESS(url);
         }
         return;
@@ -999,6 +1032,9 @@ ATtiny88
     }
 
     MESS("\n");
+#if 1	// 2011/03/23 9:13:30
+    printf("==== AT%s ====\n\n", Device->Name);
+#endif
     put_fuseval(FuseBuff[LOW], Device->FuseMask[LOW], "Low: ", fp);
 
     if(Device->FuseType >= 5)
@@ -3083,7 +3119,7 @@ void terminate (int rc)
 #if AVRSPX
 void do_exit(void)
 {
-	(void)usb_cleanup();			/* add by senshu */
+    (void)usb_cleanup();            /* add by senshu */
 
     if (!f_terminate)
         terminate(-1);
@@ -3334,6 +3370,7 @@ int main (int argc, char **argv)
             extern char *progpathname, progpath[];
             char * p, ini_file_path[MAX_PATH];
             FILE *fp;
+            int r;
 
             if (strchr(progpathname, ':') != NULL) {
                 fprintf(stderr, "program  '%s'\n", progpathname);
@@ -3341,7 +3378,12 @@ int main (int argc, char **argv)
                 fprintf(stderr, "program  '%s%s'\n", progpath, progpathname);
             }
 
-            sprintf(ini_file_path, "%s%s", progpath, INIFILE);
+            r = snprintf(ini_file_path, sizeof ini_file_path, "%s%s", progpath, INIFILE);
+		    if (r < 0) {
+		        MESS("ini_file_path error");
+			    atexit(do_exit);
+		    }
+
             fp = fopen(ini_file_path, "rt");
             if (fp != NULL) {
                 fclose(fp);

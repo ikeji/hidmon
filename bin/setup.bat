@@ -69,6 +69,7 @@ echo hidspxG.exe, hidspx-GUI.exe
 echo firmware\regserial.awk , firmware\addserial.awk, firmware\main-12.hex , 
 echo firmware\firmprog.bat, firmware\hexcleanup.bat
 echo ..\HIDaspx.pdf ..\hidspx_tips.pdf ..\Readme-j.txt ..\avrx-tool.txt
+echo srec*.exe
 %COPY% hidspx.exe %TARGET% > NUL
 %COPY% hidspx-gcc.exe %TARGET% > NUL
 IF EXIST %TARGET%\hidspx.ini (
@@ -93,6 +94,7 @@ IF EXIST %TARGET%\hidspx.ini (
 %COPY% ..\hidspx_tips.pdf %TARGET% > NUL
 %COPY% ..\Readme-j.txt %TARGET% > NUL
 %COPY% ..\avrx-tool.txt %TARGET% > NUL
+%COPY% srec*.exe %TARGET% > NUL
 echo ==== %PROJECT% setup finished ====
 goto END
 

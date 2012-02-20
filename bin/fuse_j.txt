@@ -550,6 +550,7 @@ Device: ATmega640
 Device: ATmega1280
 Device: ATmega1281
 Device: ATmega2560
+Device: ATmega1284P
 Device: ATmega2561
 Mode: ISP/Parallel
 Low: 76543210

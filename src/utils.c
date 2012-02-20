@@ -106,8 +106,7 @@ DEVPROP *search_device(char *Name)
             return dev;
     }
 #endif
-    return dev;
-//  return NULL;
+    return NULL;
 }
 
 #if 0

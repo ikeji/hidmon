@@ -18,12 +18,18 @@
 
 
 #include <windows.h>
+#include <stdio.h>
 #include <errno.h>
 
 #include "usb.h"
 
 #define LIBUSB_DLL_NAME "libusb0.dll"
 
+#if 1
+#define PUTS(p)
+#else
+#define PUTS(p) puts(p)
+#endif
 
 typedef usb_dev_handle * (*usb_open_t)(struct usb_device *dev);
 
@@ -100,89 +106,90 @@ static usb_free_async_t _usb_free_async = NULL;
 
 static HINSTANCE libusb_dll;
 
-static int set_proc_addr(HINSTANCE libusb_dll)
+static int set_proc_addr(void)
 {
     if (libusb_dll) {
-		return 0;
+        return 0;
     } else {
-	    libusb_dll = LoadLibrary(LIBUSB_DLL_NAME);
-	    if (libusb_dll == NULL) {
-		    _usb_open = NULL;
-			return -1;
-	    } else {
-		    _usb_open = (usb_open_t) GetProcAddress(libusb_dll, "usb_open");
-		    _usb_close = (usb_close_t) GetProcAddress(libusb_dll, "usb_close");
-		    _usb_get_string = (usb_get_string_t) GetProcAddress(libusb_dll, "usb_get_string");
-		    _usb_get_string_simple = (usb_get_string_simple_t) GetProcAddress(libusb_dll, "usb_get_string_simple");
-		    _usb_get_descriptor_by_endpoint =
-		    	(usb_get_descriptor_by_endpoint_t) GetProcAddress(libusb_dll, "usb_get_descriptor_by_endpoint");
-		    _usb_get_descriptor =
-		    	(usb_get_descriptor_t) GetProcAddress(libusb_dll, "usb_get_descriptor");
-		    _usb_bulk_write = (usb_bulk_write_t)
-		                      GetProcAddress(libusb_dll, "usb_bulk_write");
-		    _usb_bulk_read = (usb_bulk_read_t)
-		                     GetProcAddress(libusb_dll, "usb_bulk_read");
-		    _usb_interrupt_write = (usb_interrupt_write_t)
-		                           GetProcAddress(libusb_dll, "usb_interrupt_write");
-		    _usb_interrupt_read = (usb_interrupt_read_t)
-		                          GetProcAddress(libusb_dll, "usb_interrupt_read");
-		    _usb_control_msg = (usb_control_msg_t)
-		                       GetProcAddress(libusb_dll, "usb_control_msg");
-		    _usb_set_configuration = (usb_set_configuration_t)
-		                             GetProcAddress(libusb_dll, "usb_set_configuration");
-		    _usb_claim_interface = (usb_claim_interface_t)
-		                           GetProcAddress(libusb_dll, "usb_claim_interface");
-		    _usb_release_interface = (usb_release_interface_t)
-		                             GetProcAddress(libusb_dll, "usb_release_interface");
-		    _usb_set_altinterface = (usb_set_altinterface_t)
-		                            GetProcAddress(libusb_dll, "usb_set_altinterface");
-		    _usb_resetep = (usb_resetep_t) GetProcAddress(libusb_dll, "usb_resetep");
-		    _usb_clear_halt = (usb_clear_halt_t)
-		                      GetProcAddress(libusb_dll, "usb_clear_halt");
-		    _usb_reset = (usb_reset_t)
-		                 GetProcAddress(libusb_dll, "usb_reset");
-		    _usb_strerror = (usb_strerror_t)
-		                    GetProcAddress(libusb_dll, "usb_strerror");
-		    _usb_init = (usb_init_t)
-		                GetProcAddress(libusb_dll, "usb_init");
-		    _usb_set_debug = (usb_set_debug_t)
-		                     GetProcAddress(libusb_dll, "usb_set_debug");
-		    _usb_find_busses = (usb_find_busses_t)
-		                       GetProcAddress(libusb_dll, "usb_find_busses");
-		    _usb_find_devices = (usb_find_devices_t)
-		                        GetProcAddress(libusb_dll, "usb_find_devices");
-		    _usb_device = (usb_device_t)
-		                  GetProcAddress(libusb_dll, "usb_device");
-		    _usb_get_busses = (usb_get_busses_t)
-		                      GetProcAddress(libusb_dll, "usb_get_busses");
-		    _usb_install_service_np = (usb_install_service_np_t)
-		                              GetProcAddress(libusb_dll, "usb_install_service_np");
-		    _usb_uninstall_service_np = (usb_uninstall_service_np_t)
-		                                GetProcAddress(libusb_dll, "usb_uninstall_service_np");
-		    _usb_install_driver_np = (usb_install_driver_np_t)
-		                             GetProcAddress(libusb_dll, "usb_install_driver_np");
-		    _usb_get_version = (usb_get_version_t)
-		                       GetProcAddress(libusb_dll, "usb_get_version");
-		    _usb_isochronous_setup_async = (usb_isochronous_setup_async_t)
-		                                   GetProcAddress(libusb_dll, "usb_isochronous_setup_async");
-		    _usb_bulk_setup_async = (usb_bulk_setup_async_t)
-		                            GetProcAddress(libusb_dll, "usb_bulk_setup_async");
-		    _usb_interrupt_setup_async = (usb_interrupt_setup_async_t)
-		                                 GetProcAddress(libusb_dll, "usb_interrupt_setup_async");
-		    _usb_submit_async = (usb_submit_async_t)
-		                        GetProcAddress(libusb_dll, "usb_submit_async");
-		    _usb_reap_async = (usb_reap_async_t)
-		                      GetProcAddress(libusb_dll, "usb_reap_async");
-		    _usb_free_async = (usb_free_async_t)
-		                      GetProcAddress(libusb_dll, "usb_free_async");
-		}
-	}
-	return 0;
+        libusb_dll = LoadLibrary(LIBUSB_DLL_NAME);
+        if (libusb_dll == NULL) {
+            _usb_open = NULL;
+            return -1;
+        } else {
+            _usb_open = (usb_open_t) GetProcAddress(libusb_dll, "usb_open");
+            _usb_close = (usb_close_t) GetProcAddress(libusb_dll, "usb_close");
+            _usb_get_string = (usb_get_string_t) GetProcAddress(libusb_dll, "usb_get_string");
+            _usb_get_string_simple = (usb_get_string_simple_t) GetProcAddress(libusb_dll, "usb_get_string_simple");
+            _usb_get_descriptor_by_endpoint =
+                (usb_get_descriptor_by_endpoint_t) GetProcAddress(libusb_dll, "usb_get_descriptor_by_endpoint");
+            _usb_get_descriptor =
+                (usb_get_descriptor_t) GetProcAddress(libusb_dll, "usb_get_descriptor");
+            _usb_bulk_write = (usb_bulk_write_t)
+                              GetProcAddress(libusb_dll, "usb_bulk_write");
+            _usb_bulk_read = (usb_bulk_read_t)
+                             GetProcAddress(libusb_dll, "usb_bulk_read");
+            _usb_interrupt_write = (usb_interrupt_write_t)
+                                   GetProcAddress(libusb_dll, "usb_interrupt_write");
+            _usb_interrupt_read = (usb_interrupt_read_t)
+                                  GetProcAddress(libusb_dll, "usb_interrupt_read");
+            _usb_control_msg = (usb_control_msg_t)
+                               GetProcAddress(libusb_dll, "usb_control_msg");
+            _usb_set_configuration = (usb_set_configuration_t)
+                                     GetProcAddress(libusb_dll, "usb_set_configuration");
+            _usb_claim_interface = (usb_claim_interface_t)
+                                   GetProcAddress(libusb_dll, "usb_claim_interface");
+            _usb_release_interface = (usb_release_interface_t)
+                                     GetProcAddress(libusb_dll, "usb_release_interface");
+            _usb_set_altinterface = (usb_set_altinterface_t)
+                                    GetProcAddress(libusb_dll, "usb_set_altinterface");
+            _usb_resetep = (usb_resetep_t) GetProcAddress(libusb_dll, "usb_resetep");
+            _usb_clear_halt = (usb_clear_halt_t)
+                              GetProcAddress(libusb_dll, "usb_clear_halt");
+            _usb_reset = (usb_reset_t)
+                         GetProcAddress(libusb_dll, "usb_reset");
+            _usb_strerror = (usb_strerror_t)
+                            GetProcAddress(libusb_dll, "usb_strerror");
+            _usb_init = (usb_init_t)
+                        GetProcAddress(libusb_dll, "usb_init");
+            _usb_set_debug = (usb_set_debug_t)
+                             GetProcAddress(libusb_dll, "usb_set_debug");
+            _usb_find_busses = (usb_find_busses_t)
+                               GetProcAddress(libusb_dll, "usb_find_busses");
+            _usb_find_devices = (usb_find_devices_t)
+                                GetProcAddress(libusb_dll, "usb_find_devices");
+            _usb_device = (usb_device_t)
+                          GetProcAddress(libusb_dll, "usb_device");
+            _usb_get_busses = (usb_get_busses_t)
+                              GetProcAddress(libusb_dll, "usb_get_busses");
+            _usb_install_service_np = (usb_install_service_np_t)
+                                      GetProcAddress(libusb_dll, "usb_install_service_np");
+            _usb_uninstall_service_np = (usb_uninstall_service_np_t)
+                                        GetProcAddress(libusb_dll, "usb_uninstall_service_np");
+            _usb_install_driver_np = (usb_install_driver_np_t)
+                                     GetProcAddress(libusb_dll, "usb_install_driver_np");
+            _usb_get_version = (usb_get_version_t)
+                               GetProcAddress(libusb_dll, "usb_get_version");
+            _usb_isochronous_setup_async = (usb_isochronous_setup_async_t)
+                                           GetProcAddress(libusb_dll, "usb_isochronous_setup_async");
+            _usb_bulk_setup_async = (usb_bulk_setup_async_t)
+                                    GetProcAddress(libusb_dll, "usb_bulk_setup_async");
+            _usb_interrupt_setup_async = (usb_interrupt_setup_async_t)
+                                         GetProcAddress(libusb_dll, "usb_interrupt_setup_async");
+            _usb_submit_async = (usb_submit_async_t)
+                                GetProcAddress(libusb_dll, "usb_submit_async");
+            _usb_reap_async = (usb_reap_async_t)
+                              GetProcAddress(libusb_dll, "usb_reap_async");
+            _usb_free_async = (usb_free_async_t)
+                              GetProcAddress(libusb_dll, "usb_free_async");
+        }
+    }
+    return 0;
 }
 
 void usb_init(void)
 {
-	set_proc_addr(libusb_dll);
+    PUTS("usb_init");
+    set_proc_addr();
     if (_usb_init) {
         _usb_init();
     }
@@ -190,6 +197,7 @@ void usb_init(void)
 
 usb_dev_handle *usb_open(struct usb_device *dev)
 {
+    PUTS("usb_open");
     if (_usb_open)
         return _usb_open(dev);
     else
@@ -198,56 +206,58 @@ usb_dev_handle *usb_open(struct usb_device *dev)
 
 int usb_cleanup(void)
 {
-	if (libusb_dll) {				// Add by senshu.
-    	if (FreeLibrary(libusb_dll)) {
-	    	libusb_dll = NULL;
+    PUTS("usb_cleanup");
+    if (libusb_dll) {               // Add by senshu.
+        if (FreeLibrary(libusb_dll)) {
+            libusb_dll = NULL;
 
-			_usb_open = NULL;
-			_usb_close = NULL;
-			_usb_get_string = NULL;
-			_usb_get_string_simple = NULL;
-			_usb_get_descriptor_by_endpoint = NULL;
-			_usb_get_descriptor = NULL;
-			_usb_bulk_write = NULL;
-			_usb_bulk_read = NULL;
-			_usb_interrupt_write = NULL;
-			_usb_interrupt_read = NULL;
-			_usb_control_msg = NULL;
-			_usb_set_configuration = NULL;
-			_usb_claim_interface = NULL;
-			_usb_release_interface = NULL;
-			_usb_set_altinterface = NULL;
-			_usb_resetep = NULL;
-			_usb_clear_halt = NULL;
-			_usb_reset = NULL;
-			_usb_strerror = NULL;
-			_usb_init = NULL;
-			_usb_set_debug = NULL;
-			_usb_find_busses = NULL;
-			_usb_find_devices = NULL;
-			_usb_device = NULL;
-			_usb_get_busses = NULL;
-			_usb_install_service_np = NULL;
-			_usb_uninstall_service_np = NULL;
-			_usb_install_driver_np = NULL;
-			_usb_get_version = NULL;
-			_usb_isochronous_setup_async = NULL;
-			_usb_bulk_setup_async = NULL;
-			_usb_interrupt_setup_async = NULL;
-			_usb_submit_async = NULL;
-			_usb_reap_async = NULL;
-			_usb_free_async = NULL;
-		} else {
-			return -1;
-		}
-	}
-	return 0;
+            _usb_open = NULL;
+            _usb_close = NULL;
+            _usb_get_string = NULL;
+            _usb_get_string_simple = NULL;
+            _usb_get_descriptor_by_endpoint = NULL;
+            _usb_get_descriptor = NULL;
+            _usb_bulk_write = NULL;
+            _usb_bulk_read = NULL;
+            _usb_interrupt_write = NULL;
+            _usb_interrupt_read = NULL;
+            _usb_control_msg = NULL;
+            _usb_set_configuration = NULL;
+            _usb_claim_interface = NULL;
+            _usb_release_interface = NULL;
+            _usb_set_altinterface = NULL;
+            _usb_resetep = NULL;
+            _usb_clear_halt = NULL;
+            _usb_reset = NULL;
+            _usb_strerror = NULL;
+            _usb_init = NULL;
+            _usb_set_debug = NULL;
+            _usb_find_busses = NULL;
+            _usb_find_devices = NULL;
+            _usb_device = NULL;
+            _usb_get_busses = NULL;
+            _usb_install_service_np = NULL;
+            _usb_uninstall_service_np = NULL;
+            _usb_install_driver_np = NULL;
+            _usb_get_version = NULL;
+            _usb_isochronous_setup_async = NULL;
+            _usb_bulk_setup_async = NULL;
+            _usb_interrupt_setup_async = NULL;
+            _usb_submit_async = NULL;
+            _usb_reap_async = NULL;
+            _usb_free_async = NULL;
+        } else {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 int usb_close(usb_dev_handle *dev)
 {
+    PUTS("usb_close");
     if (_usb_close) {
-        return _usb_close(dev);;
+        return _usb_close(dev);
     } else {
         return -ENOFILE;
     }
@@ -256,15 +266,16 @@ int usb_close(usb_dev_handle *dev)
 int usb_get_string(usb_dev_handle *dev, int index, int langid, char *buf,
                    size_t buflen)
 {
+    PUTS("usb_get_string");
     if (_usb_get_string)
         return _usb_get_string(dev, index, langid, buf, buflen);
     else
         return -ENOFILE;
 }
 
-int usb_get_string_simple(usb_dev_handle *dev, int index, char *buf,
-                          size_t buflen)
+int usb_get_string_simple(usb_dev_handle *dev, int index, char *buf, size_t buflen)
 {
+    PUTS("usb_get_string_simple");
     if (_usb_get_string_simple)
         return _usb_get_string_simple(dev, index, buf, buflen);
     else
@@ -275,6 +286,7 @@ int usb_get_descriptor_by_endpoint(usb_dev_handle *udev, int ep,
                                    unsigned char type, unsigned char index,
                                    void *buf, int size)
 {
+    PUTS("usb_get_descriptor_by_endpoint");
     if (_usb_get_descriptor_by_endpoint)
         return _usb_get_descriptor_by_endpoint(udev, ep, type, index, buf, size);
     else
@@ -284,42 +296,43 @@ int usb_get_descriptor_by_endpoint(usb_dev_handle *udev, int ep,
 int usb_get_descriptor(usb_dev_handle *udev, unsigned char type,
                        unsigned char index, void *buf, int size)
 {
+    PUTS("usb_get_descriptor");
     if (_usb_get_descriptor)
         return _usb_get_descriptor(udev, type, index, buf, size);
     else
         return -ENOFILE;
 }
 
-int usb_bulk_write(usb_dev_handle *dev, int ep, char *bytes, int size,
-                   int timeout)
+int usb_bulk_write(usb_dev_handle *dev, int ep, char *bytes, int size, int timeout)
 {
+    PUTS("usb_bulk_write");
     if (_usb_bulk_write)
         return _usb_bulk_write(dev, ep, bytes, size, timeout);
     else
         return -ENOFILE;
 }
 
-int usb_bulk_read(usb_dev_handle *dev, int ep, char *bytes, int size,
-                  int timeout)
+int usb_bulk_read(usb_dev_handle *dev, int ep, char *bytes, int size,  int timeout)
 {
+    PUTS("usb_bulk_read");
     if (_usb_bulk_read)
         return _usb_bulk_read(dev, ep, bytes, size, timeout);
     else
         return -ENOFILE;
 }
 
-int usb_interrupt_write(usb_dev_handle *dev, int ep, char *bytes, int size,
-                        int timeout)
+int usb_interrupt_write(usb_dev_handle *dev, int ep, char *bytes, int size, int timeout)
 {
+    PUTS("usb_interrupt_write");
     if (_usb_interrupt_write)
         return _usb_interrupt_write(dev, ep, bytes, size, timeout);
     else
         return -ENOFILE;
 }
 
-int usb_interrupt_read(usb_dev_handle *dev, int ep, char *bytes, int size,
-                       int timeout)
+int usb_interrupt_read(usb_dev_handle *dev, int ep, char *bytes, int size,  int timeout)
 {
+    PUTS("usb_interrupt_read");
     if (_usb_interrupt_read)
         return _usb_interrupt_read(dev, ep, bytes, size, timeout);
     else
@@ -330,6 +343,7 @@ int usb_control_msg(usb_dev_handle *dev, int requesttype, int request,
                     int value, int index, char *bytes, int size,
                     int timeout)
 {
+    PUTS("usb_control_msg");
     if (_usb_control_msg)
         return _usb_control_msg(dev, requesttype, request, value, index, bytes,
                                 size, timeout);
@@ -339,6 +353,7 @@ int usb_control_msg(usb_dev_handle *dev, int requesttype, int request,
 
 int usb_set_configuration(usb_dev_handle *dev, int configuration)
 {
+    PUTS("usb_set_configuration");
     if (_usb_set_configuration)
         return _usb_set_configuration(dev, configuration);
     else
@@ -347,6 +362,7 @@ int usb_set_configuration(usb_dev_handle *dev, int configuration)
 
 int usb_claim_interface(usb_dev_handle *dev, int interface)
 {
+    PUTS("usb_claim_interface");
     if (_usb_claim_interface)
         return _usb_claim_interface(dev, interface);
     else
@@ -355,6 +371,7 @@ int usb_claim_interface(usb_dev_handle *dev, int interface)
 
 int usb_release_interface(usb_dev_handle *dev, int interface)
 {
+    PUTS("usb_release_interface");
     if (_usb_release_interface)
         return _usb_release_interface(dev, interface);
     else
@@ -363,6 +380,7 @@ int usb_release_interface(usb_dev_handle *dev, int interface)
 
 int usb_set_altinterface(usb_dev_handle *dev, int alternate)
 {
+    PUTS("usb_set_altinterface");
     if (_usb_set_altinterface)
         return _usb_set_altinterface(dev, alternate);
     else
@@ -371,6 +389,7 @@ int usb_set_altinterface(usb_dev_handle *dev, int alternate)
 
 int usb_resetep(usb_dev_handle *dev, unsigned int ep)
 {
+    PUTS("usb_resetep");
     if (_usb_resetep)
         return _usb_resetep(dev, ep);
     else
@@ -379,6 +398,7 @@ int usb_resetep(usb_dev_handle *dev, unsigned int ep)
 
 int usb_clear_halt(usb_dev_handle *dev, unsigned int ep)
 {
+    PUTS("usb_clear_halt");
     if (_usb_clear_halt)
         return _usb_clear_halt(dev, ep);
     else
@@ -387,6 +407,7 @@ int usb_clear_halt(usb_dev_handle *dev, unsigned int ep)
 
 int usb_reset(usb_dev_handle *dev)
 {
+    PUTS("usb_reset");
     if (_usb_reset)
         return _usb_reset(dev);
     else
@@ -395,6 +416,7 @@ int usb_reset(usb_dev_handle *dev)
 
 char *usb_strerror(void)
 {
+    PUTS("usb_strerror");
     if (_usb_strerror)
         return _usb_strerror();
     else
@@ -403,12 +425,14 @@ char *usb_strerror(void)
 
 void usb_set_debug(int level)
 {
+    PUTS("usb_set_debug");
     if (_usb_set_debug)
         _usb_set_debug(level);
 }
 
 int usb_find_busses(void)
 {
+    PUTS("usb_find_busses");
     if (_usb_find_busses)
         return _usb_find_busses();
     else
@@ -417,20 +441,25 @@ int usb_find_busses(void)
 
 int usb_find_devices(void)
 {
+    PUTS("usb_find_devices");
     if (_usb_find_devices)
         return _usb_find_devices();
     else
         return -ENOFILE;
 }
 
-struct usb_device *usb_device(usb_dev_handle *dev) {
+struct usb_device *usb_device(usb_dev_handle *dev)
+{
+    PUTS("usb_device");
     if (_usb_device)
         return _usb_device(dev);
     else
         return NULL;
 }
 
-struct usb_bus *usb_get_busses(void) {
+struct usb_bus *usb_get_busses(void)
+{
+    PUTS("usb_get_busses");
     if (_usb_get_busses)
         return _usb_get_busses();
     else
@@ -439,6 +468,7 @@ struct usb_bus *usb_get_busses(void) {
 
 int usb_install_service_np(void)
 {
+    PUTS("usb_install_service_np");
     if (_usb_install_service_np)
         return _usb_install_service_np();
     else
@@ -447,6 +477,7 @@ int usb_install_service_np(void)
 
 int usb_uninstall_service_np(void)
 {
+    PUTS("usb_uninstall_service_np");
     if (_usb_uninstall_service_np)
         return _usb_uninstall_service_np();
     else
@@ -455,13 +486,16 @@ int usb_uninstall_service_np(void)
 
 int usb_install_driver_np(const char *inf_file)
 {
+    PUTS("usb_install_driver_np");
     if (_usb_install_driver_np)
         return _usb_install_driver_np(inf_file);
     else
         return -ENOFILE;
 }
 
-const struct usb_version *usb_get_version(void) {
+const struct usb_version *usb_get_version(void)
+{
+    PUTS("usb_get_version");
     if (_usb_get_version)
         return _usb_get_version();
     else
@@ -471,6 +505,7 @@ const struct usb_version *usb_get_version(void) {
 int usb_isochronous_setup_async(usb_dev_handle *dev, void **context,
                                 unsigned char ep, int pktsize)
 {
+    PUTS("usb_isochronous_setup_async");
     if (_usb_isochronous_setup_async)
         return _usb_isochronous_setup_async(dev, context, ep, pktsize);
     else
@@ -480,15 +515,16 @@ int usb_isochronous_setup_async(usb_dev_handle *dev, void **context,
 int usb_bulk_setup_async(usb_dev_handle *dev, void **context,
                          unsigned char ep)
 {
+    PUTS("usb_bulk_setup_async");
     if (_usb_bulk_setup_async)
         return _usb_bulk_setup_async(dev, context, ep);
     else
         return -ENOFILE;
 }
 
-int usb_interrupt_setup_async(usb_dev_handle *dev, void **context,
-                              unsigned char ep)
+int usb_interrupt_setup_async(usb_dev_handle *dev, void **context,  unsigned char ep)
 {
+    PUTS("usb_interrupt_setup_async");
     if (_usb_interrupt_setup_async)
         return _usb_interrupt_setup_async(dev, context, ep);
     else
@@ -497,6 +533,7 @@ int usb_interrupt_setup_async(usb_dev_handle *dev, void **context,
 
 int usb_submit_async(void *context, char *bytes, int size)
 {
+    PUTS("usb_submit_async");
     if (_usb_submit_async)
         return _usb_submit_async(context, bytes, size);
     else
@@ -505,6 +542,7 @@ int usb_submit_async(void *context, char *bytes, int size)
 
 int usb_reap_async(void *context, int timeout)
 {
+    PUTS("usb_reap_async");
     if (_usb_reap_async)
         return _usb_reap_async(context, timeout);
     else
@@ -513,6 +551,7 @@ int usb_reap_async(void *context, int timeout)
 
 int usb_free_async(void **context)
 {
+    PUTS("usb_free_async");
     if (_usb_free_async)
         return _usb_free_async(context);
     else

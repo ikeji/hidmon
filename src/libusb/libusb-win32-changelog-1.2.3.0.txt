@@ -1,5 +1,49 @@
 LibUsb-Win32 Change Log
 
+V1.2.3.0 (03/16/2010)
+=======================
+* Fixed bug-id 3117686 reported by Tim Schuerewegen.
+
+* Added LIBUSB_IOCTL_GET_OBJECT_NAME.  This new IOCTL code retrieves object
+  from the driver.  The only valid object name index is 0.  Index 0 is
+  returns the devices plug and play registry key pathname.
+
+* Removed maximum timeout restriction for vendor class requests.
+
+V1.2.2.0 (10/02/2010)
+=======================
+* Added install-filter-win.exe.  A gui installer for device filters.
+
+* Added new libusb0.dll function usb_install_np_rundll().  This function
+  is designed for rundll32.exe and takes the same parameters as
+  install-filter.exe.
+
+* Updated install-filter.exe.  This application has several new features.
+  Type "install-filter --help" for more details.
+
+* Updated libusb-win32-devel-filter package.  This package is once again
+  available for download as a setup.exe.
+
+* Updated libusb-win32 "bin" package format.  inf-wizard.exe has been moved
+  up one directory.
+
+* Updated driver_installer_template.iss example. This is an Inno Setup
+  Script showing how to create your own setup.exe for installing your
+  application and driver.
+
+* Fixed missing byte order marker in inf-wizard.exe .inf files. (libwdi)
+
+* Fixed auto-configuration issue when there is more than one driver in the
+  stack.
+
+* Fixed BSOD when using the filter driver with devices that are auto
+  suspended by other drivers in the stack.
+  
+* Fixed BSOD for devices with endpoints that have '0' for wMaxPacketSize.
+
+* Fixed BSOD when cancelling large transfers on high speed devices.
+
+  
 V1.2.1.0 (07/28/2010)
 =======================
 * Updated bulk.c to include async i/o example code.
