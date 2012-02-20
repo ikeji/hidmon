@@ -15,6 +15,7 @@
 
 #define	INCLUDE_MONITOR_CMD 0	// 62:POKE(),63:PEEK()を実装する.
 #define	INCLUDE_LED_CMD 	1	// 02:LEDコマンドを実装する.
+#define	SPEED_OPT		 	1	// 処理速度の最適化
 
 /* ------------------------------------------------------------------------- */
 
@@ -132,6 +133,38 @@ static void delay(uchar d) {
 }
 static uint8_t wait=60; // 160
 
+#if SPEED_OPT
+/* written by iruka */
+static uint8_t usi_trans(uint8_t data)
+{
+	uchar CR0, CR1;
+
+	USIDR = data;
+	USISR = (1 << USIOIF);
+
+	if (wait == 0) {
+		CR0 = (1 << USIWM0) | (1 << USICS1) | (1 << USITC);
+		USICR = CR0;
+	 	CR1 = (1 << USIWM0) | (1 << USICS1) | (1 << USITC) | (1 << USICLK);
+									USICR = CR1; asm("nop");
+		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
+		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
+		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
+		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
+		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
+		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
+		USICR = CR0; asm("nop");	USICR = CR1;
+    } else {
+		do {
+			if (wait != 1) {
+			    delay(wait);
+			}
+		    USICR = (1<<USIWM0) | (1<<USICS1) | (1<<USICLK) | (1<<USITC);
+		} while (!(USISR & (1 << USIOIF)));
+	}
+	return USIDR;
+}
+#else
 static uint8_t usi_trans(uint8_t data){
 	USIDR=data;
 	USISR=(1<<USIOIF);
@@ -148,7 +181,7 @@ static uint8_t usi_trans(uint8_t data){
 	} while(!(USISR&(1<<USIOIF)));
 	return USIDR;
 }
-
+#endif
 
 static inline void isp_command(uint8_t *data){
 	int i;
