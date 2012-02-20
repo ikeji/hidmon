@@ -865,7 +865,6 @@ int hidasp_page_write_fast(long addr, const unsigned char *wd, int pagesize)
 		cmd = HIDASP_PAGE_TX;		// cmd ‚ğƒm[ƒ}ƒ‹‚Ìpage_write‚É–ß‚·.
 	}
 
-
 	return 0;
 }
 

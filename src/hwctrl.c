@@ -1254,7 +1254,6 @@ void write_page (
 	BYTE d, spicmd[5];
 	int n;
 
-
 	/* Skip the page if all data in the page are 0xFF */
 	for(n = 0, d = 0xFF; n < Device->FlashPage; n++)
 		d &= wd[n];
@@ -1262,6 +1261,7 @@ void write_page (
 
 	/* Load the page data into page buffer */
 	if (PortType == TY_HIDASP) {
+		/* HIDaspx ÇÃèÍçá */
 		hidasp_page_write(adr, wd, Device->FlashPage, Device->FlashSize);
 	} else if (PortType == TY_BRIDGE && BridgeRev >= 4) {
 		spicmd[0] = FLAG;
@@ -1321,11 +1321,15 @@ void write_page (
 
 	delay_ms(Device->FlashWait);	/* Wait for page write time */
   }else{
-	int w = Device->FlashWait - 1;	// HID ReportÇÃì]ëóÇ…ç≈í· 3mS ä|Ç©ÇÈ.
-	if( w > 0)
-	delay_ms(w);	/* Wait for page write time */
-  }
+	/* HIDaspx ÇÃèÍçá */
+	int w;
 
+	w = Device->FlashWait - 1;		/* HID ReportÇÃì]ëóÇ…ç≈í· 3mS ä|Ç©ÇÈ. */
+	if (w <=0) w = Device->FlashWait;
+	if( w > 0) {
+		delay_ms(w);	/* Wait for page write time */
+	}
+  }
 }
 
 

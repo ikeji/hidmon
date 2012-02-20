@@ -506,12 +506,12 @@ avrps/avrspx(hidspx) の場合、「-rf コマンド」にてヒューズを読み出ス事により
 マ側での対応も必要になります。
 
  プログラム書き込み時には -c スイッチを指定すると、CAL 値をフラッシュメモ
-リの最後バイトにセットします。4個ある場合は、最終バイトから順に 1MHz 用...
+リの最後バイトにセットします。4個ある場合は、最終バイトから順に 1MHz 用～
 8MHz 用の順で配置されます。プログラムは初期化時にその値を読み出して設定を行
 います。
 
 example:
-    c = pgm_read_byte(FLASHEND - n); // written by -c switch
+    c = pgm_read_byte(FLASHEND - n); // read calibration byte written by -c sw
     if(c != 0xFF) OSCCAL = c;
 
 

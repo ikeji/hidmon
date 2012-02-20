@@ -23,6 +23,7 @@
 /* R0.42  Aug 08, '07  ATmega48P/88P/168P/328P                               */
 /* R0.43  Dec 16, '07  Improved programming time on SPI bridge (ser2spi_r4)  */
 /* R0.43b Dec 18, '07  Supported old SPI bridge for backward compatibility   */
+/* R0.44  Dec  7, '08  ATmega325P/3250P/324PA, AT90PWM216/316                */
 /*---------------------------------------------------------------------------*/
 /* R0.43b Base                                                                */
 /*   b2   2006-05-06  USBasp support, by mutech,t.kuroki                     */
@@ -57,6 +58,8 @@
 /*---------------------------------------------------------------------------*/
 /* b10.11 2008-01-01 senshuがavrspとavrspx(b10.10)のソースを参考に作成       */
 /*---------------------------------------------------------------------------*/
+/* b10.12 2008-12-10 senshuがHIDaspxへの対応を追加、avrsp R0.44の変更を反映  */
+/*---------------------------------------------------------------------------*/
 
 #include <stdio.h>
 #include <string.h>
@@ -75,10 +78,28 @@ int hidmon_mode = 0;	/* for hidasp.c */
 /*-----------------------------------------------------------------------
   Device properties
 -----------------------------------------------------------------------*/
+#if 0
+typedef struct _DEVPROP {
+	char	*Name;			/* Name:		Device name */
+	char	ID;				/* ID:			Device ID */
+	BYTE	Sign[3];		/* Signature:	Device signature bytes */
+	DWORD	FlashSize;		/* FS:			Flash memory size in unit of byte */
+	WORD	FlashPage;		/* PS:			Flash page size (0 is byte-by-byte) */
+	DWORD	EepromSize;		/* ES:			EEPROM size in unit of byte */
+	WORD	EepromPage;		/* EP:			EEPROM page size (0 is byte-by-byte) @@@ */
+	WORD	FlashWait;		/* FW:			Wait time for flash write */
+	WORD	EepromWait;		/* EW:			Wait time for EEPROM write */
+	BYTE	PollData;		/* PV:			Polling data value */
+	BYTE	LockData;		/* LB:			Default lock byte (program LB1 and LB2) */
+	char	FuseType;		/* FT:			Device specific fuse type */
+	char	Cals;			/* Cals:		Number of calibration bytes */
+	BYTE	FuseMask[3];	/* FuseMasks:	Valid fuse bit mask [low, high, ext] */
+} DEVPROP;
+#endif
 
 const DEVPROP DevLst[] =	/* Device property list */
 {
-	/* Name,         ID,    Signature,              FS,  PS,   ES, EP, FW, EW,   PV,   LB, FT, Cals, FuseMasks */
+	/* Name,         ID,    Signature,              FS,  PS,   ES,EP*, FW, EW,   PV,   LB, FT, Cals, FuseMasks */
 //------- AT90S
 	{ "90S1200",     S1200, {0x1E, 0x90, 0x01},   1024,   0,   64,  0, 11, 11, 0xFF, 0xF9, 0 },
 	{ "90S2313",     S2313, {0x1E, 0x91, 0x01},   2048,   0,  128,  0, 11, 11, 0x7F, 0xF9, 0 },
@@ -126,9 +147,12 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "mega323",     M323,  {0x1E, 0x95, 0x01},  32768, 128, 1024,  4, 18,  5, 0xFF, 0xFC, 5, 1, {0xCF, 0xEF} },
 	{ "mega325/9",   M325,  {0x1E, 0x95, 0x03},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega3250/90", M3250, {0x1E, 0x95, 0x04},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
+/**/{ "mega325P",    M325P, {0x1E, 0x95, 0x0D},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
+/**/{ "mega3250P",   M3250P,{0x1E, 0x95, 0x0E},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega328P",    M328P, {0x1E, 0x95, 0x0F},  32768, 128, 1024,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega32",      M32,   {0x1E, 0x95, 0x02},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF} },
 	{ "mega324P",    M324P, {0x1E, 0x95, 0x08},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
+/**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega603",     M603,  {0x1E, 0x96, 0x01},  65536, 256, 2048,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B} },
 	{ "mega644",     M644,  {0x1E, 0x96, 0x09},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
@@ -140,10 +164,12 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "mega128",     M128,  {0x1E, 0x97, 0x02}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03} },
 	{ "mega1280",    M1280, {0x1E, 0x97, 0x03}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega1281",    M1281, {0x1E, 0x97, 0x04}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
+/**/{ "mega1284P",   M1284P,{0x1E, 0x97, 0x05}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega2560",    M2560, {0x1E, 0x98, 0x01}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 	{ "mega2561",    M2561, {0x1E, 0x98, 0x02}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
 //------- PWM, CAN
 	{ "90PWM2/3",    PWM2,  {0x1E, 0x93, 0x81},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7} },
+/**/{ "90PWM216/316",PWM216,{0x1E, 0x94, 0x83},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7} },
 	{ "90CAN32",     CAN32, {0x1E, 0x95, 0x81},  32768, 256, 1024,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F} },
 	{ "90CAN64",     CAN64, {0x1E, 0x96, 0x81},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F} },
 	{ "90CAN128",    CAN128,{0x1E, 0x97, 0x81}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F} },
@@ -302,7 +328,7 @@ void output_usage (bool detail)
 	int n;
 #if AVRSPX
 	static const char *const MesUsage[] = {
-		"AVRSP - AVR Serial Programming tool R0.43b (C)ChaN,2007  http://elm-chan.org/\n",
+		"AVRSP - AVR Serial Programming tool R0.44 (C)ChaN, 2008  http://elm-chan.org/\n",
 		"Write code and/or data  : <hex file> [<hex file>] ...\n",
 		"Verify code and/or data : -v <hex file> [<hex file>] ...\n",
 		"Read code, data or fuse : -r{p|e|f}\n",
@@ -339,9 +365,9 @@ void output_usage (bool detail)
 		"@AT90S 1200,2313,2323,2333,2343,4414,4433,4434,8515,8535\n",
 		"@ATtiny 12,13,15,22,24,25,26,44,45,84,85,261,461,861,2313\n",
 		"@ATmega 8,16,32,48,48P,64,88,88P,103,128,161,162,163,164P,165,168,168P,\n",
-		"@       169,323,324P,325/9,328P,3250/90,603,640,644,644P,645/9,1280,1281,\n",
-		"@       2560,2561,6450/90,8515,8535\n",
-		"@AT90CAN 32,64,128, AT90PWM 2,3\n",
+		"@       169,323,324P,324PA,325/9,325P,3250P,328P,3250/90,603,640,644,644P,\n",
+		"@       645/9,1280,1281,2560,2561,6450/90,8515,8535\n",
+		"@AT90CAN 32,64,128, AT90PWM 2,3,216,316\n",
 
 		"\n",
 		"Supported Adapter:\n",
@@ -354,13 +380,13 @@ void output_usage (bool detail)
 
 
 #if defined(__GNUC__) && defined(__WIN32__)
-		printf("%s (b10.11) by t.k & senshu, GCC-MinGW %s, %s\n",  progname, __VERSION__,  __DATE__);
+		printf("%s (b10.12) by t.k & senshu, GCC-MinGW %s, %s\n",  progname, __VERSION__,  __DATE__);
 		printf("----\n");
 #elif defined(__WIN32__)
-		printf("%s (b10.11) by t.k & senshu, Borland C++ 5.5.1, %s\n",  progname, __DATE__ );
+		printf("%s (b10.12) by t.k & senshu, Borland C++ 5.5.1, %s\n",  progname, __DATE__ );
 		printf("----\n");
 #elif defined(__WIN32__)
-		printf("%s (b10.11) by t.k & senshu for Windows, %s\n",  progname, __DATE__ );
+		printf("%s (b10.12) by t.k & senshu for Windows, %s\n",  progname, __DATE__ );
 		printf("----\n");
 #endif
 	for(n = 0; MesUsage[n] != NULL; n++) {
@@ -381,7 +407,7 @@ void output_usage (bool detail)
 
 #else
 	static const char *const MesUsage[] = {
-		"AVRSP - AVR Serial Programming tool R0.43b (C)ChaN,2007  http://elm-chan.org/\n\n",
+		"AVRSP - AVR Serial Programming tool R0.43b (C)ChaN, 2008  http://elm-chan.org/\n\n",
 		"Write code and/or data  : <hex file> [<hex file>] ...\n",
 		"Verify code and/or data : -V <hex file> [<hex file>] ...\n",
 		"Read code, data or fuse : -R{P|E|F}\n",
@@ -394,8 +420,10 @@ void output_usage (bool detail)
 		"Supported Device:\n",
 		"AT90S 1200,2313,2323,2333,2343,4414,4433,4434,8515,8535\n",
 		"ATtiny 12,13,15,22,24,25,26,44,45,84,85,261,461,861,2313\n",
-		"ATmega 8,16,32,48,48P,64,88,88P,103,128,161,162,163,164P,165,168,168P,169,323,324P,325/9,328P,3250/90,603,640,644,644P,645/9,1280,1281,2560,2561,6450/90,8515,8535\n",
-		"AT90CAN 32,64,128, AT90PWM 2,3\n\n",
+		"ATmega 8,16,32,48,48P,64,88,88P,103,128,161,162,163,164P,165,168,168P,169,323,\n"
+		"       324P,324PA,325/329,325P,3250P,328P,406,603,640,644,644P,645/649,\n"
+		"       1280,1281,2560,2561,3250/3290,6450/6490,8515,8535\n",
+		"AT90CAN32,64,128, AT90PWM 2,3,216,316\n",
 		"Supported Adapter:\n",
 		"AVRSP adapter (COM/LPT), SPI Bridge (COM), STK200 ISP dongle (LPT)\n",
 		"Xilinx JTAG (LPT), Lattice isp (LPT), Altera ByteBlasterMV (LPT)\n",
