@@ -29,9 +29,12 @@ hidspx コマンド共に互換性はありませんので区別して扱ってください。
 │	fuse_en.txt
 │	fuse_j.txt
 ├─bin
-│  └─firmware	… main.hex（HIDaspx用）, main_libusb.hex（MacOS, Linux用）
+│  └─firmware	… main-12.hex（HIDaspx用）, main_libusb.hex（MacOS, Linux用）
 │			… main-small.hex(USB-IO専用のファームウェア)
+│			… main-RC.hex (RC発振モードのUSB-IO専用のファームウェア、実験レベル)
 ｜　　　　　　　　　　　… genserial.awk（シリアル情報生成ツール）
+｜　　　　　　　　　　　… firmprog.bat main12.hexを書き込むためのBATファイル
+｜　　　　　　　　　　　… prog-rc.bat  main-RC.hexを書き込むためのBATファイル
 ｜
 ├─firmware		… HIDaspのファームウェアソース
 ├─src			… hidspxのソース(MinGW, Borland C++兼用)
@@ -55,14 +58,15 @@ bin ディレクトリにあるファイルを実行可能なディレクトリにコピーすることで利
 用可能になります。
 
 **************************** 重要 ****************************
-2007/03/20  11:33               43,520 libusb0.dll
-2008/10/30  12:29              115,712 hidspx.exe
-2008/10/30  12:29               67,584 hidspx-gcc.exe
-2008/09/09  12:54               17,408 usbtool.exe
-2008/09/05  10:39                  289 hidspx.ini
-2007/10/31  23:01               19,207 fuse.txt
-2007/10/31  23:00               21,160 fuse_en.txt
-2007/10/31  23:01               19,207 fuse_j.txt
+2008/11/13  13:30             1,787 setup.bat
+2007/03/20  11:33            43,520 libusb0.dll
+2009/01/10  15:15           121,344 hidspx.exe
+2009/01/10  15:16            54,784 hidspx-gcc.exe
+2008/09/09  12:54            17,408 usbtool.exe
+2008/09/05  10:39               289 hidspx.ini
+2008/12/10  08:39            20,115 fuse.txt
+2008/12/07  13:08            22,152 fuse_en.txt
+2008/12/10  08:41            20,115 fuse_j.txt
 **************************** 重要 ****************************
 
 これらのファイルは、相互に関係していますので、hidspx.exe だけでなく一括して
