@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------*/
 /* AVRSP - AVR Serial Programming Controller                                 */
 /*                                                                           */
-/* R0.43b (C)ChaN, 2007                                                       */
+/* R0.44 (C)ChaN, 2008                                                       */
 /*---------------------------------------------------------------------------*/
 /* R0.28  Apr 30, '04  Migration from MS-DOS based AVRSS/AVRXS R0.27         */
 /* R0.28b May  1, '04  Fixed some value in the device property table         */
@@ -94,85 +94,86 @@ typedef struct _DEVPROP {
 	char	FuseType;		/* FT:			Device specific fuse type */
 	char	Cals;			/* Cals:		Number of calibration bytes */
 	BYTE	FuseMask[3];	/* FuseMasks:	Valid fuse bit mask [low, high, ext] */
+	WORD	DocNumber;		/* http://www.avrfreaks.net/ ... 0 = none */
 } DEVPROP;
 #endif
 
 const DEVPROP DevLst[] =	/* Device property list */
 {
-	/* Name,         ID,    Signature,              FS,  PS,   ES,EP*, FW, EW,   PV,   LB, FT, Cals, FuseMasks */
+	/* Name,         ID,    Signature,              FS,  PS,   ES, EP*,FW, EW,   PV,   LB, FT, Cals, FuseMasks, DocNum */
 //------- AT90S
-	{ "90S1200",     S1200, {0x1E, 0x90, 0x01},   1024,   0,   64,  0, 11, 11, 0xFF, 0xF9, 0 },
-	{ "90S2313",     S2313, {0x1E, 0x91, 0x01},   2048,   0,  128,  0, 11, 11, 0x7F, 0xF9, 0 },
-	{ "90S2323",     S2323, {0x1E, 0x91, 0x02},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01} },
-	{ "90S2333",     S2333, {0x1E, 0x91, 0x05},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F} },
-	{ "90S2343",     S2343, {0x1E, 0x91, 0x03},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01} },
-	{ "90S4414",     S4414, {0x1E, 0x92, 0x01},   4096,   0,  256,  0, 11, 11, 0x7F, 0xF9, 0 },
-	{ "90S4433",     S4433, {0x1E, 0x92, 0x03},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F} },
-	{ "90S4434",     S4434, {0x1E, 0x92, 0x02},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01} },
-	{ "90S8515",     S8515, {0x1E, 0x93, 0x01},   8192,   0,  512,  0, 11, 11, 0x7F, 0xF9, 0 },
-	{ "90S8535",     S8535, {0x1E, 0x93, 0x03},   8192,   0,  512,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01} },
+	{ "90S1200",     S1200, {0x1E, 0x90, 0x01},   1024,   0,   64,  0, 11, 11, 0xFF, 0xF9, 0 ,0, {0},                 8},
+	{ "90S2313",     S2313, {0x1E, 0x91, 0x01},   2048,   0,  128,  0, 11, 11, 0x7F, 0xF9, 0 ,0, {0},                 9},
+	{ "90S2323",     S2323, {0x1E, 0x91, 0x02},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             30},
+	{ "90S2333",     S2333, {0x1E, 0x91, 0x05},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F},             46},
+	{ "90S2343",     S2343, {0x1E, 0x91, 0x03},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             32},
+	{ "90S4414",     S4414, {0x1E, 0x92, 0x01},   4096,   0,  256,  0, 11, 11, 0x7F, 0xF9, 0, 0, {0},                48},
+	{ "90S4433",     S4433, {0x1E, 0x92, 0x03},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F},             34},
+	{ "90S4434",     S4434, {0x1E, 0x92, 0x02},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             13},
+	{ "90S8515",     S8515, {0x1E, 0x93, 0x01},   8192,   0,  512,  0, 11, 11, 0x7F, 0xF9, 0, 0, {0},                37},
+	{ "90S8535",     S8535, {0x1E, 0x93, 0x03},   8192,   0,  512,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             11},
 //------- ATtiny
-	{ "tiny12",      T12,   {0x1E, 0x90, 0x05},   1024,   0,   64,  2,  5,  8, 0xFF, 0xF9, 3, 1, {0xFF} },
-	{ "tiny13",      T13,   {0x1E, 0x90, 0x07},   1024,  32,   64,  4,  6,  5, 0xFF, 0xFC, 5, 1, {0x7F, 0x1F} },
-	{ "tiny15",      T15,   {0x1E, 0x90, 0x06},   1024,   0,   64,  2,  6, 11, 0xFF, 0xF9, 3, 1, {0xD3} },
-	{ "tiny22",      T22,   {0x1E, 0x91, 0x06},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01} },
-	{ "tiny2313",    T2313, {0x1E, 0x91, 0x0A},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 2, {0xFF, 0xDF, 0x01} },
-	{ "tiny24",      T24,   {0x1E, 0x91, 0x0B},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny25",      T25,   {0x1E, 0x91, 0x08},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny26",      T26,   {0x1E, 0x91, 0x09},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 5, 4, {0xFF, 0x17} },
-	{ "tiny261",     T261,  {0x1E, 0x91, 0x0C},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny44",      T44,   {0x1E, 0x92, 0x07},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny45",      T45,   {0x1E, 0x92, 0x06},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny461",     T461,  {0x1E, 0x92, 0x08},   4096,  64,  256,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny84",      T84,   {0x1E, 0x93, 0x0C},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny85",      T85,   {0x1E, 0x93, 0x0B},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "tiny861",     T861,  {0x1E, 0x93, 0x0D},   8192,  64,  512,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
+	{ "tiny12",      T12,   {0x1E, 0x90, 0x05},   1024,   0,   64,  2,  5,  8, 0xFF, 0xF9, 3, 1, {0xFF},             15},
+	{ "tiny13",      T13,   {0x1E, 0x90, 0x07},   1024,  32,   64,  4,  6,  5, 0xFF, 0xFC, 5, 1, {0x7F, 0x1F},       74},
+	{ "tiny15",      T15,   {0x1E, 0x90, 0x06},   1024,   0,   64,  2,  6, 11, 0xFF, 0xF9, 3, 1, {0xD3},             44},
+	{ "tiny22",      T22,   {0x1E, 0x91, 0x06},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             25},
+	{ "tiny2313",    T2313, {0x1E, 0x91, 0x0A},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 2, {0xFF, 0xDF, 0x01}, 75},
+	{ "tiny24",      T24,   {0x1E, 0x91, 0x0B},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},139},
+	{ "tiny25",      T25,   {0x1E, 0x91, 0x08},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},100},
+	{ "tiny26",      T26,   {0x1E, 0x91, 0x09},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 5, 4, {0xFF, 0x17},       61},
+	{ "tiny261",     T261,  {0x1E, 0x91, 0x0C},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},142},
+	{ "tiny44",      T44,   {0x1E, 0x92, 0x07},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},140},
+	{ "tiny45",      T45,   {0x1E, 0x92, 0x06},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},101},
+	{ "tiny461",     T461,  {0x1E, 0x92, 0x08},   4096,  64,  256,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},143},
+	{ "tiny84",      T84,   {0x1E, 0x93, 0x0C},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},141},
+	{ "tiny85",      T85,   {0x1E, 0x93, 0x0B},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},102},
+	{ "tiny861",     T861,  {0x1E, 0x93, 0x0D},   8192,  64,  512,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},144},
 //------- ATmega
-	{ "mega48",      M48,   {0x1E, 0x92, 0x05},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "mega48P",     M48P,  {0x1E, 0x92, 0x0A},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01} },
-	{ "mega8",       M8,    {0x1E, 0x93, 0x07},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF} },
-	{ "mega8515",    M8515, {0x1E, 0x93, 0x06},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF} },
-	{ "mega8535",    M8535, {0x1E, 0x93, 0x08},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF} },
-	{ "mega88",      M88,   {0x1E, 0x93, 0x0A},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega88P",     M88P,  {0x1E, 0x93, 0x0F},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega16",      M16,   {0x1E, 0x94, 0x03},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF} },
-	{ "mega161",     M161,  {0x1E, 0x94, 0x01},  16384, 128,  512,  0, 20,  5, 0xFF, 0xFC, 4, 0, {0x7F} },
-	{ "mega162",     M162,  {0x1E, 0x94, 0x04},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x1E} },
-	{ "mega163",     M163,  {0x1E, 0x94, 0x02},  16384, 128,  512,  0, 18,  5, 0xFF, 0xFC, 5, 1, {0xEF, 0x07} },
-	{ "mega164P",    M164P, {0x1E, 0x94, 0x0A},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega165",     M165,  {0x1E, 0x94, 0x07},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0E} },
-	{ "mega168",     M168,  {0x1E, 0x94, 0x06},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega168P",    M168P, {0x1E, 0x94, 0x0B},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega169",     M169,  {0x1E, 0x94, 0x05},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F} },
-	{ "mega323",     M323,  {0x1E, 0x95, 0x01},  32768, 128, 1024,  4, 18,  5, 0xFF, 0xFC, 5, 1, {0xCF, 0xEF} },
-	{ "mega325/9",   M325,  {0x1E, 0x95, 0x03},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega3250/90", M3250, {0x1E, 0x95, 0x04},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-/**/{ "mega325P",    M325P, {0x1E, 0x95, 0x0D},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-/**/{ "mega3250P",   M3250P,{0x1E, 0x95, 0x0E},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega328P",    M328P, {0x1E, 0x95, 0x0F},  32768, 128, 1024,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega32",      M32,   {0x1E, 0x95, 0x02},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF} },
-	{ "mega324P",    M324P, {0x1E, 0x95, 0x08},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-/**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega603",     M603,  {0x1E, 0x96, 0x01},  65536, 256, 2048,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B} },
-	{ "mega644",     M644,  {0x1E, 0x96, 0x09},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega645/9",   M645,  {0x1E, 0x96, 0x03},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega6450/90", M6450, {0x1E, 0x96, 0x04},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega64",      M64,   {0x1E, 0x96, 0x02},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03} },
-	{ "mega640",     M640,  {0x1E, 0x96, 0x08},  65536, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega103",     M103,  {0x1E, 0x97, 0x01}, 131072, 256, 4096,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B} },
-	{ "mega128",     M128,  {0x1E, 0x97, 0x02}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03} },
-	{ "mega1280",    M1280, {0x1E, 0x97, 0x03}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega1281",    M1281, {0x1E, 0x97, 0x04}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-/**/{ "mega1284P",   M1284P,{0x1E, 0x97, 0x05}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega2560",    M2560, {0x1E, 0x98, 0x01}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
-	{ "mega2561",    M2561, {0x1E, 0x98, 0x02}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07} },
+	{ "mega48",      M48,   {0x1E, 0x92, 0x05},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01}, 76},
+	{ "mega48P",     M48P,  {0x1E, 0x92, 0x0A},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01}, 76},
+	{ "mega8",       M8,    {0x1E, 0x93, 0x07},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       52},
+	{ "mega8515",    M8515, {0x1E, 0x93, 0x06},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       63},
+	{ "mega8535",    M8535, {0x1E, 0x93, 0x08},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       64},
+	{ "mega88",      M88,   {0x1E, 0x93, 0x0A},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 77},
+	{ "mega88P",     M88P,  {0x1E, 0x93, 0x0F},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 77},
+	{ "mega16",      M16,   {0x1E, 0x94, 0x03},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       56},
+	{ "mega161",     M161,  {0x1E, 0x94, 0x01},  16384, 128,  512,  0, 20,  5, 0xFF, 0xFC, 4, 0, {0x7F},             41},
+	{ "mega162",     M162,  {0x1E, 0x94, 0x04},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x1E}, 67},
+	{ "mega163",     M163,  {0x1E, 0x94, 0x02},  16384, 128,  512,  0, 18,  5, 0xFF, 0xFC, 5, 1, {0xEF, 0x07},       38},
+	{ "mega164P",    M164P, {0x1E, 0x94, 0x0A},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 99},
+	{ "mega165",     M165,  {0x1E, 0x94, 0x07},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0E}, 79},
+	{ "mega168",     M168,  {0x1E, 0x94, 0x06},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78},
+	{ "mega168P",    M168P, {0x1E, 0x94, 0x0B},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78},
+	{ "mega169",     M169,  {0x1E, 0x94, 0x05},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 73},
+	{ "mega323",     M323,  {0x1E, 0x95, 0x01},  32768, 128, 1024,  4, 18,  5, 0xFF, 0xFC, 5, 1, {0xCF, 0xEF},       50},
+	{ "mega325/9",   M325,  {0x1E, 0x95, 0x03},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 83},
+	{ "mega3250/90", M3250, {0x1E, 0x95, 0x04},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 84},
+/**/{ "mega325P",    M325P, {0x1E, 0x95, 0x0D},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 83},
+/**/{ "mega3250P",   M3250P,{0x1E, 0x95, 0x0E},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 84},
+	{ "mega328P",    M328P, {0x1E, 0x95, 0x0F},  32768, 128, 1024,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 0},
+	{ "mega32",      M32,   {0x1E, 0x95, 0x02},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       69},
+	{ "mega324P",    M324P, {0x1E, 0x95, 0x08},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104},
+/**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104},
+	{ "mega603",     M603,  {0x1E, 0x96, 0x01},  65536, 256, 2048,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B},            0},
+	{ "mega644",     M644,  {0x1E, 0x96, 0x09},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106},
+	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106},
+	{ "mega645/9",   M645,  {0x1E, 0x96, 0x03},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 87},
+	{ "mega6450/90", M6450, {0x1E, 0x96, 0x04},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 88},
+	{ "mega64",      M64,   {0x1E, 0x96, 0x02},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03}, 58},
+	{ "mega640",     M640,  {0x1E, 0x96, 0x08},  65536, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 91},
+	{ "mega103",     M103,  {0x1E, 0x97, 0x01}, 131072, 256, 4096,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B},              7},
+	{ "mega128",     M128,  {0x1E, 0x97, 0x02}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03}, 54},
+	{ "mega1280",    M1280, {0x1E, 0x97, 0x03}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 92},
+	{ "mega1281",    M1281, {0x1E, 0x97, 0x04}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 93},
+/**/{ "mega1284P",   M1284P,{0x1E, 0x97, 0x05}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 0},
+	{ "mega2560",    M2560, {0x1E, 0x98, 0x01}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 95},
+	{ "mega2561",    M2561, {0x1E, 0x98, 0x02}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 94},
 //------- PWM, CAN
-	{ "90PWM2/3",    PWM2,  {0x1E, 0x93, 0x81},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7} },
-/**/{ "90PWM216/316",PWM216,{0x1E, 0x94, 0x83},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7} },
-	{ "90CAN32",     CAN32, {0x1E, 0x95, 0x81},  32768, 256, 1024,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F} },
-	{ "90CAN64",     CAN64, {0x1E, 0x96, 0x81},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F} },
-	{ "90CAN128",    CAN128,{0x1E, 0x97, 0x81}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F} },
+	{ "90PWM2/3",    PWM2,  {0x1E, 0x93, 0x81},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7}, 97},
+/**/{ "90PWM216/316",PWM216,{0x1E, 0x94, 0x83},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7}, 0},
+	{ "90CAN32",     CAN32, {0x1E, 0x95, 0x81},  32768, 256, 1024,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82},
+	{ "90CAN64",     CAN64, {0x1E, 0x96, 0x81},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82},
+	{ "90CAN128",    CAN128,{0x1E, 0x97, 0x81}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82},
 //------- Misc
 	{ "Locked",      L0000, {0x00, 0x01, 0x02} },	/* Locked Device */
 	{ NULL,          N0000 }						/* Unknown */
@@ -226,6 +227,8 @@ char ForcedName[20];			/* -t Forced device type (compared to Device->Name)*/
 /* for USBasp */
 bool f_usblist;
 bool f_detail_help;
+bool f_open_device_url;			// @@@ by senshu
+bool f_open_atmel_url;			// @@@ by senshu
 char usb_serial[8];				// USBasp, HIDaspx
 char new_serial[8];
 char DeviceName[20];			// -d check device type (compared to Device->Name)
@@ -241,9 +244,12 @@ static long total_size_kb = 0L;
 char report_msg[128];
 
 /* 2009/01/11 @@@ by senshu */
-#define RD_DEV_OPT_f	0
-#define RD_DEV_OPT_F	1
-#define RD_DEV_OPT_i	2
+enum {
+	RD_DEV_OPT_f=0,	/* original fuse list */
+	RD_DEV_OPT_F,	/* Extented fuse list */
+	RD_DEV_OPT_i,	/* Web fuse list */
+	RD_DEV_OPT_d	/* Web document view */
+};
 
 #define MAX_BYTES	8192
 
@@ -336,12 +342,13 @@ void output_usage (bool detail)
 		"AVRSP - AVR Serial Programming tool R0.44 (C)ChaN, 2008  http://elm-chan.org/\n",
 		"Write code and/or data  : <hex file> [<hex file>] ...\n",
 		"Verify code and/or data : -v <hex file> [<hex file>] ...\n",
-		"Read code, data or fuse : -r{p|e|f|F|i}\n",
+		"Read code, data or fuse : -r{p|e|f|F|i|d}\n",
         "@  -rp                      Read Program(flash) memory\n",
         "@  -re                      Read Eeprom\n",
         "@  -rf                      Read Fuse (use fuse.txt)\n",
         "@  -rF                      Read Fuse list (HEX style)\n",
-        "@  -ri                      Read Fuse Informasion (By Web browser)\n",
+        "@  -ri                      Read Fuse Information (By Web browser)\n",
+        "@  -rd                      Read chip Datasheet (By Web browser)\n",
 		"Write fuse byte         : -f{l|h|x}<bin>\n",
 		"Lock device             : -l[<bin>]\n",
 		"Copy calibration bytes  : -c\n",
@@ -369,6 +376,8 @@ void output_usage (bool detail)
 		"@  --list-port or -p?       List COM Port\n",
 		"@  --list-usbasp or -pu?    List USBasp devices\n",
 		"@  --set-serial=XXXXXX      Set USBasp serial number\n",
+		"@  --avr-devices            Open AVR Devices list by Web browser.\n",
+		"@  --atmel                  Open AVR(8-Bit RISC) URL by Web browser.\n",
 
 		"@\n",
 		"@Supported Device:\n",
@@ -490,8 +499,35 @@ void put_fuseval (BYTE val, BYTE mask, const char *head, FILE *fp)
 
 }
 
+#if AVRSPX
+/* Web browser */
+void open_device_url(int number)
+{
+	char url[512];
 
+	if (number == 0) {
+		sprintf(url, "start http://www.avrfreaks.net/index.php?module=Freaks%%20Devices^&func=viewDev");
+	} else {
+		sprintf(url, "start http://www.avrfreaks.net/index.php?module=Freaks%%20Devices"
+					"^&func=displayDev^&objectid=%d", number);
+	}
+	if (system(url) < 0) {
+		MESS("WARNING: Web browser start error.\n");
+	}
+	return;
+}
 
+void open_atmel_url(char *str)
+{
+	char url[512];
+
+	sprintf(url, "start http://www.atmel.com/products/AVR/");
+	if (system(url) < 0) {
+		MESS("WARNING: Web browser start error.\n");
+	}
+	return;
+}
+#endif
 
 /* Output fuse bytes and calibration byte */
 
@@ -506,14 +542,37 @@ void output_fuse (int mode)
 		MESS("Fuse bits are not accessible.\n");
 		return;
 	}
-#if 1	/* @@@ by senshu */
+#if AVRSPX		/* @@@ by senshu */
 	if (mode==RD_DEV_OPT_F) {
-		printf("DEVICE=AT%s -fL0x%02X", Device->Name, FuseBuff[0]);
+
+		printf("\nDEVICE=at%s\n", Device->Name);
+		printf("### %s command line example ###\n", progname);
+		printf("%s -d10 -fL0x%02X", progname, FuseBuff[0]);
 		if(Device->FuseType >= 5)
 			printf(" -fH0x%02X", FuseBuff[1]);
 		if(Device->FuseType >= 6)
 			printf(" -fX0x%02X", FuseBuff[2]);
+		printf("\n\n");
+
+/*
+ PORT = avrdoper
+ PROGRAMMER = stk500v2
+ avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE) \
+ -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m -U efuse:w:$(FUSE_X):m
+ */
+		printf("### avrdude command line example ###\n");
+		printf(" avrdude -c avrdoper -P stk500v2  -p at%s -U flash:w:main.hex:i \\\n", Device->Name);
+		printf(" -U lfuse:w:0x%02x:m", FuseBuff[0]);
+		if(Device->FuseType >= 5)
+			printf(" -U hfuse:w:0x%02x:m", FuseBuff[1]);
+		if(Device->FuseType >= 6)
+			printf(" -U efuse:w:0x%02x:m", FuseBuff[2]);
 		printf("\n");
+
+		return;
+
+	} else if (mode==RD_DEV_OPT_d) {
+		open_device_url((int)Device->DocNumber);
 		return;
 
 	} else if (mode==RD_DEV_OPT_i) {
@@ -521,7 +580,7 @@ void output_fuse (int mode)
 		int len;
 
 		/* ATmega644P‚ÍATmega644‚Å‘ã—p‚·‚é */
-		if (Device->Name == M644P) {
+		if (Device->ID == M644P) {
 			chip = "mega644";
 		} else {
 			chip = Device->Name;
@@ -535,11 +594,12 @@ void output_fuse (int mode)
 
 		sprintf(url+len, "^&O_HEX=Apply+user+values");
 		if (system(url) < 0) {
-			MESS("WARNING: Not open Web browser.\n");
+			MESS("WARNING: Web browser start error.\n");
 		}
 		return;
 	}
 #endif
+
 	/* Open FUSE.TXT and seek to the device */
 	fp = open_cfgfile(FUSEFILE);
 	if(fp == NULL) {
@@ -1056,6 +1116,10 @@ int load_commands (int argc, char **argv)
                             strncpy(new_serial, s+1, sizeof(new_serial));
                     } else if (strcmp(cp, "list-usbasp") == 0) {
 					    f_usblist = true;
+                    } else if (strcmp(cp, "avr-devices") == 0) {
+					    f_open_device_url = true;
+                    } else if (strcmp(cp, "atmel") == 0) {
+					    f_open_atmel_url = true;
                     } else if (strcmp(cp, "help") == 0) {
 					    f_detail_help = true;
                     }
@@ -1799,6 +1863,7 @@ int read_device (char cmd)
 			output_fuse(RD_DEV_OPT_f);
 			break;
 
+#if AVRSPX
 		case 'F' :	/* -rF : read fuses @@@ by senshu */
 			read_fuse();
 			output_fuse(RD_DEV_OPT_F);
@@ -1808,6 +1873,11 @@ int read_device (char cmd)
 			read_fuse();
 			output_fuse(RD_DEV_OPT_i);
 			break;
+
+		case 'd' :	/* -rd : read chip datasheet docment @@@ by senshu */
+			output_fuse(RD_DEV_OPT_d);
+			break;
+#endif
 
 		default :
 			output_deviceinfo();
@@ -2281,11 +2351,24 @@ int main (int argc, char **argv)
 		return rc;
 	}
 
+    if (f_open_device_url) {	// @@@ by senshu
+		open_device_url(0);
+		terminate(rc = 0);
+		return rc;
+    }
+
+    if (f_open_atmel_url) {	// @@@ by senshu
+		open_atmel_url("");
+		terminate(rc = 0);
+		return rc;
+    }
+
     if (f_detail_help) {
 		output_usage(true);
 		terminate(rc = 0);
 		return rc;
     }
+
 
     if (f_usblist) {
 		if (CtrlPort.PortClass == TY_HIDASP) {

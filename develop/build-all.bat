@@ -37,4 +37,5 @@ make -f Makefile.unix install
 cd ..
 echo ======= All update. =======
 popd
+avr-size ../bin/firmware/*.hex
 pause

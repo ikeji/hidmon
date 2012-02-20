@@ -1,6 +1,6 @@
 # TAB size = 8で編集しています。
 
-                                                             2009年 1月11日
+                                                             2009年 1月12日
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -733,7 +733,45 @@ EEPROM Size       = 128 bytes
 	どうもありがとうございました。
 
 2009-01-11 ...	hidmonの追加とヘルプメッセージの修正
+
         - hidspx , hidspx -? で表示するメッセージに、0110の機能追加分を反映
+
         - この説明書に記載した hidmon の bench テストを実行できるように、
           hidmon.exe コマンドを同梱
 
+        - -rFオプションの仕様を以下のように拡張
+        コピー＆ペーストで直接利用可能な形式を出力するに仕様とした。
+        以下のように、hidspxとavrdude用のコマンド行を表示する。
+        （海外ではavrdudeの使用が主流であり、参考のためにこの機能を追加した）
+
+        ※ FUSE 設定時には、エラーを避けるため、-d10 のように速度を落として
+           書き込むことをお勧めします。
+
+        >hidspx -rF
+        Detected device is ATtiny2313.
+        
+        DEVICE=attiny2313
+        ### hidspx command line example ###
+        hidspx -d10 -fL0xE4 -fH0xDF -fX0xFF
+        
+        ### avrdude command line example ###
+         avrdude -c avrdoper -P stk500v2  -p tiny2313 -U flash:w:main.hex:i \
+         -U lfuse:w:0xe4:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
+
+        - -rd Docment view機能を追加
+        このオプションを指定することにより、該当する AVR マイコンの概要を 
+        Web ブラウザに表示します。この機能は、http://www.avrfreaks.net/ さ
+        んが提供する情報を利用しています。
+
+2009-01-12 ...	Atmel社とAVR Freaks のURLを開く機能を追加
+
+        - 「--atmel」「--avr-devices」オプションの追加
+
+        > hidspx --atmel        ... Atmel社のAVRマイコンのページを開く
+        > hidspx --avr-devices  ... AVR FreaksのDevicesページを開く
+
+          私がよく利用している「Atmel 社の AVR のページ」と AVR Freaks の 
+          AVR デバイス一覧のページを開く機能を追加しました。Web ブラウザの
+          ブックマークに登録しておけば済むことですが、AVR マイコンを開発す
+          る全ての PC にブックマークするのは手間がかかり（複数の PC を
+          利用する場合）ますので、メリットはあると思います。
