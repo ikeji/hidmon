@@ -91,6 +91,7 @@ typedef struct _DEVPROP {
 	WORD	EepromWait;		/* Wait time for EEPROM write */
 	BYTE	PollData;		/* Polling data value */
 	BYTE	LockData;		/* Default lock byte (program LB1 and LB2) */
+	BYTE	LockMask;		/* lock byte mask */
 	char	FuseType;		/* Device specific fuse type */
 	char	Cals;			/* Number of calibration bytes */
 	BYTE	FuseMask[3];	/* Valid fuse bit mask [low, high, ext] */

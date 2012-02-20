@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 9月25日（最新更新）
+                                                2009年 9月28日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1366,4 +1366,19 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 
 	(3) hidspx-GUI.exeのEfuse右の表示をavrdude互換表示を行います。
 	    （従来はマスク値でしたが、わかりにくかったので改めました）
+
+■2009-09-28
+	(1) -l<hex> により、Lock bitを設定時、未定義ビットの扱いをavrdudeと
+	    同様に、'0' として扱ってもエラーにはしない仕様にしました。
+	    設定されている値の確認は -rl オプションで確認できます。
+
+	>hidspx -rl （最後のカラムに表示します）
+	Detected device is ATmega168.
+	ATmega168 FF:FF DD:DF F8:07 CF
+
+	(2) --show-options でオプション一覧を表示する時、空白を含む引数は、
+	    ""で囲むようにしました。（CMDへのCopy and Pasteを可能にする為）
+
+	※ バージョン表記を以下のように改めました。（b11.3 => b11.4）
+	hidspx (b11.4) by t.k & senshu, Borland C++ 5.5.1, Sep 28 2009
 
