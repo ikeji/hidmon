@@ -630,7 +630,7 @@ int hidasp_list(char * string)
 //----------------------------------------------------------------------------
 void chg_vid_pid(int type)
 {
-	if (type == 1) {	/* pro mode */
+	if (type) {	/* NON-free (pro mode) */
 		MY_VID = 0x20A0;				/* VID */
 		MY_PID = 0x410e;				/* PID */
 	} else {

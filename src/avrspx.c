@@ -575,7 +575,7 @@ void output_usage (bool detail)
 		"AVRSP adapter (COM -pc<n>|-pv<n> / LPT -pl<n>), SPI Bridge (COM -pb<n>[:BAUD]),\n"
 		"STK200 ISP dongle, Xilinx JTAG, Lattice isp, Altera ByteBlasterMV (LPT -pl<n>)\n",
 		"USBasp(x) (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
-		"HIDaspx   (USB -ph<:XXXX>), HIDaspx(pro) (USB -php<:XXXX>)\n",
+		"HIDaspx   (USB -ph<:XXXX>), HIDaspx(p) (USB -php<:XXXX>)\n",
 		NULL
 	};
 
