@@ -671,6 +671,20 @@ void put_fuseval (BYTE val, BYTE mask, const char *head, FILE *fp)
 
 #if AVRSPX
 /* Web browser */
+void open_url(char *str)
+{
+	char url[512];
+
+	sprintf(url, "start %s", str);
+	if (system(url) >= 0) {
+		MESS(url);
+		MESS("\n");
+	} else {
+		MESS("WARNING: Web browser start error.\n");
+	}
+	return;
+}
+
 void open_device_url(int number)
 {
 	char url[512];
@@ -689,19 +703,6 @@ void open_device_url(int number)
 	return;
 }
 
-void open_url(char *str)
-{
-	char url[512];
-
-	sprintf(url, "start %s", str);
-	if (system(url) >= 0) {
-		MESS(url);
-		MESS("\n");
-	} else {
-		MESS("WARNING: Web browser start error.\n");
-	}
-	return;
-}
 #endif
 
 /* Output fuse bytes and calibration byte */
@@ -1144,15 +1145,15 @@ int load_commands (int argc, char **argv)
 		}
 
 		if (found) {
-			printf("# %s ", progname);
+			fprintf(stderr, "# %s ", progname);
 
 			/* list options */
 			for (i=0; i<cmd; i++){
 				if (strncmp(cmdlst[i], show_options, opt_len) != 0) {
-					printf("%s ", cmdlst[i]);
+					fprintf(stderr, "%s ", cmdlst[i]);
 				}
 			}
-			printf("\n");
+			fprintf(stderr, "\n");
 		}
 	}
 #endif
@@ -1160,13 +1161,6 @@ int load_commands (int argc, char **argv)
 	/* Analyze command line parameters... */
 	for(cmd = 0; cmdlst[cmd] != NULL; cmd++) {
 		cp = cmdlst[cmd];
-#if 0
-		if (cp) {
-			printf("%d: %p[%s]\n", cmd, cp, cp);
-		} else {
-			printf("%d: %p\n", cmd, cp);
-		}
-#endif
 		if(*cp == '-') {	/* Command switches... */
 			cp++;
 			switch (tolower(*cp++)) {
@@ -1189,7 +1183,7 @@ int load_commands (int argc, char **argv)
 
 				case 'r' :	/* -r{p|e|f} */
 					Command[0] = 'r';
-#if AVRSPX	/* -rF, -rL オプション @@@ by senshu*/
+#if AVRSPX	/* -rF, -rl (Read Lock bits) オプション @@@ by senshu*/
 					if (*cp) {
 						switch (*cp) {
 						case 'F':
