@@ -732,7 +732,7 @@ void output_fuse (int mode)
 
 		printf("\nDEVICE=at%s\n", Device->Name);
 		printf("### %s command line example ###\n", progname);
-		printf("%s -d10 -fL0x%02X", progname, FuseBuff[0]);
+		printf("%s -q%s -d10 -fL0x%02X", progname, Device->Name, FuseBuff[0]);
 		if(Device->FuseType >= 5)
 			printf(" -fH0x%02X", FuseBuff[1]);
 		if(Device->FuseType >= 6)

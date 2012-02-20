@@ -2,7 +2,7 @@
 
                                                         2008年 9月22日（公開開始）
                                                                ｜
-                                                        2009年 1月19日（最新更新）
+                                                        2009年 1月21日（最新更新）
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -914,4 +914,25 @@ EEPROM Size       = 128 bytes
         ことが可能です。（速度の計測や動作テストに便利）
 
 	その他にもヘルプ表示を変更しています。詳細は「-?」で確認してください。
+
+2009-01-21 ...	-rFオプションでの表示を改良
+  
+  「-rF」の改良
+        誤った FUSE データの書き込みは AVR チップを使用不能にする可能性があ
+        ります。そこで、-rF オプションで表示するコマンド行に -q(query) オプ
+        ションを追加し、チップを特定する仕様に改良しました。
+
+ >hidspx -rF
+ Detected device is ATtiny2313.
+ 
+ DEVICE=attiny2313
+ ### hidspx command line example ###
+ hidspx -qtiny2313 -d10 -fL0xE4 -fH0xDF -fX0xFF
+
+        以下のように、ターゲットの AVR マイコンが指定したチップでなければ、
+        それ以降のコマンドを実行しません。
+
+ >hidspx -qtiny26 -rp
+ Detected device is ATtiny2313.
+ Invalid Device tiny26 != tiny2313
 
