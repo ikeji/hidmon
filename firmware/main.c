@@ -11,7 +11,7 @@
 #include <util/delay.h>
 
 #if	F_CPU == 12800000	/* RC OSC mode */
-#error This file doesn't support RC-OSC mode.
+#error This file does not support RC-OSC mode.
 #endif
 
 #include "usbdrv.h"

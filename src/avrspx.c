@@ -314,6 +314,7 @@ enum {
 	RD_DEV_OPT_F,	/* Extented fuse list */
 	RD_DEV_OPT_l,	/* Read Fuse list */
 	RD_DEV_OPT_i,	/* Web fuse list */
+	RD_DEV_OPT_I,	/* Web fuse list (new cgi) */
 	RD_DEV_OPT_d	/* Web document view */
 };
 
@@ -504,7 +505,8 @@ void output_usage (bool detail)
         "@  -rf                      Read Fuse (use fuse.txt)\n",
         "@  -rF                      Read Fuse list (HEX style)\n",
         "@  -rl                      Read Fuse and lock bits\n",
-		"Get AVR Information(Web): -r{i|d}\n",
+		"Get AVR Information(Web): -r{I|i|d}\n",
+        "@  -rI                      Read Fuse Information (new)\n",
         "@  -ri                      Read Fuse Information\n",
         "@  -rd                      Read chip Datasheet\n",
 		"Write fuse byte         : -f{l|h|x}<bin>\n",
@@ -696,7 +698,7 @@ void open_device_url(int number)
 					"^&func=displayDev^&objectid=%d", number);
 	}
 	if (system(url) >= 0) {
-		MESS("start http://www.avrfreaks.net/");
+		MESS("start http://www.avrfreaks.net/\n");
 	} else {
 		MESS("WARNING: Web browser start error.\n");
 	}
@@ -719,7 +721,7 @@ void output_fuse (int mode)
 		open_device_url((int)Device->DocNumber);
 		return;
 	}
-	if(mode!=RD_DEV_OPT_i && Device->FuseType == 0) {
+	if( !(mode==RD_DEV_OPT_i || mode==RD_DEV_OPT_I) && Device->FuseType == 0) {
 		MESS("Fuse bits are not accessible.\n");
 		return;
 	}
@@ -786,9 +788,9 @@ void output_fuse (int mode)
 
 		return;
 
-	} else if (mode==RD_DEV_OPT_i) {
+	} else if (mode==RD_DEV_OPT_i || mode==RD_DEV_OPT_I) {
 		char url[512], *chip;
-		int len;
+		int len, r;
 
 		/* ATmega644PはATmega644で代用する */
 		if (Device->ID == M644P) {
@@ -796,18 +798,20 @@ void output_fuse (int mode)
 		} else {
 			chip = Device->Name;
 		}
-		len = sprintf(url, "start http://www.engbedded.com/cgi-bin/fc.cgi/?P=AT%s^&V_LOW=%02X",
-					chip, FuseBuff[0]);
+		len = sprintf(url, "start http://www.engbedded.com/cgi-bin/fc%s.cgi/?P=AT%s^&V_LOW=%02X",
+					(mode == RD_DEV_OPT_I)?"x":"", chip, FuseBuff[0]);
 		if(Device->FuseType >= 5)
 			len += sprintf(url+len, "^&V_HIGH=%02X", FuseBuff[1]);
 		if(Device->FuseType >= 6)
 			len += sprintf(url+len, "^&V_EXTENDED=%02X", FuseBuff[2]);
 
 		sprintf(url+len, "^&O_HEX=Apply+user+values");
-		if (system(url) >= 0) {
-			MESS("start http://www.engbedded.com/cgi-bin/fc.cgi/");
-		} else {
-			MESS("WARNING: Web browser start error.\n");
+		r = system(url);	/* Start web browser */
+
+		if (r >= 0) {	/* success */
+			sprintf(url, "start http://www.engbedded.com/cgi-bin/fc%s.cgi/\n",
+								(mode == RD_DEV_OPT_I)?"x":"");
+			MESS(url);
 		}
 		return;
 	}
@@ -1145,7 +1149,7 @@ int load_commands (int argc, char **argv)
 		}
 
 		if (found) {
-			fprintf(stderr, "# %s ", progname);
+			fprintf(stderr, "#=> %s ", progname);
 
 			/* list options */
 			for (i=0; i<cmd; i++){
@@ -1188,6 +1192,7 @@ int load_commands (int argc, char **argv)
 						switch (*cp) {
 						case 'F':
 						case 'L':
+						case 'I':
 							/* 大文字・小文字を区別するコマンド */
 							Command[1] = *cp++;
 							break;
@@ -2190,6 +2195,11 @@ int read_device (char cmd)
 			output_fuse(RD_DEV_OPT_i);
 			break;
 
+		case 'I' :	/* -rI : read fuses @@@ by senshu */
+			read_fuse();
+			output_fuse(RD_DEV_OPT_I);
+			break;
+
 		case 'd' :	/* -rd : read chip datasheet docment @@@ by senshu */
 			output_fuse(RD_DEV_OPT_d);
 			break;
@@ -2704,10 +2714,10 @@ int main (int argc, char **argv)
 		return rc;
 	}
 
-    if (isatty (fileno(stderr))) {
-      /* stderr のバッファリングを行わない */
-      setvbuf( stderr, NULL, _IONBF, 0 );
-    }
+	if (isatty (fileno(stderr))) {
+		/* stderr のバッファリングを行わない */
+		setvbuf( stderr, NULL, _IONBF, 0 );
+	}
 
     if (out_filename) {	// @@@ by senshu
 		/* stdout を out_filename に変更 */
@@ -2716,24 +2726,24 @@ int main (int argc, char **argv)
 			MESS("-ofilename Redirect error\n");
 			return RC_FILE;
 		}
-    } else {
+	} else {
 		setvbuf( stdout, out_buff, _IOLBF, sizeof(out_buff) );
 	}
 
 
-    if (f_open_device_url) {	// @@@ by senshu
+	if (f_open_device_url) {	// @@@ by senshu
 		open_device_url(0);
 		terminate(rc = 0);
 		return rc;
     }
 
-    if (f_open_atmel_url) {	// @@@ by senshu
+	if (f_open_atmel_url) {	// @@@ by senshu
 		open_url("http://www.atmel.com/products/AVR/");
 		terminate(rc = 0);
 		return rc;
     }
 
-    if (f_list_device) {	// @@@ by senshu
+	if (f_list_device) {	// @@@ by senshu
 		int i = 0;
 		char name[32], *p;
 

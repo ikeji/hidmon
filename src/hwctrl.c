@@ -308,11 +308,11 @@ void delay_ms (WORD dly)
 	BYTE spicmd[3] = { FLAG, SPI_WAIT, 0 };
 
 
-	if(PortType == TY_BRIDGE) {		/* Issue wait commadnd for bridge */
+	if(PortType == TY_BRIDGE) {		/* Issue wait command for bridge */
 		spicmd[2] = (BYTE)dly;
 		send_bridge(spicmd, 3);
 	}
-	else if (PortType == TY_RSCR) {	/* Issue wait commadnd for bridge */
+	else if (PortType == TY_RSCR) {	/* Issue wait command for bridge */
 		rscr_delay_ms(dly);
 	}
 	else {							/* Make wait using Win32 API */

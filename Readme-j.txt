@@ -1,8 +1,12 @@
 # Windowsの標準的な環境に合わせ、TAB size = 8で編集しています。
 
-                                                        2008年 9月22日（公開開始）
-                                                               ｜
-                                                        2009年 3月 7日（最新更新）
+                                                2008年 9月22日（公開開始）
+                                                          ｜
+                                                2009年 3月17日（最新更新）
+
+                                      山形県立産業技術短期大学校  千秋広幸
+                                 E-mail senshu(at)astro.yamatata-cit.ac.jp
+
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -36,6 +40,7 @@ hidspx コマンド共に互換性はありませんので区別して扱ってください。
 【2】 アーカイブの構成
 
 .\
+├─ 各種ドキュメント
 ├─bin
 │	libusb0.dll
 │	hidspx-gcc.exe	… MinGW-GCCでコンパイルしたもの
@@ -121,7 +126,7 @@ circuit フォルダある回路図（HIDaspx.png）を参考にハードウェアを製作します。
 なお、近日中に専用の基板が入手可能 (http://www.wsnak.com より) になります。
 回路図にも明記していますが、発振子にはクリスタルを実装してください。セラミ
 ック振動子では回路が要求する精度と安定性を満たすことができません。
-この後で、bin/main.hex を Tiny2313 に書き込んでください．ヒューズ設定は，外
+この後で、bin/main.hex を Tiny2313 に書き込んでください。ヒューズ設定は，外
 付けの 12MHz クリスタルに合わせ、以下のように設定します。
 
 Low: 11111111 (0xFF)
@@ -265,17 +270,17 @@ hidmon で 15kB/s を超える環境を用意すれば速度向上につながります。USB-HUB を
 エラーが表示される場合があることをご理解ください。
 
 【8】 ライセンス（瓶詰堂さんに同じ）
-AVR USBに準じ、GPL2とします．
+AVR USBに準じ、GPL2とします。（お願い：商用利用時には、ご一報ください。）
 
 【9】 謝辞
 　HIDaspx の開発には、多くの方から協力をいただきました。ここに、心より感謝
 の意を表します。
 
     1. 瓶詰堂さん  …… HIDaspの開発者です。HIDaspなくしてはHIDaspxはありません。
-    2. irukaさん   …… 高速化はirukaさんの成果です。
+    2. irukaさん   …… 高速化（ファームウェアとhidspx）はirukaさんの成果です。
     3. kugaさん    …… 旧AVRのサポートとコンパクト化、PD5による再接続機能。
     4. RAINさん    …… 新アイコンの作成と各種の動作テスト。
-    5. 岩永さん    …… 複数のHIDaspxを区別して利用可能なことを確認。
+    5. 岩永さん    …… 複数のHIDaspxを区別して利用できることを確認いただきました。
     6. kumanさん   …… 早期から注目していただき、多くの助言をいただきました。
     7. TADさん、宮前さん、mituさん、akakusaさん、すんさん、kawanaさん
                    …… 動作報告や各種のコメントをいただきました。
@@ -460,6 +465,9 @@ EEPROM Size       = 128 bytes
 
 
 [5] 参考URL
+
+    * HIDaspxの公式URL（山形県立産業技術短期大学校内）
+         http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx
 
     * 瓶詰堂さん(HIDaspの開発元) ⇒ http://www.binzume.net/library/avr_hidasp.html
 
@@ -1003,4 +1011,8 @@ EEPROM Size       = 128 bytes
         * bin\firmware\egg-write.batを追加
         * 標準出力のバッファリングを行単位に変更しました（外部ツールへの配慮）
         * HIDaspx.pdfを更新
+
+■2009-03-17 -rIオプションを追加
+	* 「Engbedded Atmel AVR(R) Fuse Calculator」の新版に対応
+	* hidspx_tips.pdfの追加（HIDaspx.pdfからhidspxのtipsを分離）
 
