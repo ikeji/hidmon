@@ -1,8 +1,8 @@
 /* hidasp.h */
-#define HIDASP_RST_H_GREEN	0x18
-#define HIDASP_RST_H_RED	0x14
-#define HIDASP_RST_L_GREEN	0x08
-#define HIDASP_RST_L_BOTH	0x00
+#define HIDASP_RST_H_GREEN			0x18
+#define HIDASP_RST_H_RED			0x14
+#define HIDASP_RST_L_GREEN			0x08
+#define HIDASP_RST_L_BOTH			0x00
 
 
 int hidasp_init(char *string);

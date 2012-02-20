@@ -561,8 +561,8 @@ int hidasp_init(char *string)
 	}
 	hidCommand(HIDASP_SET_STATUS,0,HIDASP_RST_H_GREEN,0);	// RESET HIGH
 	r = hidRead(hHID, rd_data ,REPORT_LENGTH1, REPORT_ID1);
-	if( rd_data[0] == 0xaa ) {
-		have_ledcmd = 1;	// LEDêßå‰OK.
+	if( rd_data[1] == 0xaa ) {	// LEDÉRÉ}ÉìÉh(isp_enable)Ç™ê≥èÌìÆçÏÇµÇΩ.
+		have_ledcmd = 1;		// LEDêßå‰OK.
 #if DEBUG
 		fprintf(stderr, "LED OK.\n");
 #endif
@@ -591,10 +591,10 @@ int hidasp_program_enable(int delay)
 	for (i = 0; i < 3; i++) {
 		Sleep(2);
 		hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
-		Sleep(20);				// 10 => 100 !!!
+		Sleep(10);				// 10 => 100
 		hidSetStatus(HIDASP_RST_L_BOTH);		// RESET LOW
 		hidCommand(HIDASP_SET_DELAY,delay,0,0);					// SET_DELAY
-		Sleep(50);				// 30 !!!
+		Sleep(30);				// 30
 
 		buf[0] = 0xAC;
 		buf[1] = 0x53;

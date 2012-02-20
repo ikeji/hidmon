@@ -12,7 +12,7 @@
 #include "usbdrv.h"
 #include "hidcmd.h"
 
-#define OPTIMIZE_SIZE		0	// r4,r5,r6,r7を global変数として使用する.
+#define OPTIMIZE_SIZE		1	// r4,r5,r6,r7,r8を global変数として使用する.
 								// usbdrv側で同レジスタが使用されていないことが条件.
 
 /* ------------------------------------------------------------------------- */
@@ -78,14 +78,17 @@ PROGMEM char usbHidReportDescriptor[42] = {
 //	受信バッファ.
 //
 #if OPTIMIZE_SIZE
-register uchar currentPosition asm("r5");
-register uchar bytesRemaining asm("r6");
-register uchar page_mode asm("r4");
-register uchar page_addr asm("r7");
+register uchar currentPosition asm("r4");
+register uchar bytesRemaining asm("r5");
+register uchar page_mode   asm("r6");
+register uchar page_addr   asm("r7");
+register uchar page_addr_h asm("r8");
 #else
-static uchar currentPosition, bytesRemaining; // Receive Data Pointer
-static uchar   page_mode;
-static uchar   page_addr;
+static uchar currentPosition;
+static uchar bytesRemaining; // Receive Data Pointer
+static uchar page_mode;
+static uchar page_addr;
+static uchar page_addr_h;
 #endif
 
 typedef struct {
@@ -236,10 +239,15 @@ void hidasp_main()	//uchar *data)
 #if	INCLUDE_LED_CMD
 	if ( data0 == HIDASP_SET_STATUS ) { // SET_LED
 		PORTD = (PORTD&~3)    | (data1 & 3);
-//		PORTB = (PORTB&~0x10) | (data[2]&0x1F);
 		// RESETピンを保持、それ以外をOR出力
 		PORTB = (PORTB&~0x1F) | (data[2]&0x1f) ;
-		usbData[0] = 0xaa;
+		// Hi-Z制御.
+		if(data[2] & 0x10) {// RST解除の場合に:
+			DDRB = 0x0f;	// 0000_1111 SCLK,MOSI,RST切り離し.
+		}else{
+			DDRB = 0xdf;	// 1101_1111 SCLK,MOSI,RSTを出力に.
+		}
+		usbData[0] = 0xaa;	// コマンド実行完了をHOSTに知らせる.
 	} else
 #endif
 	if ( cmd == HIDASP_CMD_TX) { // SPI
@@ -247,6 +255,7 @@ void hidasp_main()	//uchar *data)
 	} else if ( data0 == HIDASP_SET_PAGE ) { // Page set
 		page_mode = data1;
 		page_addr = 0;
+		page_addr_h = 0;
 	}
 #if	INCLUDE_FUSION
 	else if (cmdtx == HIDASP_PAGE_TX ) { // Page buf
@@ -256,17 +265,19 @@ void hidasp_main()	//uchar *data)
 		if(data0 & (HIDASP_PAGE_TX_START & MODE_MASK)) {
 			page_mode = 0x40;
 			page_addr = 0;
+			page_addr_h = 0;
 		}
 		//
 		//	page_write (またはpage_read) の実行.
 		//
 		for(i=0;i<data1;i++) {
 			usi_trans(page_mode);
-			usi_trans(0);
+			usi_trans(page_addr_h);
 			usi_trans(page_addr);
 			usbData[i]=usi_trans(data[i+2]);
 			if (page_mode & 0x88) { // EEPROM or FlashH
 				page_addr++;
+				if(page_addr==0) {page_addr_h++;}
 				page_mode&=~0x08;
 			} else {
 				page_mode|=0x08;
@@ -283,11 +294,12 @@ void hidasp_main()	//uchar *data)
 	else if ( cmd == HIDASP_PAGE_TX ) { // Page buf
 		for(i=0;i<data1;i++) {
 			usi_trans(page_mode);
-			usi_trans(0);
+			usi_trans(page_addr_h);
 			usi_trans(page_addr);
 			usbData[i]=usi_trans(data[i+2]);
 			if (page_mode & 0x88) { // EEPROM or FlashH
 				page_addr++;
+				if(page_addr==0) {page_addr_h++;}
 				page_mode&=~0x08;
 			} else {
 				page_mode|=0x08;
@@ -384,35 +396,10 @@ GND     [10      11] PD6(NC)
 
 int main(void)
 {
-#if	INCLUDE_MONITOR_CMD
-//	モニタコマンド有効の場合は、SCK,MOSIのHi-Z制御までホスト側から行う.
 	DDRD = ~USBMASK;        /* all outputs except USB data */
 	PORTB = (1<<3);			/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
 	DDRB = 0x0f;			/* PB7-4=in PB3-0=out */
 	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
-#else
-//	モニタコマンド無効の場合は、SCK,MOSIは常に出力になるのでターゲットMCUとのPIN出力競合に注意.
-	DDRD = ~USBMASK;        /* all outputs except USB data */
-	PORTB = (1<<4)|(1<<3);	/* RESET=High, PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
-	DDRB = ~(1<<5);         /* all outputs except USI input data */
-	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
-
-//	ToDo:	LEDコマンド内でDDRBの設定も変える.
-#endif
-
-
-#if	0
-	//参考用
-	//	未使用pinを入力設定にしておく.
-	DDRD = 0; 	// Ｄ＋、Ｄ－を含め、PORTDをすべて入力モードにする。
-	PORTB = (1<<4)|(1<<3);	/* RESET=High, PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
-
-	// PORTB[3,2,1,0]を入力モードにする.
-	DDRB = 0xd0;	// 1101_0000 input = USI input data , PB3,2,1,0
-	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
-
-	// ToDo:未接続pinにプルアップ設定が必要.
-#endif
 
     usbInit();
     sei();

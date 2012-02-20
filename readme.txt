@@ -33,18 +33,17 @@ The firmware dosn't support USB Suspend Mode.
 USE PRECOMPILED VERSION
 
 Firmware:
-Flash "bin/firmware/HIDaspx.atmega48.xxxx-xx-xx.hex" or
-"bin/firmware/main.hex" to the used controller with a working programmer 
-(e.g. with avrdude, uisp, ...). 
+Flash "bin/firmware/main.hex" to the used controller with a working programmer 
+(e.g. with avrspx, uisp, ...). 
 HIDaspx firmware update function.
 You have to change the fuse bits for external crystal (see "make fuses").
 
 Windows:
 Start Windows and connect HIDaspx to the system. 
-Now you can run avrdude. Examples:
+Now you can run hidspx. Examples:
 1. Enter target AVR chip connected to the programmer:
-   hidspx -r <Enter>
-2. Write main.hex to the flash of an ATmega8:
+   hidspx -ph -r <Enter>
+2. Write main.hex to the flash of an ATtiny2313:
    hidspx main.hex
 
 BUILDING AND INSTALLING FROM SOURCE CODE
