@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 9月29日（最新更新）
+                                                2009年11月25日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1419,4 +1419,7 @@ Type = HIDaspx, Delay = 4
 	    が、以下のようにMalwareと誤認識される不具合を修正しました。
 		C:\bin\usbtool.exe (Infected with W32/Zlob.gen134)
 	    … upxによる圧縮を中止することで対応しました。
+
+■2009-11-25
+	(1) HIDaspx用のファームを avr-gcc vewr 3.4.6 で作り直しました。
 
