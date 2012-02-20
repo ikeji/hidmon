@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 4月 6日（最新更新）
+                                                2009年 4月 7日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1052,3 +1052,8 @@ EEPROM Size       = 128 bytes
 ■2009-04-06 hidspx-GUI.exeを追加
 	* FUSEの書き込みとHEXファイルとhidspx.exeのドロップを可能にしました。
 	* ISPではFUSEを操作できない場合でも認識を可能にしました（AT90S2313など）。
+
+■2009-04-07 hidspx-GUI.exeのBUGを修正
+	* コマンド起動時のファイル指定の不具合を修正
+	* 起動直後はFUSE READボタンをフォーカスする
+
