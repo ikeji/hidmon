@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 9月28日（最新更新）
+                                                2009年 9月29日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1370,7 +1370,6 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 ■2009-09-28
 	(1) -l<hex> により、Lock bitを設定時、未定義ビットの扱いをavrdudeと
 	    同様に、'0' として扱ってもエラーにはしない仕様にしました。
-	    設定されている値の確認は -rl オプションで確認できます。
 
 	>hidspx -rl （最後のカラムに表示します）
 	Detected device is ATmega168.
@@ -1381,4 +1380,31 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 
 	※ バージョン表記を以下のように改めました。（b11.3 => b11.4）
 	hidspx (b11.4) by t.k & senshu, Borland C++ 5.5.1, Sep 28 2009
+
+■2009-09-29
+	(1) -l<hex> により、Lock bit を設定時、90S シリーズに関しては、書き込み時
+	    の行わない仕様とします。これは書き込みと読み出しのビットの対応がマイ
+	    コン毎にことなるため、プログラムが複雑化するのを避けるためです。なお、
+	    設定値は -rl オプションで確認できます。
+
+	(2) -ph で HIDaspx を指定したとき、-d の規定値 (4) が設定されない不具合を
+	    修正。これは 「hidspx.ini が無い状態で起動した場合に処理が遅い」とい
+	    う不具合を修正するものです。以前の版でも、推奨する使い方をしていた場
+	    合にはこの不具合は生じません。
+
+	(3) ディレイの設定値や参照する ini ファイルを確認する「--show-spec」オプ
+	    ションを追加しました。これにより、iniファイルが無い場合の設定状況を
+	    確認できます。
+
+>hidspx-gcc --show-spec …（HIDaspxにATTiny2313を接続して実行）
+prog path name [hidspx-gcc]
+ini file name  [hidspx-gcc.ini]
+No SPI bridge on the \\.\COM1.
+Type = COM-SPI breadge, Delay = 4
+
+>hidspx-gcc --show-spec -ph …（HIDaspxにATTiny2313を接続して実行）
+prog path name [hidspx-gcc]
+ini file name  [hidspx-gcc.ini]
+Detected device is ATtiny2313.
+Type = HIDaspx, Delay = 4
 

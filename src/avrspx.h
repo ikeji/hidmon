@@ -168,7 +168,7 @@ typedef struct {
 } PORTPROP;
 
 #if 1
-#define DEFAULT_DELAY_VALUE	3		//@@@ by t.k
+#define DEFAULT_DELAY_VALUE	4		//@@@ by t.k (3 => 4 by sensh)
 #define DEFAULT_BAUDRATE	115200	//@@@ by t.k
 #endif
 

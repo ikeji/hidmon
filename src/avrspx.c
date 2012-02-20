@@ -260,6 +260,7 @@ bool f_show_opts;			/* @@@ by senshu */
 bool f_version;				/* @@@ by senshu */
 bool f_report_mode = 1;		/* 0 = original, 1 = avrdude like */
 bool f_hex_dump_mode;		/* 0 = Intel HEX, 1 = HEX dump */
+bool f_show_spec;			/* @@@ by senshu */
 
 bool f_ISP_DISBL_prog;		/* 1 = RST program enable, @@@ add by senshu */
 
@@ -290,6 +291,7 @@ struct opt_list {
 	{"    ",	"pause-on-exit",	OPT_str,  &msg_pause_on_exit,	"Pause on exit"},
 	{"    ",	"set-serial",		OPT_str,  &new_serial,			"Set USBaspx serial number"},
 	{"    ",	"show-options",		OPT_bool, &f_show_opts,			"Show Option Values"},
+	{"    ",	"show-spec",		OPT_bool, &f_show_spec,			"Show Setting Values"},
 	{"-!  ",	"list-bookmark",	OPT_bool, &f_list_bookmark,		"List user Bookmarks"},
 	{"-p? ", 	"list-port",		OPT_bool, &f_portlist,			"List COM Port"},
 	{"-pu?",	"list-usbasp",		OPT_bool, &f_usbasp_list,		"List USBasp  Programmer"},
@@ -2753,14 +2755,18 @@ int write_fuse ()
 		if (CmdWrite.Verify != 1)
 			write_fuselock(F_LOW, fuse | ~Device->FuseMask[LOW]);
 
-		/* -v- : Skip verifying process when programming only mode */
-		if (CmdWrite.Verify != 2)
-			vfuse = get_fuse_lock_byte(F_LOW, fuse) & Device->FuseMask[LOW];
-
-		if (vfuse != fuse)
-			fprintf(stderr, "Fuse Low byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
-		else
+		if (Device->FuseType < 3) {	/* Type 1..2 : No check Lock Byte */
 			fprintf(stderr, "Fuse Low byte was programmed (0x%02X).\n", fuse);
+		} else {
+			/* -v- : Skip verifying process when programming only mode */
+			if (CmdWrite.Verify != 2)
+				vfuse = get_fuse_lock_byte(F_LOW, fuse) & Device->FuseMask[LOW];
+
+			if (vfuse != fuse)
+				fprintf(stderr, "Fuse Low byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
+			else
+				fprintf(stderr, "Fuse Low byte was programmed (0x%02X).\n", fuse);
+		}
 #else
 		write_fuselock(F_LOW, (BYTE)(CmdFuse.Data[LOW] | ~Device->FuseMask[LOW]));
 		MESS("Fuse Low byte was programmed.\n");
@@ -2871,9 +2877,6 @@ void terminate (int rc)
 #if AVRSPX
 	int i;
 	f_terminate = true;
-#if DEBUG
-	printf("Pause = %d, rc = %d\n", Pause, rc);
-#endif
 #endif
 
 	close_ifport();
@@ -3181,14 +3184,46 @@ int main (int argc, char **argv)
 	}
 
 #if AVRSPX
-	if (!hex_file_is_empty && Device == NULL)
+	if (Device == NULL)
+	{
+		rc = RC_SYNTAX;
+		if (!hex_file_is_empty && !(argc > 1)) {
+			output_usage(false);
+		}
+		if (f_show_spec) {
+			extern char *progpathname;
+			char * p;
+
+			fprintf(stderr, "prog path name [%s]\n", progpathname);
+			fprintf(stderr, "ini file name  [%s]\n", INIFILE);
+
+			init_devices ();
+
+			switch (CtrlPort.PortClass) {
+				case TY_LPT:		p = "LPT"; break;
+				case TY_COMM:		p = "COMM"; break;
+				case TY_VCOM:		p = "VCOM"; break;
+				case TY_BRIDGE:		p = "COM-SPI breadge"; break;
+				case TY_AVRSP:		p = "COM(AVRSP)"; break;
+				case TY_STK200:		p = "LPT(STK200)"; break;
+				case TY_XILINX:		p = "LPT(XILINX)"; break;
+				case TY_LATTICE:	p = "LPT(LATTICE)"; break;
+				case TY_ALTERA:		p = "LPT(ALTRA)"; break;
+				case TY_RSCR:		p = "COM(RSCR)"; break;
+				case TY_USBASP:		p = "USBasp"; break;
+				case TY_HIDASP:		p = "HIDaspx"; break;
+				default:			p = "Unknown"; break;
+			}
+			fprintf(stderr, "Type = %s, Delay = %d\n", p, CtrlPort.Delay);
+		}
+	}
 #else
 	if(Device == NULL)
-#endif
 	{
 		rc = RC_SYNTAX;
 		output_usage(false);
 	}
+#endif
 	terminate(rc);
 	return 0;
 }

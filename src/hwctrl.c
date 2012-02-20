@@ -382,16 +382,18 @@ int open_ifport (PORTPROP *pc)
 #if AVRSPX
 	if (pc->Delay < 0) {				//@@x by t.k
 		PortDly = DEFAULT_DELAY_VALUE;	//@@x
+		pc->Delay = PortDly;			//@@ by senshu
 	} else {
 		PortDly = pc->Delay;	/* I/O delay for direct I/O control */
 	}
 
 	if (pc->Baud < 0) {					//@@x by t.k
-		if (pc->PortClass == TY_RSCR)
+		if (pc->PortClass == TY_RSCR) {
 			dcb.BaudRate = 19200;
-		else {
+		} else {
 			dcb.BaudRate = DEFAULT_BAUDRATE;
 		}
+		pc->Baud = dcb.BaudRate;		//@@ by senshu
 	} else {
 		dcb.BaudRate = pc->Baud;	/* Bit rate for SPI bridge */
 	}
