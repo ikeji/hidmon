@@ -1976,11 +1976,11 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Low byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
+			MESS("Fuse Low byte was programmed.\n");
 #else
-		write_fuselock(F_HIGH, (BYTE)(CmdFuse.Data[0] | ~Device->FuseMask[0]));
-#endif
 		write_fuselock(F_LOW, (BYTE)(CmdFuse.Data[0] | ~Device->FuseMask[0]));
 		MESS("Fuse Low byte was programmed.\n");
+#endif
 	}
 
 	if(CmdFuse.Cmd.Flag.High && (Device->FuseType >= 5)) {
@@ -1997,10 +1997,11 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse High byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
+			MESS("Fuse High byte was programmed.\n");
 #else
 		write_fuselock(F_HIGH, (BYTE)(CmdFuse.Data[1] | ~Device->FuseMask[1]));
-#endif
 		MESS("Fuse High byte was programmed.\n");
+#endif
 	}
 
 	if(CmdFuse.Cmd.Flag.Extend && (Device->FuseType >= 6)) {
@@ -2017,10 +2018,11 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Extend byte was programm error. (%02X -> %02X)\n",fuse,vfuse);
 		else
+			MESS("Fuse Extend byte was programmed.\n");
 #else
 		write_fuselock(F_EXTEND, (BYTE)(CmdFuse.Data[2] | ~Device->FuseMask[2]));
-#endif
 		MESS("Fuse Extend byte was programmed.\n");
+#endif
 	}
 
 	if(CmdFuse.Cmd.Flag.Lock) {
@@ -2038,10 +2040,11 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Lock bits programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
+			MESS("Lock bits are programmed.\n");
 #else
 		write_fuselock(F_LOCK, (BYTE)(CmdFuse.Data[3] ? CmdFuse.Data[3] : Device->LockData));
-#endif
 		MESS("Lock bits are programmed.\n");
+#endif
 	}
 
 	return 0;

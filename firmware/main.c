@@ -1,4 +1,4 @@
-/* USBasp main.c */
+/* HIDaspx main.c */
 /* 高速化の改良は、irukaさんが行いました
    2008年9月12日～9月22日
    2008年9月22日 テスト公開開始
@@ -167,7 +167,7 @@ inline static uint8_t byte(uint8_t t) {return t;}
 
 /* アセンブリソース delay.S で実現 */
 void delay_10us(uchar d);
-void delay_8clk(void);
+void delay_7clk(void);
 
 /* ------------------------------------------------------------------------- */
 /* -----------------------------  USI Transfer  ---------------------------- */
@@ -209,10 +209,10 @@ static uint8_t usi_trans(uint8_t data){
 		} while(!(USISR&(1<<USIOIF)));
 	}else{
 		do {
-			uchar d=wait;		// 12clk * (wait-2)としたいところだが13clk *(wait-2)
+			uchar d=wait;		// 12clk * (wait-2)
 			while(d != 2) {		// 1+1: cpi,breq
 #if 1	/* code 削減のため、call-ret を利用 */
-				delay_8clk();	// 4+4: call,ret
+				delay_7clk();	// 3+4: call,ret
 #else
 				DLY_2clk();		// 2clk
 				DLY_2clk();		// 2clk
@@ -224,7 +224,7 @@ static uint8_t usi_trans(uint8_t data){
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
 	}
-#if 0
+#if 1
 	USICR=0;		/* SCKをポートに戻しておく */
 #endif
 	return USIDR;

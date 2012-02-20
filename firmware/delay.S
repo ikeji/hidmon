@@ -10,8 +10,8 @@
 	.global	delay_10us
 	.type	delay_10us, @function
 
-	.global	delay_8clk
-	.type	delay_8clk, @function
+	.global	delay_7clk
+	.type	delay_7clk, @function
 
 // *******************************************************
 delay_10us:
@@ -24,9 +24,9 @@ loop1:
 	brne	delay_10us
 // *******************************************************
 //
-//	delay_8clk()	;	4+4 : call,ret
+//	delay_7clk()	;	4+4 : call,ret
 //
-delay_8clk:
+delay_7clk:
 	ret
 
 // *******************************************************
