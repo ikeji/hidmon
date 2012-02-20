@@ -5,7 +5,7 @@
  * Tabsize: 4
  * Copyright: (c) 2005 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- * This Revision: $Id: usbdrv.h 748 2009-04-15 15:05:07Z cs $
+ * This Revision: $Id: usbdrv.h 769 2009-08-22 11:49:05Z cs $
  */
 
 #ifndef __usbdrv_h_included__
@@ -122,7 +122,7 @@ USB messages, even if they address another (low-speed) device on the same bus.
 /* --------------------------- Module Interface ---------------------------- */
 /* ------------------------------------------------------------------------- */
 
-#define USBDRV_VERSION  20090415
+#define USBDRV_VERSION  20090822
 /* This define uniquely identifies a driver version. It is a decimal number
  * constructed from the driver's release date in the form YYYYMMDD. If the
  * driver's behavior or interface changes, you can use this constant to
@@ -167,7 +167,9 @@ struct usbRequest;  /* forward declaration */
 
 USB_PUBLIC void usbInit(void);
 /* This function must be called before interrupts are enabled and the main
- * loop is entered.
+ * loop is entered. We exepct that the PORT and DDR bits for D+ and D- have
+ * not been changed from their default status (which is 0). If you have changed
+ * them, set both back to 0 (configure them as input with no internal pull-up).
  */
 USB_PUBLIC void usbPoll(void);
 /* This function must be called at regular intervals from the main loop.
@@ -511,22 +513,22 @@ int usbDescriptorStringSerialNumber[];
 #if !defined __ASSEMBLER__ && (!defined USB_CFG_VENDOR_ID || !defined USB_CFG_DEVICE_ID)
 #warning "You should define USB_CFG_VENDOR_ID and USB_CFG_DEVICE_ID in usbconfig.h"
 /* If the user has not defined IDs, we default to obdev's free IDs.
- * See USBID-License.txt for details.
+ * See USB-IDs-for-free.txt for details.
  */
 #endif
 
 /* make sure we have a VID and PID defined, byte order is lowbyte, highbyte */
 #ifndef USB_CFG_VENDOR_ID
-#   define  USB_CFG_VENDOR_ID   0xc0, 0x16  /* 5824 in dec, stands for VOTI */
+#   define  USB_CFG_VENDOR_ID   0xc0, 0x16  /* = 0x16c0 = 5824 = voti.nl */
 #endif
 
 #ifndef USB_CFG_DEVICE_ID
 #   if USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH
-#       define USB_CFG_DEVICE_ID    0xdf, 0x05  /* 1503 in dec, shared PID for HIDs */
+#       define USB_CFG_DEVICE_ID    0xdf, 0x05  /* = 0x5df = 1503, shared PID for HIDs */
 #   elif USB_CFG_INTERFACE_CLASS == 2
-#       define USB_CFG_DEVICE_ID    0xe1, 0x05  /* 1505 in dec, shared PID for CDC Modems */
+#       define USB_CFG_DEVICE_ID    0xe1, 0x05  /* = 0x5e1 = 1505, shared PID for CDC Modems */
 #   else
-#       define USB_CFG_DEVICE_ID    0xdc, 0x05  /* 1500 in dec, obdev's free PID */
+#       define USB_CFG_DEVICE_ID    0xdc, 0x05  /* = 0x5dc = 1500, obdev's free PID */
 #   endif
 #endif
 
@@ -716,7 +718,7 @@ typedef struct usbRequest{
 #define USBDESCR_HID_REPORT     0x22
 #define USBDESCR_HID_PHYS       0x23
 
-#define USBATTR_BUSPOWER        0x80
+//#define USBATTR_BUSPOWER        0x80  // USB 1.1 does not define this value any more
 #define USBATTR_SELFPOWER       0x40
 #define USBATTR_REMOTEWAKE      0x20
 

@@ -5,7 +5,7 @@
  * Tabsize: 4
  * Copyright: (c) 2005 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- * This Revision: $Id: usbdrv.c 740 2009-04-13 18:23:31Z cs $
+ * This Revision: $Id: usbdrv.c 763 2009-08-22 10:27:24Z cs $
  */
 
 #include "usbportability.h"
@@ -149,9 +149,9 @@ PROGMEM char usbDescriptorConfiguration[] = {    /* USB configuration descriptor
     1,          /* index of this configuration */
     0,          /* configuration name string index */
 #if USB_CFG_IS_SELF_POWERED
-    USBATTR_SELFPOWER,      /* attributes */
+    (1 << 7) | USBATTR_SELFPOWER,       /* attributes */
 #else
-    (char)USBATTR_BUSPOWER, /* attributes */
+    (1 << 7),                           /* attributes */
 #endif
     USB_CFG_MAX_BUS_POWER/2,            /* max USB current in 2mA units */
 /* interface descriptor follows inline: */

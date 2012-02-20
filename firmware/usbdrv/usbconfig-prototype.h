@@ -5,7 +5,7 @@
  * Tabsize: 4
  * Copyright: (c) 2005 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- * This Revision: $Id: usbconfig-prototype.h 740 2009-04-13 18:23:31Z cs $
+ * This Revision: $Id: usbconfig-prototype.h 767 2009-08-22 11:39:22Z cs $
  */
 
 #ifndef __usbconfig_h_included__
@@ -201,24 +201,36 @@ section at the end of this file).
 /* define this macro to 1 if you want the function usbMeasureFrameLength()
  * compiled in. This function can be used to calibrate the AVR's RC oscillator.
  */
+#define USB_USE_FAST_CRC                0
+/* The assembler module has two implementations for the CRC algorithm. One is
+ * faster, the other is smaller. This CRC routine is only used for transmitted
+ * messages where timing is not critical. The faster routine needs 31 cycles
+ * per byte while the smaller one needs 61 to 69 cycles. The faster routine
+ * may be worth the 32 bytes bigger code size if you transmit lots of data and
+ * run the AVR close to its limit.
+ */
 
 /* -------------------------- Device Description --------------------------- */
 
-#define  USB_CFG_VENDOR_ID       0xc0, 0x16
+#define  USB_CFG_VENDOR_ID       0xc0, 0x16 /* = 0x16c0 = 5824 = voti.nl */
 /* USB vendor ID for the device, low byte first. If you have registered your
- * own Vendor ID, define it here. Otherwise you use one of obdev's free shared
- * VID/PID pairs. Be sure to read USBID-License.txt for rules!
- * + This template uses obdev's shared VID/PID pair: 0x16c0/0x5dc.
- * + Use this VID/PID pair ONLY if you understand the implications!
+ * own Vendor ID, define it here. Otherwise you may use one of obdev's free
+ * shared VID/PID pairs. Be sure to read USB-IDs-for-free.txt for rules!
+ * *** IMPORTANT NOTE ***
+ * This template uses obdev's shared VID/PID pair for Vendor Class devices
+ * with libusb: 0x16c0/0x5dc.  Use this VID/PID pair ONLY if you understand
+ * the implications!
  */
-#define  USB_CFG_DEVICE_ID       0xdc, 0x05
+#define  USB_CFG_DEVICE_ID       0xdc, 0x05 /* = 0x05dc = 1500 */
 /* This is the ID of the product, low byte first. It is interpreted in the
  * scope of the vendor ID. If you have registered your own VID with usb.org
  * or if you have licensed a PID from somebody else, define it here. Otherwise
- * you use obdev's free shared VID/PID pair. Be sure to read the rules in
- * USBID-License.txt!
- * + This template uses obdev's shared VID/PID pair: 0x16c0/0x5dc.
- * + Use this VID/PID pair ONLY if you understand the implications!
+ * you may use one of obdev's free shared VID/PID pairs. See the file
+ * USB-IDs-for-free.txt for details!
+ * *** IMPORTANT NOTE ***
+ * This template uses obdev's shared VID/PID pair for Vendor Class devices
+ * with libusb: 0x16c0/0x5dc.  Use this VID/PID pair ONLY if you understand
+ * the implications!
  */
 #define USB_CFG_DEVICE_VERSION  0x00, 0x01
 /* Version number of the device: Minor number first, then major number.
@@ -230,14 +242,14 @@ section at the end of this file).
  * are interpreted as Unicode (UTF-16) entities.
  * If you don't want a vendor name string, undefine these macros.
  * ALWAYS define a vendor name containing your Internet domain name if you use
- * obdev's free shared VID/PID pair. See the file USBID-License.txt for
+ * obdev's free shared VID/PID pair. See the file USB-IDs-for-free.txt for
  * details.
  */
 #define USB_CFG_DEVICE_NAME     'T', 'e', 'm', 'p', 'l', 'a', 't', 'e'
 #define USB_CFG_DEVICE_NAME_LEN 8
 /* Same as above for the device name. If you don't want a device name, undefine
- * the macros. See the file USBID-License.txt before you assign a name if you
- * use a shared VID/PID.
+ * the macros. See the file USB-IDs-for-free.txt before you assign a name if
+ * you use a shared VID/PID.
  */
 /*#define USB_CFG_SERIAL_NUMBER   'N', 'o', 'n', 'e' */
 /*#define USB_CFG_SERIAL_NUMBER_LEN   0 */
