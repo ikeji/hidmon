@@ -1974,7 +1974,7 @@ int write_fuse ()
 			vfuse = verify_fuselock(F_LOW, fuse) & Device->FuseMask[0];
 
 		if (vfuse != fuse)
-			fprintf(stderr, "Fuse Low byte was programm error. (%02X %02X)\n", fuse, vfuse);
+			fprintf(stderr, "Fuse Low byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
 #else
 		write_fuselock(F_HIGH, (BYTE)(CmdFuse.Data[0] | ~Device->FuseMask[0]));
@@ -1995,7 +1995,7 @@ int write_fuse ()
 		if (CmdWrite.Verify != 2)
 			vfuse = verify_fuselock(F_HIGH, fuse) & Device->FuseMask[1];
 		if (vfuse != fuse)
-			fprintf(stderr, "Fuse High byte was programm error. (%02X %02X)\n", fuse, vfuse);
+			fprintf(stderr, "Fuse High byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
 #else
 		write_fuselock(F_HIGH, (BYTE)(CmdFuse.Data[1] | ~Device->FuseMask[1]));
@@ -2015,7 +2015,7 @@ int write_fuse ()
 		if (CmdWrite.Verify != 2)
 			vfuse = verify_fuselock(F_EXTEND, fuse) & Device->FuseMask[2];
 		if (vfuse != fuse)
-			fprintf(stderr, "Fuse Extend byte was programm error. (%02X %02X)\n",fuse,vfuse);
+			fprintf(stderr, "Fuse Extend byte was programm error. (%02X -> %02X)\n",fuse,vfuse);
 		else
 #else
 		write_fuselock(F_EXTEND, (BYTE)(CmdFuse.Data[2] | ~Device->FuseMask[2]));
@@ -2036,7 +2036,7 @@ int write_fuse ()
 		if (CmdWrite.Verify != 2)
 			vfuse = verify_fuselock(F_LOCK, fuse);
 		if (vfuse != fuse)
-			fprintf(stderr, "Lock bits programm error. (%02X %02X)\n", fuse, vfuse);
+			fprintf(stderr, "Lock bits programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
 #else
 		write_fuselock(F_LOCK, (BYTE)(CmdFuse.Data[3] ? CmdFuse.Data[3] : Device->LockData));

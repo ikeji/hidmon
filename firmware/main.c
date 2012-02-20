@@ -18,10 +18,15 @@
 /* ------------------------------------------------------------------------- */
 //	コンフィギュレーションスイッチ:
 #define	INCLUDE_FUSION		1	// 融合命令を実装.
+#if		INCLUDE_FUSION			// 効果はOHCIに限定
+#define	FLOW_CONTROL		1	// FLOW_CONTROL 有効
+#else
+#define	FLOW_CONTROL		0	// FLOW_CONTROL 無効
+#endif
 #define	INCLUDE_POLL_CMD 	0	// ReportID:4  POLLING PORTを実装する.
 
 #define	INCLUDE_MONITOR_CMD 1	// 62:POKE(),63:PEEK()を実装する.
-#define	INCLUDE_LED_CMD 	1	// 02:SET_STATUS()を実装する.
+#define	INCLUDE_ISP_CMD 	1	// 02:SET_STATUS()を実装する.
 //	↑ LED_CMD / MONITOR_CMD は、少なくともどちらかは必要ですが、
 //	HIDmonを使用しない場合は MONITOR_CMD は不要です.
 
@@ -158,32 +163,11 @@ static void cmd_peek_poke(MonCommand_t *cmd,uchar data0)
 inline static uint8_t byte(uint8_t t) {return t;}
 
 // 遅延用.
-#if	0
-#define	DLY_2clk()	asm("nop");
-#else
 #define	DLY_2clk()	asm("rjmp .+0");
-#endif
 
-
-#if	0
-//
-#define	N_10us		(3*10)		// 30回ループで10uS待つ.
-
-static void delay_10us(uchar d)
-{
-	do {
-		// １０μ秒消費.
-		uchar n = N_10us;
-		do {
-			asm("nop");	//何か書かないと最適化でループごと消える.
-		}while(--n);	//このループは 4clk * N_10us クロック.
-		// ここまで.
-	}while(--d);
-}
-#else
+/* アセンブリソース delay.S で実現 */
 void delay_10us(uchar d);
 void delay_8clk(void);
-#endif
 
 /* ------------------------------------------------------------------------- */
 /* -----------------------------  USI Transfer  ---------------------------- */
@@ -201,7 +185,7 @@ void delay_8clk(void);
 //	   20 =249clk   23 kHz
 //	   50 =609clk  9.8 kHz
 //
-//		2以上は 9 + (12 * wait) clk
+//		2以上は 9 + (12 * wait) clk （CALL-RETを採用した場合 9 + (13 * wait) clk）
 //
 static uint8_t usi_trans(uint8_t data){
 	USIDR=data;
@@ -227,16 +211,22 @@ static uint8_t usi_trans(uint8_t data){
 		do {
 			uchar d=wait;		// 12clk * (wait-2)としたいところだが13clk *(wait-2)
 			while(d != 2) {		// 1+1: cpi,breq
+#if 1	/* code 削減のため、call-ret を利用 */
 				delay_8clk();	// 4+4: call,ret
-//				asm("rjmp .+0");// 2
-//				asm("rjmp .+0");// 2
-//				asm("rjmp .+0");// 2
-//				asm("nop");		// 1
+#else
+				DLY_2clk();		// 2clk
+				DLY_2clk();		// 2clk
+				DLY_2clk();		// 2clk
+				asm("nop");		// 1clk
+#endif
 				d--;			// 1+2: subi,rjmp
 			}
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
 	}
+#if 0
+	USICR=0;		/* SCKをポートに戻しておく */
+#endif
 	return USIDR;
 }
 
@@ -256,7 +246,7 @@ static inline void isp_command(uint8_t *data){
 #define	ISP_MISO	5
 #define	ISP_RST		4
 #define	ISP_LED		3
-#define	ISP_PWR		2
+#define	ISP_RDY		2
 #define	ISP_DDR_DEFAULT	0x0f	/* PB7-4=in PB3-0=out */
 
 
@@ -323,20 +313,16 @@ void hidasp_main()	//uchar *data)
 		usbData[0] = DEV_ID;
 	}else
 #endif
-#if	INCLUDE_LED_CMD
+#if	INCLUDE_ISP_CMD
 	if ( data0 == HIDASP_SET_STATUS ) { // SET_LED
 
-#if	0
+#if	0	/* コード節約のため、処理をカット */
 		PORTD = (PORTD&~3)    | (data1 & 3);
 		// RESETピンを保持、それ以外をOR出力
 		PORTB = (PORTB&~0x1F) | (data[2]&0x1f) ;
-		// Hi-Z制御.
-		if(data[2] & 0x10) {// RST解除の場合に:
-			DDRB = 0x0f;	// 0000_1111 SCLK,MOSI,RST切り離し.
-		}else{
-			DDRB = 0xdf;	// 1101_1111 SCLK,MOSI,RSTを出力に.
-		}
-#else
+#endif
+		/* ISP用のピンをHi-Z制御 */
+#if 1	/* AT90Sシリーズをサポートする為、ISP移行モードを修正 */
 		if(data[2] & 0x10) {// RST解除の場合に:
 			ispDisconnect();
 		}else{
@@ -345,6 +331,12 @@ void hidasp_main()	//uchar *data)
 			} else {
 				ispConnect();
 			}
+		}
+#else
+		if(data[2] & 0x10) {// RST解除の場合に:
+			DDRB = 0x0f;	// 0000_1111 SCLK,MOSI,RST切り離し.
+		}else{
+			DDRB = 0xdf;	// 1101_1111 SCLK,MOSI,RSTを出力に.
 		}
 #endif
 		usbData[0] = 0xaa;	// コマンド実行完了をHOSTに知らせる.
@@ -364,7 +356,9 @@ void hidasp_main()	//uchar *data)
 	}
 #if	INCLUDE_FUSION
 	else if (cmdtx == HIDASP_PAGE_TX ) { // Page buf
+#if FLOW_CONTROL
         usbDisableAllRequests();
+#endif
 		//
 		//	page_write開始時にpage_addrをdata[1]で初期化.
 		//
@@ -395,7 +389,9 @@ void hidasp_main()	//uchar *data)
 		if(data0 & (HIDASP_PAGE_TX_FLUSH & MODE_MASK)) {
 			isp_command(data+i+2);
 		}
+#if FLOW_CONTROL
         usbEnableAllRequests();
+#endif
 	}
 #else
 	else if ( cmd == HIDASP_PAGE_TX ) { // Page buf

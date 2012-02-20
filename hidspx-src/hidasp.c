@@ -606,7 +606,7 @@ int hidasp_program_enable(int delay)
 
 	for(tried = 1; tried <= 3; tried++) {
 		for(i = 1; i <= 32; i++) {
-		
+
 			buf[0] = 0xAC;
 			buf[1] = 0x53;
 			buf[2] = 0x00;
@@ -615,10 +615,12 @@ int hidasp_program_enable(int delay)
 
 			if (res[2] == 0x53) {
 				rc = 0;
-				return rc;
-			} 
-			if (tried <= 2) break;
-			hidSetStatus(HIDASP_SCK_PULSE);			// RESET LOW SCK H PULSE shift scan poin
+				goto hidasp_program_enable_exit;
+			}
+			if (tried <= 2) {
+				break;
+			}
+			hidSetStatus(HIDASP_SCK_PULSE);			// RESET LOW SCK H PULSE shift scan point
 		}
 	}
 #else
@@ -648,6 +650,7 @@ int hidasp_program_enable(int delay)
 		}
 	}
 #endif
+	hidasp_program_enable_exit:
 #if DEBUG
 	if (rc == 0) {
 		fprintf(stderr, "hidasp_program_enable() == OK\n");

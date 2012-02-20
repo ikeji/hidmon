@@ -742,6 +742,7 @@ void spi_reset ()
 	switch (PortType) {
 #if AVRSPX
 		case TY_HIDASP :
+			delay_ms(10);
 			{
 				unsigned char dat[]={0,0,0,0};
 				hidasp_cmd(dat,NULL);
