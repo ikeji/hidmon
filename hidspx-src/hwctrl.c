@@ -29,7 +29,7 @@
 
 #if AVRSPX
 //@@ by t.k
-#ifdef __BORLANDC__
+#if defined(__BORLANDC__)
 int _inp(unsigned short _port)
 {
 	_EDX = _port;
@@ -45,6 +45,9 @@ int _outp(unsigned short _port, int _value)
 	__emit__(0xEE);		// out dx, al
 	return _AL;
 }
+#elif defined(__GNUC__)
+extern int _inp(unsigned short _port);
+extern int _outp(unsigned short _port, int _value);
 #endif
 #endif
 

@@ -19,8 +19,9 @@
 
 #include "../firmware/hidcmd.h"
 
-
+#ifndef __GNUC__
 #pragma comment(lib, "setupapi.lib")
+#endif
 
 //  obdev
 #define MY_VID 0x16c0				/* 5824 in dec, stands for VOTI */
