@@ -466,7 +466,7 @@ static char *uni_to_string(char *t, unsigned short *u)
 /*  Manufacturer & Product name check.
  *  名前チェック : 成功=1  失敗=0 読み取り不能=(-1)
  */
-static int check_product_string(HANDLE handle, const char *serial)
+static int check_product_string(HANDLE handle, const char *serial, int verbose)
 {
 	unsigned short unicode[BUFF_SIZE*2];
 	char string1[BUFF_SIZE];
@@ -492,7 +492,11 @@ static int check_product_string(HANDLE handle, const char *serial)
 	uni_to_string(string3, unicode);
 
 	if (serial[0]=='*') {
-		fprintf(stderr, "Manufacturer: [%6s], Product: [%7s], serial number: [%s]\n", string1,  string2, string3);
+		if (verbose) {
+			fprintf(stderr,
+				"VID=%04x, PID=%04x, Manufacturer: [%6s], Product: [%7s], serial number: [%s]\n",
+				MY_VID, MY_PID, string1,  string2, string3);
+		}
 	}
 
 #ifdef	MY_Manufacturer
@@ -506,15 +510,22 @@ static int check_product_string(HANDLE handle, const char *serial)
 #endif
 
 	found_hidaspx++;
-	if (strcmp(string3, serial) != 0)
-		return 0;	// 一致せず
 
-	return 1;		//合致した.
+	/* Check serial number */
+	if (found_hidaspx) {
+		if (strcmp(string3, serial) == 0)
+			return 1;		//合致した.
+		else if (strcmp(serial ,"*") == 0)
+			return 1;		//合致した.
+	}
+
+	return 0;	// 一致せず
+
 }
 
 ////////////////////////////////////////////////////////////////////////
 // HIDディバイス一覧からUSB-IOを検索
-static int OpenTheHid(const char *serial)
+static int OpenTheHid(const char *serial, int verbose)
 {
 	int f, i, rc;
 	ULONG Needed, l;
@@ -561,7 +572,7 @@ static int OpenTheHid(const char *serial)
 		// HIDaspかどうか調べる.
 		if (DeviceAttributes.VendorID == MY_VID && DeviceAttributes.ProductID == MY_PID) {
 			int rc;
-			rc = check_product_string(hHID, serial);
+			rc = check_product_string(hHID, serial, verbose);
 			if ( rc == 1) {
 				f++;				// 見つかった
 				break;
@@ -599,7 +610,7 @@ int hidasp_list(char * string)
 
 	LoadHidDLL();
 	found_hidaspx = 0;
-	r = OpenTheHid("*");
+	r = OpenTheHid("*", 1);
 	if (r == 0) {
 		rc = 1;
 	} else {
@@ -617,12 +628,8 @@ int hidasp_list(char * string)
 //----------------------------------------------------------------------------
 //  初期化.
 //----------------------------------------------------------------------------
-int hidasp_init(int type, const char *serial)
+void chg_vid_pid(int type)
 {
-	unsigned char rd_data[BUFF_SIZE];
-	int i, r, result;
-
-	result = 0;
 	if (type == 1) {	/* pro mode */
 		MY_VID = 0x20A0;				/* VID */
 		MY_PID = 0x410e;				/* PID */
@@ -630,9 +637,18 @@ int hidasp_init(int type, const char *serial)
 		MY_VID = 0x16c0;				/* 5824 in dec, stands for VOTI */
 		MY_PID = 0x05df;				/* 1503 in dec, obdev's free PID */
 	}
+}
 
+int hidasp_init(int type, const char *serial)
+{
+	unsigned char rd_data[BUFF_SIZE];
+	int i, r, result;
+
+	result = 0;
+
+	chg_vid_pid(type);
 	LoadHidDLL();
-	if (OpenTheHid(serial) == 0) {
+	if (OpenTheHid(serial, 0) == 0) {
 #if DEBUG
 		fprintf(stderr, "ERROR: fail to OpenTheHid(%s)\n", serial);
 #endif

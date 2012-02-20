@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2010年 2月 1日（最新更新）
+                                                2010年 2月 8日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -437,10 +437,10 @@ HIDaspx 用のシリアルデータ（HEX ファイル）を生成するツールを用意しました。
 用できない方は、バグが少なく単独で動作する、木村さんの移植版 gawk を入手してくだ
 さい。
 
-2008年7月4日 gawk 3.1.6 日本語版バイナリバグfix
-GAWKの改良版の入手先 ⇒ http://www.kt.rim.or.jp/~kbk/
+2009年9月4日 gawk 3.1.7 日本語版バイナリバグfix
+GAWKの改良版の入手先 ⇒ http://www.kt.rim.or.jp/~kbk/gawk-3.1/
 
-http://www.kt.rim.or.jp/%7ekbk/cgi-bin/download.cgi?dl-file1=gawk-mbcs-win32-20080704.zip
+http://www.kt.rim.or.jp/%7ekbk/cgi-bin/download.cgi?dl-file1=gawk-mbcs-win32-20091124.zip
 
 入手した gawk-mbcs-win32-20080704.zip を展開し、gawk.exe を hidspx.exe と同じディ
 レクトリにコピーします。
@@ -1453,3 +1453,34 @@ Type = HIDaspx, Delay = 4
 	(1) 実験レベルのファームウェアの添付を停止し、build-all.batの
 	    内容を修正し、不要なオブジェクトの生成を修正しました。
 	(2) 同梱のPDFファイルを最新に差し替えました。
+
+■2010-02-08
+	(1) HIDaspxのシリアル番号のワイルドカード指定を可能にしました。
+	    hidspx において、HIDaspx のシリアル番号の指定無しに認識できる仕様に変
+	    更しました。複数の HIDaspx が接続されている場合には、最初に認識された
+	    ものが操作対象です。なお、複数の HIDaspx を選択して指定するには、例
+	    3 の様に、希望のシリアル番号を指定します。
+  例1）
+  >hidspx -ph? … HIDaspxの検索（接続対象のシリアル番号の調査方法）
+  VID=16c0, PID=05df, Manufacturer: [  YCIT], Product: [HIDaspx], serial number: [0999]
+
+  例2）
+  >hidspx -ph -r … 従来とは異なり、シリアル番号を省略しても動作可能
+  Detected device is ATtiny2313.
+  Device Signature  = 1E-91-0A
+  Flash Memory Size = 2048 bytes
+  Flash Memory Page = 32 bytes x 64 pages
+  EEPROM Size       = 128 bytes
+
+  例3）
+  >hidspx -ph:0999 -r … 複数のHIDaspxを同時に使用する場合の指定方法
+  Detected device is ATtiny2313.
+  Device Signature  = 1E-91-0A
+  Flash Memory Size = 2048 bytes
+  Flash Memory Page = 32 bytes x 64 pages
+  EEPROM Size       = 128 bytes
+
+	(2) hidmon.exe, hidmon.dll でも同様に、ワイルドカード指定を可能にしました。
+
+  シリアル番号を設定すれば、複数の HIDaspx を利用が可能になります。シリアル番号の
+  設定方法は、「[3] シリアル情報の生成ツールの使い方」をご覧ください。

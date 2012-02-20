@@ -451,7 +451,7 @@ int open_ifport (PORTPROP *pc)
 	if (pc->PortClass == TY_HIDASP)	{ //@@+ by k-k
 		if (hidasp_init(hidaspx_type, pc->SerialNumber) == HIDASP_MODE_ERROR)	{
 			if (hidaspx_type) {
-				sprintf(str_info, "HIDaspx-pro(%s) not found.\n", pc->SerialNumber);
+				sprintf(str_info, "HIDaspx-p(%s) not found.\n", pc->SerialNumber);
 			} else {
 				sprintf(str_info, "HIDaspx(%s) not found.\n", pc->SerialNumber);
 			}

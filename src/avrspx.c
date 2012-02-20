@@ -1474,7 +1474,10 @@ int load_commands (int argc, char **argv)
 							CtrlPort.PortClass = TY_HIDASP;
 #if 1	/* 2010/01/21 10:36:43 */
 							if (*cp == 'p') {	/* pro mode */
+								extern void chg_vid_pid(int type);	/* 2010/02/08 9:03:00 */
+
 							    hidaspx_type = 1;
+							    chg_vid_pid(hidaspx_type);
 							    ++cp;
 							} else {
 							    hidaspx_type = 0;
@@ -1513,7 +1516,7 @@ int load_commands (int argc, char **argv)
 											}
 										}
 									} else if (*s == '\0'){
-										strcpy(usb_serial, "0000");		// 省略時は、"0000"を選択する
+										strcpy(usb_serial, "*");		// 省略時は、"*"を選択する
 									} else {
 										strncpy(usb_serial, s, 4);
 									}
