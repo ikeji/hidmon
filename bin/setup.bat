@@ -47,10 +47,11 @@ IF NOT EXIST %TARGET% (
   mkdir %TARGET%
 )
 echo ==== [COPY to %TARGET%] ====
-echo hidspx.exe, hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe, hidspx-GUI.exe
+echo hidspx.exe, hidspx-gcc.exe hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe, hidspx-GUI.exe
 echo firmware\genserial.awk , firmware\main-12.hex , firmware\firmprog.bat
 echo ..\HIDaspx.pdf ..\Readme-j.txt ..\avrx-tool.txt
 %COPY% hidspx.exe %TARGET% > NUL
+%COPY% hidspx-gcc.exe %TARGET% > NUL
 IF EXIST %TARGET%\hidspx.ini (
   echo **** original hidspx.ini to hidspx-save.ini ****
   echo original hidspx.ini to hidspx-save.ini

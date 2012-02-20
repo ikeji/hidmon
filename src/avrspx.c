@@ -254,7 +254,7 @@ bool f_list_adapter;		/* @@@ by senshu */
 bool f_list_bookmark;		/* @@@ by senshu */
 bool f_show_opts;			/* @@@ by senshu */
 bool f_version;				/* @@@ by senshu */
-bool f_report_mode;		/* 0 = original, 1 = avrdude like */
+bool f_report_mode = 1;		/* 0 = original, 1 = avrdude like */
 
 char *out_filename = NULL;	/* @@@ by senshu */
 FILE *redirect_fp;
