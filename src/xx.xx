@@ -1,0 +1,59 @@
+hidspx (b11.1) by t.k & senshu, Borland C++ 5.5.1, Jun 22 2009
+----
+AVRSP - AVR Serial Programming tool R0.44 (C)ChaN, 2008  http://elm-chan.org/
+Write code and/or data  : <hex file> [<hex file>] ...
+Verify code and/or data : -v <hex file> [<hex file>] ...
+Read code, data or fuse : -r{p|e|f|F|l} [-oOUT_HEXFILE]
+HEX dump (Flash/Eeprom) : -r{p|e}h      [-oOUT_HEXFILE]
+  -rp{h}                   Read Program(flash) memory
+  -re{h}                   Read Eeprom
+  -rf                      Read Fuse (use fuse.txt)
+  -rF                      Read Fuse list (HEX style)
+  -rl                      Read Fuse and lock bits
+Get AVR Information(Web): -r{I|i|d}
+  -r{i|I}                  Read Fuse Information (new)
+  -rd                      Read chip Datasheet
+Write fuse byte         : -f{l|h|x}<bin>
+Lock device             : -l[<bin>]
+Copy calibration bytes  : -c
+Erase device            : -e
+Control port [-pb1]     : -p{c|l|v|b|u|h|f}<n>[:<baud>]
+SPI control delay [-d3] : -d<n>
+Help (Detail)           : -? or -h or --help
+
+Miscellaneous Options:
+  -q<device>               Check device type
+  -t<device>               Force device type
+  -w<num>                  Pause before exit
+  -z                       1KHz pulse on SCK
+
+Supported Device:
+AT90S 1200,2313,2323,2333,2343,4414,4433,4434,8515,8535
+ATtiny 12,13,15,22,24,25,26,44,45,84,85,261,461,861,2313
+ATmega 8,16,32,48,48P,64,88,88P,103,128,161,162,163,164P,165,168,168P,
+       169,323,324P,324PA,325/9,325P,3250P,328P,3250/90,603,640,644,644P,
+       645/9,1280,1281,2560,2561,6450/90,8515,8535
+AT90CAN 32,64,128, AT90PWM 2,3,216,316
+
+Supported Adapter:
+AVRSP adapter (COM -pc<n>|-pv<n> / LPT -pl<n>), SPI Bridge (COM -pb<n>[:BAUD]),
+STK200 ISP dongle, Xilinx JTAG, Lattice isp, Altera ByteBlasterMV (LPT -pl<n>)
+USBasp(x) (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)
+HIDaspx   (USB -ph<:XXXX>)
+
+  === long options ===
+  --pause-on-start         Pause on Port Open
+  --pause-on-exit          Pause on exit
+  --set-serial             Set USBaspx serial number
+  --show-options           Show Option Values
+  --list-bookmark  -!      List user Bookmarks
+  --list-port      -p?     List COM Port
+  --list-usbasp    -pu?    List USBasp  Programmer
+  --list-hidaspx   -ph?    List HIDaspx Programmer
+  --list-adapter           List Support Adapters
+  --list-device            List Support AVR Devices
+  --new-mode               New progress mode
+
+  === Open URL by Web browser ===
+  --avr-devices    AVR Devices list
+  --atmel-avr      Atmel (AVR 8-Bit RISC)

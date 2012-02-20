@@ -478,8 +478,10 @@ void show_version(int flag)
 #elif defined(__WIN32__)
 		printf("%s (%s) by t.k & senshu for Windows, %s\n",  progname, VERSION, __DATE__ );
 #endif
-	if (flag)
+	if (flag){
 		printf("----\n");
+	}
+	fflush(stdout);			// 2009/06/23
 }
 
 #if USER_BOOKMARKS
@@ -496,6 +498,7 @@ void show_bookmarks()
 		printf("  --%-10s = [%s]\n", user_bookmarks[i].key, user_bookmarks[i].url);
 		i++;
 	}
+	fflush(stdout);			// 2009/06/23
 }
 #endif
 
@@ -634,6 +637,8 @@ void output_usage (bool detail)
 	for(n = 0; MesUsage[n] != NULL; n++)
 		MESS(MesUsage[n]);
 #endif
+	fflush(stdout);			// 2009/06/23
+
 }
 
 
@@ -648,6 +653,8 @@ void output_deviceinfo (void)
 		printf("Flash Memory Page = %d bytes x %d pages\n",
 				(int)Device->FlashPage, (int)(Device->FlashSize / Device->FlashPage));
 	printf("EEPROM Size       = %d bytes\n", (int)Device->EepromSize);
+
+	fflush(stdout);			// 2009/06/23
 }
 
 
@@ -676,6 +683,8 @@ void put_fuseval (BYTE val, BYTE mask, const char *head, FILE *fp)
 		if(fgets(Line, sizeof(Line), fp) == NULL) return;
 		fputs(Line, stdout);
 	} while (Line[0] != '\n');
+
+	fflush(stdout);			// 2009/06/23
 
 }
 
@@ -768,6 +777,7 @@ void output_fuse (int mode)
 		if(Device->FuseType >= 6)
 			printf(" -U efuse:w:0x%02x:m", FuseBuff[2]);
 		printf("\n");
+		fflush(stdout);			// 2009/06/23
 
 		return;
 
@@ -798,6 +808,7 @@ void output_fuse (int mode)
 		} else {
 			printf("AT%s --:-- --:-- --:-- --\n", Device->Name);
 		}
+		fflush(stdout);			// 2009/06/23
 
 		return;
 
@@ -944,6 +955,7 @@ ATtiny88
 			printf(" %d", CalBuff[n]);
 		putchar('\n');
 	}
+	fflush(stdout);			// 2009/06/23
 
 	if(fp != NULL) fclose(fp);	/* Close FUSE.TXT */
 }
@@ -2845,13 +2857,15 @@ void terminate (int rc)
 			fprintf(stderr, "Pause = %3d\r", i);
 #endif
 			Sleep(1000);
+#if 0	// 2009/06/23 hidspxG Ç≈ kbhit()ÇåƒÇ—èoÇ∑Ç∆ÅAAccess Violation error Çî≠ê∂Ç∑ÇÈ
 			if (kbhit()) {
 				getchar();
 				break;
 			}
+#endif
 		} while (i--);
 	}
-#else
+#else	 // !AVRSPX
 	if((Pause == 1) || ((Pause == 2)&&(rc != 0))) {
 		MESS("\nType Enter to exit...");
 		getchar();
@@ -2939,6 +2953,7 @@ int main (int argc, char **argv)
 			printf("%s\n", name);
 			i++;
 		}
+		fflush(stdout);			// 2009/06/23
 		terminate(rc = 0);
 		return rc;
     }
