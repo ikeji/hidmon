@@ -1,4 +1,4 @@
-                                                             2008年10月14日
+                                                             2008年10月17日
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,15 +32,18 @@ avrspx の機能に意図しない副作用が生じる可能性もあります。そのため、十分な動
 .\
 ├─bin
 │	libusb0.dll
-│	hidspx.exe		… MinGWでコンパイルしたもの
-│	hidspx-bcc.exe		… Borland C++ ver 5.5.1でコンパイルしたもの
-│	main.hex		… HIDaspのファームウェア
-│	hidspx.ini		… hidspxの初期化ファイル
-│	fuse.txt		… FUSE情報を詳細に表示する為のテキストファイル
+│	hidspx.exe	… MinGWでコンパイルしたもの
+│	hidspx-bcc.exe	… Borland C++ ver 5.5.1でコンパイルしたもの
+│	main.hex	… HIDaspのファームウェア
+│	hidspx.ini	… hidspxの初期化ファイル
+│	fuse.txt	… FUSE情報を詳細に表示する為のテキストファイル
 │	fuse_en.txt
 │	fuse_j.txt
-├─firmware			… HIDaspのファームウェアソース
-├─hidspx-src			… hidspxのソース(MinGW, Borland C++兼用)
+├─bin
+│  └─firmware	… main.hex（HIDaspx用）, main_libusb.hex（MacOS, Linux用）
+
+├─firmware		… HIDaspのファームウェアソース
+├─hidspx-src		… hidspxのソース(MinGW, Borland C++兼用)
 │  └─libusb
 │      ├─bin
 │      ├─examples
@@ -51,7 +54,7 @@ avrspx の機能に意図しない副作用が生じる可能性もあります。そのため、十分な動
 │          ├─gcc
 │          ├─msvc
 │          └─msvc_x64
-└─pict			… 回路図と実装例
+└─pict		… 回路図と実装例
 
 [2] 準備
 
@@ -77,6 +80,8 @@ Ext: -------1 (0xFF)
 
 
 [3] 使い方
+
+　詳細な使い方は、avrsp.txtをご覧ください。
 
 hidspx に「-ph」指定で HIDaspx が利用できます。hidspx.ini に -ph を書いてお
 けば、この指定は省略できます。
@@ -154,43 +159,48 @@ AVR USBに準じてGPL2とします．
                MOSI, SCK の競合を回避（Hi-Z化する）
 
 2008-10-03 ...	- hidspxのメッセージをHIDaspxに統一
-				- Borland C++ での警告メッセージを抑止(avrspx.hを修正)
-				- usbtool を追加
-				- kugaさんのアドバイスにより、Firmwareサイズを40バイト縮小(1968バイト)
-				 avr-size --mcu=attiny2313 main.elf
-				   text    data     bss     dec     hex filename
-				   1966       4      85    2055     807 main.elf
-				- USBのProductID 0x5dc (libusb device) との競合を避ける為、
-				  0x5df(HID devide)に変更
-				- firmwareの変更 （今のところサポートしているAVRデバイスでは）
-				  page_addr は 256 以下なので、uint16 から uint8 に降格。
+		- Borland C++ での警告メッセージを抑止(avrspx.hを修正)
+		- usbtool を追加
+		- kugaさんのアドバイスにより、Firmwareサイズを40バイト縮小(1968バイト)
+		 avr-size --mcu=attiny2313 main.elf
+		   text    data     bss     dec     hex filename
+		   1966       4      85    2055     807 main.elf
+		- USBのProductID 0x5dc (libusb device) との競合を避ける為、
+		  0x5df(HID devide)に変更
+		- firmwareの変更 （今のところサポートしているAVRデバイスでは）
+		  page_addr は 256 以下なので、uint16 から uint8 に降格。
 
 2008-10-06 ...	- irukaさんの10-05までの修正分を反映（ほぼ同じ内容です）
-				- -d2以上の値を指定した時の不具合は、senshuの修正ミスでした。
-				 （irukaさん、大変お手数をお掛けしました）
-				- ATtiny2313の認識が不十分だった件に関しては、このミスに起因して
-				 シーケンスが見直され？、より適切なものになっています
+		- -d2以上の値を指定した時の不具合は、senshuの修正ミスでした。
+		 （irukaさん、大変お手数をお掛けしました）
+		- ATtiny2313の認識が不十分だった件に関しては、このミスに起因して
+		 シーケンスが見直され？、より適切なものになっています
 				- firmwareの変更  page_addr を uint16 に戻す。
 
 2008-10-10 ...	- irukaさんの10-09までの修正分を反映（ほぼ同じ内容です）
-				- 2008.10.9a delay_10us関数がコンパイル環境によっては最適化されて
-				             消えていたのを修正. （アセンブﾘ言語でリライト）
-				- 2008.10.9a '-d2'以上の遅延クロック数を適正化
-				- 2008.10.9 高速化: flow-controlを導入
-				- 2008.10.9 12MHzターゲットに '-d0'が使えるように変更(SCLK=2MHz)
-				- 2008.10.9 ispConnect/ispDisconnectを導入
+		- 2008.10.9a delay_10us関数がコンパイル環境によっては最適化されて
+		  消えていたのを修正. （アセンブﾘ言語でリライト）
+		- 2008.10.9a '-d2'以上の遅延クロック数を適正化
+		- 2008.10.9 高速化: flow-controlを導入
+		- 2008.10.9 12MHzターゲットに '-d0'が使えるように変更(SCLK=2MHz)
+		- 2008.10.9 ispConnect/ispDisconnectを導入
 
 2008-10-12 ...	- kugaさんのAT90Sシリーズ用のISP移行処理を追加（90Sシリーズをサポート）
-				- ATtiny2313 のFUSEビットSTUビットの値によって、認識に失敗するのを修正
-				  （hidspx内のhwctrl.c spi_reset関数にdelay_ms(10)を追加しました）
-				- FUSE verifyエラー時の表示を適正化
-				- FUSE 書き換え関数の適正化（重要！）
+		- ATtiny2313 のFUSEビットSTUビットの値によって、認識に失敗するのを修正
+		  （hidspx内のhwctrl.c spi_reset関数にdelay_ms(10)を追加しました）
+		- FUSE verifyエラー時の表示を適正化
+		- FUSE 書き換え関数の適正化（重要！）
 
 2008-10-14 ...	- firmware main.c「USICR=0;		/* SCKをポートに戻しておく */」を有効化
-				-- USIの初期化をmain関数から、usi_trans関数に移動(SCK発生時の互換性向上)
-				- usbHidReportDescriptorの大きさを9バイト縮小(現在 2038バイト)
-				- hidmonとの整合性を考慮し、元に戻しました(現在 2046バイト)
-				- ソース中のコメントを修正（不整合部分を修正）
+		-- USIの初期化をmain関数から、usi_trans関数に移動(SCK発生時の互換性向上)
+		- usbHidReportDescriptorの大きさを9バイト縮小(現在 2038バイト)
+		- hidmonとの整合性を考慮し、元に戻しました(現在 2048バイト)
+		- ソース中のコメントを修正（不整合部分を修正）
+
+2008-10-17 ...	- firmware (HID版に加え、libusb版を追加）
+		- rebuild.bat , cleanup.batを追加
+		- avrx-tool.txt（詳しい使い方の解説）を追加
+
 
 # TAB size = 8で編集しています。
 

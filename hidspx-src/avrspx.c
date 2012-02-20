@@ -1787,7 +1787,7 @@ int write_flash ()
 				hidasp_page_read(-1, rd, PIPE_WINDOW);
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
-						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n",
+						fprintf(stderr, "\nFailed at %04X:%02X->%02X\n",
 							(int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
 						return RC_FAIL;
 					}
@@ -1799,7 +1799,7 @@ int write_flash ()
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
 						report_finish();
-						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n",
+						fprintf(stderr, "\nFailed at %04X:%02X->%02X\n",
 							(int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
 						return RC_FAIL;
 					}
@@ -1824,7 +1824,7 @@ int write_flash ()
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
 						report_finish();
-						fprintf(stderr, "Failed at %04X:%02X-%02X\n", adr+n, CodeBuff[adr+n], rd[n]);
+						fprintf(stderr, "Failed at %04X:%02X->%02X\n", adr+n, CodeBuff[adr+n], rd[n]);
 						return RC_FAIL;
 					}
 				}
@@ -1915,7 +1915,7 @@ int write_eeprom ()
 				read_multi(EEPROM, adr, ws, rd);
 				for(n = 0; n < ws; n++) {
 					if(rd[n] != DataBuff[adr+n]) {
-						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n",
+						fprintf(stderr, "\nFailed at %04X:%02X->%02X\n",
 							(int)(adr+n), (int)DataBuff[adr+n], (int)rd[n]);
 						return RC_FAIL;
 					}
@@ -1931,7 +1931,7 @@ int write_eeprom ()
 			read_multi(EEPROM, adr, ws, rd);
 			for(n = 0; n < ws; n++) {
 				if(rd[n] != DataBuff[adr+n]) {
-					fprintf(stderr, "Failed at %04X:%02X-%02X\n", adr+n, DataBuff[adr+n], rd[n]);
+					fprintf(stderr, "Failed at %04X:%02X->%02X\n", adr+n, DataBuff[adr+n], rd[n]);
 					return RC_FAIL;
 				}
 			}

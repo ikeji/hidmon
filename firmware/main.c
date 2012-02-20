@@ -50,6 +50,16 @@
 #define	LENGTH3 40
 #define	LENGTH4  6
 
+#ifndef USE_LIBUSB
+/*
+
+ 「重要」
+ usbHidReportDescriptor[] の内容を修正した時には、usbconfig.h の
+ 以下の行に、usbHidReportDescriptor[] の占めるサイズを正確に設定すること
+
+ #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    42
+
+*/
 PROGMEM char usbHidReportDescriptor[] = {
     0x06, 0x00, 0xff,              // USAGE_PAGE (Generic Desktop)
     0x09, 0x01,                    // USAGE (Vendor Usage 1)
@@ -73,7 +83,7 @@ PROGMEM char usbHidReportDescriptor[] = {
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
-#if 1	// code削減のため
+#if 0	// code削減のため
     0x85, 0x04,                    //   REPORT_ID (4)
     0x95, 0x04,                    //   REPORT_COUNT (4)
     0x09, 0x00,                    //   USAGE (Undefined)
@@ -82,6 +92,7 @@ PROGMEM char usbHidReportDescriptor[] = {
 
     0xc0                           // END_COLLECTION
 };
+#endif
 
 /* Note: REPORT_COUNT does not include report-ID byte */
 
@@ -171,6 +182,19 @@ inline static uint8_t byte(uint8_t t) {return t;}
 void delay_10us(uchar d);
 void delay_7clk(void);
 
+//
+#define	ISP_DDR		DDRB
+#define	ISP_OUT		PORTB
+//	PORTB PIN ASSIGN
+#define	ISP_SCK		7
+#define	ISP_MOSI	6
+#define	ISP_MISO	5
+#define	ISP_RST		4
+#define	ISP_LED		3
+#define	ISP_RDY		2
+#define	ISP_DDR_DEFAULT	0x0f	/* PB7-4=in PB3-0=out */
+
+
 /* ------------------------------------------------------------------------- */
 /* -----------------------------  USI Transfer  ---------------------------- */
 /* ------------------------------------------------------------------------- */
@@ -196,6 +220,16 @@ static uint8_t usi_trans(uint8_t data){
 	USIDR=data;
 	USISR=(1<<USIOIF);
 	if(wait==0) {
+#if 1	// by kuga
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+	    ISP_OUT |= (1<<ISP_SCK); ISP_OUT &= ~(1<<ISP_SCK);
+#else
 		uchar CR0=(1<<USIWM0)|(1<<USICS1)|(1<<USITC);
 		USICR=CR0;
 		uchar CR1=(1<<USIWM0)|(1<<USICS1)|(1<<USITC)|(1<<USICLK);
@@ -208,6 +242,7 @@ static uint8_t usi_trans(uint8_t data){
 		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
 		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
 		USICR=CR0;	DLY_2clk();	USICR=CR1;//DLY_2clk(); :else のrjmpで代用.
+#endif
 	}else if(wait==1) {
 		do{
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
@@ -241,18 +276,6 @@ static inline void isp_command(uint8_t *data){
 		usbData[i]=usi_trans(data[i]);
 	}
 }
-
-//
-#define	ISP_DDR		DDRB
-#define	ISP_OUT		PORTB
-//	PORTB PIN ASSIGN
-#define	ISP_SCK		7
-#define	ISP_MOSI	6
-#define	ISP_MISO	5
-#define	ISP_RST		4
-#define	ISP_LED		3
-#define	ISP_RDY		2
-#define	ISP_DDR_DEFAULT	0x0f	/* PB7-4=in PB3-0=out */
 
 
 static	void ispConnect(void)

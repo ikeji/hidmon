@@ -99,6 +99,18 @@ static int hidRead(HANDLE h, char *buf, int Length, int id)
 	return rc;
 }
 
+int	hidReadPoll(char *buf, int Length, int id)
+{
+	int rc;
+	buf[0] = id;
+	rc = HidD_GetFeature(hHID, buf, Length);
+#if	DEBUG_PKTDUMP
+	memdump("RD", buf, Length);
+#endif
+	return rc;
+}
+
+
 /*
  *	HIDデバイスに HID Report を送信するする.
  *	送信バッファの先頭の1バイトにReportID を入れる処理は

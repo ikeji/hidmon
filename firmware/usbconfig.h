@@ -167,7 +167,11 @@ section at the end of this file).
  * own Vendor ID, define it here. Otherwise you use one of obdev's free shared
  * VID/PID pairs. Be sure to read USBID-License.txt for rules!
  */
+#ifdef USE_LIBUSB
+#define  USB_CFG_DEVICE_ID       0xdc, 0x05 /* obdev's shared PID for libusb */
+#else
 #define  USB_CFG_DEVICE_ID       0xdf, 0x05 /* obdev's shared PID for HIDs */
+#endif
 /* This is the ID of the product, low byte first. It is interpreted in the
  * scope of the vendor ID. If you have registered your own VID with usb.org
  * or if you have licensed a PID from somebody else, define it here. Otherwise
@@ -194,8 +198,8 @@ section at the end of this file).
  * the macros. See the file USBID-License.txt before you assign a name if you
  * use a shared VID/PID.
  */
-#define USB_CFG_SERIAL_NUMBER       '7'
-#define USB_CFG_SERIAL_NUMBER_LEN   1
+#define USB_CFG_SERIAL_NUMBER       '0','0','0','0'
+#define USB_CFG_SERIAL_NUMBER_LEN   4
 /* Same as above for the serial number. If you don't want a serial number,
  * undefine the macros.
  * It may be useful to provide the serial number through other means than at
@@ -203,12 +207,20 @@ section at the end of this file).
  * to fine tune control over USB descriptors such as the string descriptor
  * for the serial number.
  */
+#ifdef USE_LIBUSB
+#define USB_CFG_DEVICE_CLASS        0xff // libusb
+#else
 #define USB_CFG_DEVICE_CLASS        0 // HID
+#endif
 #define USB_CFG_DEVICE_SUBCLASS     0
 /* See USB specification if you want to conform to an existing device class.
  * Class 0xff is "vendor specific".
  */
+#ifdef USE_LIBUSB
+#define USB_CFG_INTERFACE_CLASS     0 // libusb
+#else
 #define USB_CFG_INTERFACE_CLASS     3 // HID
+#endif
 #define USB_CFG_INTERFACE_SUBCLASS  0
 #define USB_CFG_INTERFACE_PROTOCOL  0
 /* See USB specification if you want to conform to an existing device class or
@@ -216,7 +228,11 @@ section at the end of this file).
  * HID class is 3, no subclass and protocol required (but may be useful!)
  * CDC class is 2, use subclass 2 and protocol 1 for ACM
  */
-#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    51	// !!! 42
+#ifdef USE_LIBUSB
+#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    0	// libusb
+#else
+#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    42	// !!! 51
+#endif
 /* Define this to the length of the HID report descriptor, if you implement
  * an HID device. Otherwise don't define it or define it to 0.
  * If you use this define, you must add a PROGMEM character array named
