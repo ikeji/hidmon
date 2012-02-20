@@ -4,7 +4,7 @@ REM Modified by senshu (2010/02/10)
 pushd ..
 echo ======= cleanup firmware =======
 cd bin\firmware
-call cleanup.bat
+call hexcleanup.bat
 cd ..\..
 echo ======= hidspx.exe build =======
 cd src

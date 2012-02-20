@@ -494,7 +494,7 @@ static int check_product_string(HANDLE handle, const char *serial, int verbose)
 	if (serial[0]=='*') {
 		if (verbose) {
 			fprintf(stderr,
-				"VID=%04x, PID=%04x, Manufacturer: [%6s], Product: [%7s], serial number: [%s]\n",
+				"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s]\n",
 				MY_VID, MY_PID, string1,  string2, string3);
 		}
 	}
