@@ -256,6 +256,7 @@ static inline void isp_command(uint8_t *data){
 #define	ISP_MISO	5
 #define	ISP_RST		4
 #define	ISP_LED		3
+#define	ISP_PWR		2
 #define	ISP_DDR_DEFAULT	0x0f	/* PB7-4=in PB3-0=out */
 
 
@@ -270,9 +271,9 @@ static	void ispConnect(void)
 	ISP_OUT &= ~(1 << ISP_SCK);		/* SCK low */
 
 	/* positive reset pulse > 2 SCK (target) */
-	delay_10us(6);				//@@x  ispDelay();
+	delay_10us(6);					//@@x  ispDelay();
 	ISP_OUT |= (1 << ISP_RST);		/* RST high */
-	delay_10us(100);			//@@x  ispDelay(); -> 1ms
+	delay_10us(100);				//@@x  ispDelay(); -> 1ms
 	ISP_OUT &= ~((1 << ISP_RST)|(1 << ISP_LED));	/* RST low , LED Low*/
 }
 
@@ -283,7 +284,7 @@ static	void ispDisconnect(void)
 	ISP_DDR = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
 	/* switch pullups off */
 	//ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
-	ISP_OUT = 0x0f;				// PB7-4=Hi-Z PB3-0=Hi
+	ISP_OUT = 0b00001011;				// PB7-4=Hi-Z PB3-0=Hi
 }
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- execute Buffer ---------------------------- */
@@ -470,24 +471,25 @@ uchar usbFunctionWrite(uchar *data, uchar len)
 }
 
 /*
-       ATtiny2313
+         ATtiny2313
          ___    ___
-RESET   [1  |__| 20] Vcc
-PD0(NC) [2       19] PB7(SCK)
-PD1(NC) [3       18] PB6(MISO)
-XTAL2   [4       17] PB5(MOSI)
-XTAL1   [5       16] PB4(RST)
-PD2(12M)[6       15] PB3(BUSY LED)
-PD3     [7       14] PB2(READY LED)
-PD4     [8       13] PB1(NC)
-PD5(NC) [9       12] PB0(NC)
-GND     [10      11] PD6(NC)
-        ~~~~~~~~~~~
+RESET    [1  |__| 20] Vcc
+PD0(NC)  [2       19] PB7(SCK)
+PD1(NC)  [3       18] PB6(MISO)
+XTAL2    [4       17] PB5(MOSI)
+XTAL1    [5       16] PB4(RST)
+PD2(12M) [6       15] PB3(BUSY LED)
+PD3      [7       14] PB2(READY LED)
+PD4      [8       13] PB1(NC)
+PD5(PUP) [9       12] PB0(NC)
+GND      [10      11] PD6(NC)
+         ~~~~~~~~~~~
 
    ---------------------------------------
    SPI:     PB7-4 ===> [Target AVR Device](MISO‚ÆMOSI‚ÍŒð·)
    USB:     PD4   ===> USB D-
             PD3   ===> USB D+
+            PD5   ===> USB D- PULL UP
    XTAL:    XTAL1,2 => Crystal 12MHz
    PD2:     Clock Output(12MHz)
    ---------------------------------------

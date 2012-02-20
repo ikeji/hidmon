@@ -50,6 +50,7 @@ section at the end of this file).
 
 /* ----------------------- Optional Hardware Config ------------------------ */
 
+#if 1
 #define USB_CFG_PULLUP_IOPORTNAME   D
 /* If you connect the 1.5k pullup resistor from D- to a port pin instead of
  * V+, you can connect and disconnect the device from firmware by calling
@@ -61,6 +62,7 @@ section at the end of this file).
  * above) where the 1.5k pullup resistor is connected. See description
  * above for details.
  */
+#endif
 
 /* --------------------------- Functional Range ---------------------------- */
 
