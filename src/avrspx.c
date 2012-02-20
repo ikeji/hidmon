@@ -63,9 +63,10 @@
 /* b11.2  2009-08-06 RSTDISBL のビットを考慮  */
 /* b11.3  2009-08-14 DWEN のビットを考慮  */
 /* b11.4  2009-09-28 avrdudeとの互換性を強化（-e, Lock bit）*/
+/* b11.5  2010-02-13 HIDaspxのシリアル番号自動認識機能の追加 */
 /* TAB-SIZE = 4 */
 
-#define VERSION "b11.4"
+#define VERSION "b11.5"
 
 #include <stdio.h>
 #include <string.h>
@@ -263,6 +264,7 @@ bool f_hex_dump_mode;		/* 0 = Intel HEX, 1 = HEX dump */
 bool f_show_spec;			/* @@@ by senshu */
 
 bool f_ISP_DISBL_prog;		/* 1 = RST program enable, @@@ add by senshu */
+int  f_auto_retry = 3;		/* for HIDaspx (Auto detect, Retry MAX) */
 
 char *out_filename = NULL;	/* @@@ by senshu */
 FILE *redirect_fp;
@@ -1487,12 +1489,20 @@ int load_commands (int argc, char **argv)
 							{
 								char *s;
 								s = cp;
-								if (s) {
+
+								if (*cp == '?') {	/* 2010/02/13 15:48:27 */
+								    f_aspxlist = true;
+								    ++cp;
+									if (isdigit(*cp)){
+										f_auto_retry = atoi(cp);
+									}
+									if (f_auto_retry < 2) {
+										f_auto_retry = 2;
+									}
+									cp += strlen(cp);
+								} else if (s) {
 									if (*s == ':') s++;
-									if (*cp == '?') {
-									    f_aspxlist = true;
-									    ++cp;
-									} else if (isdigit(*s)) {
+									if (isdigit(*s)) {
 										if (s) {
 											int n, l;
 											l = strlen(s);

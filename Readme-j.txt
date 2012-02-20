@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2010年 2月12日（最新更新）
+                                                2010年 2月13日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1564,4 +1564,43 @@ Type = HIDaspx, Delay = 4
   VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0007]
   VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000]
   ※ シリアル指定を省略時は、(*)の0100が選択される。
+
+■2010-02-13
+	(1) -ph?にテスト回数指定機能を追加（エラーメッセージの見直し）
+	-ph? に続いて数値を指定できます。この値は、シリアル番号の連続読み出しテス
+	ト回数を指定できます。省略時の値は 3 です。1 回あたり 約 50m秒の時間が必
+	要なので、1000 を指定すれば、完了までに約 50秒間の時間が必要です。
+	正常にシリアル番号が得られると、検出したシリアル番号を表示し、一回でも不
+	一致があると
+
+	hidspx: HIDaspx(VID=16c0, PID=05df) is not found.
+
+	と表示します。
+
+	この機能により、HIDaspx と hidspx の安定度がテストできます。確実に動作す
+	る HIDaspx なら、1000000 （100 万回）を指定しても、エラーは生じません。
+	（100 万回のテストには約 12時間以上の時間が必要です）
+
+ 1. > time hidspx -ph?
+ VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+
+ real    0m0.266s
+
+ 2. > time hidspx -ph?10
+ VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+
+ real    0m0.594s
+
+ 3. > time hidspx -ph?100
+ VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+
+ real    0m4.813s
+
+ 4. > time hidspx -ph?1000
+ VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+
+ real    0m47.250s
+
+	(2) この版から、build-exe.batを追加し、firmwareの更新と実行ファイルの
+	　　更新を区別するようにしました。
 

@@ -451,9 +451,9 @@ int open_ifport (PORTPROP *pc)
 	if (pc->PortClass == TY_HIDASP)	{ //@@+ by k-k
 		if (hidasp_init(hidaspx_type, pc->SerialNumber) == HIDASP_MODE_ERROR)	{
 			if (hidaspx_type) {
-				sprintf(str_info, "HIDaspx-p(%s) not found.\n", pc->SerialNumber);
+				sprintf(str_info, "HIDaspx-p(%s) is not found.\n", pc->SerialNumber);
 			} else {
-				sprintf(str_info, "HIDaspx(%s) not found.\n", pc->SerialNumber);
+				sprintf(str_info, "HIDaspx(%s) is not found.\n", pc->SerialNumber);
 			}
 			pc->Info1 = str_info;
 			return 1;
@@ -628,7 +628,7 @@ int open_ifport (PORTPROP *pc)
 #if AVRSPX
 	if (pc->PortClass == TY_USBASP) {	//@@+ by t.k
 		if (usbasp_initialize(pc->SerialNumber) != 0) {
-			pc->Info1 = "USBasp not found.\n";
+			pc->Info1 = "USBasp is not found.\n";
 			return 1;
 		}
 		PortType = TY_USBASP;

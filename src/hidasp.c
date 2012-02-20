@@ -474,7 +474,7 @@ static int check_product_string(HANDLE handle, const char *serial, int list_mode
 	char string1[BUFF_SIZE];
 	char string2[BUFF_SIZE];
 	char string3[BUFF_SIZE];
-	char tmp[3][BUFF_SIZE];
+	char tmp[2][BUFF_SIZE];
 
 	Sleep(20);
 	if (!HidD_GetManufacturerString(handle, unicode, sizeof(unicode))) {
@@ -490,17 +490,21 @@ static int check_product_string(HANDLE handle, const char *serial, int list_mode
 
 	// シリアル番号のチェックを厳密化 (2010/02/12 13:24:08)
 	if (serial[0]=='*') {
-		for (i=0; i<3; i++) {
+		extern int  f_auto_retry;		/* for HIDaspx (Auto detect, Retry MAX) */
+
+		for (i=0; i<f_auto_retry; i++) {
 			Sleep(40);
 			if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
 				return -1;
 			}
-			uni_to_string(tmp[i], unicode);
-		}
-		if (strcmp(tmp[0], tmp[1])==0 && strcmp(tmp[0], tmp[2])==0) {
-			strcpy(string3, tmp[0]);	// OK
-		} else {
-			return -1;
+			uni_to_string(tmp[i%2], unicode);
+			if (i>0 && ((i%2) == 1)) {
+				if (strcmp(tmp[0], tmp[1])==0) {
+					strcpy(string3, tmp[0]);	// OK
+				} else {
+					return -1;
+				}
+			}
 		}
 		if (list_mode) {
 			if (first) {
@@ -642,7 +646,7 @@ int hidasp_list(char * string)
 		rc = 0;
 	}
 	if (found_hidaspx==0) {
-		fprintf(stderr, "%s not found.\n", string);
+		fprintf(stderr, "%s: HIDaspx(VID=%04x, PID=%04x) is not found.\n", string, MY_VID, MY_PID);
 	}
 	if (hHID_DLL) {
 		FreeLibrary(hHID_DLL);
