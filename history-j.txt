@@ -878,3 +878,10 @@ Type = HIDaspx, Delay = 4
 	libusb-win32(libusb0.dll)への依存度（存在しないとエラーになる）を改良し、
 	本当に必要な場合のみ、呼び出す方式に変更しました。
 
+■2010-08-16
+
+	(1) develop\build-exe.bat を修正
+	usbtoolのソースを添付したので、build-exe.batも修正しました。
+	0814 版は、make clean を実施していないために、中間ファイルが残り、
+	500kB ほど大きなアーカイブになっていたのを修正しました。
+

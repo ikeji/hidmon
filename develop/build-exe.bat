@@ -9,11 +9,19 @@ make
 make install
 make clean
 REM
+echo ======= hidspx-gcc.exe build =======
 make -f Makefile.gcc clean
 make -f Makefile.gcc
 make -f Makefile.gcc install
 make -f Makefile.gcc clean
-cd ..
+REM
+echo ======= usbtool.exe build =======
+cd libusb\usbtool
+make clean
+make
+make install
+make clean
+cd ..\..\..
 echo ======= All update. =======
 popd
 avr-size ../bin/firmware/*.hex

@@ -13,11 +13,19 @@ make
 make install
 make clean
 REM
+echo ======= hidspx-gcc.exe build =======
 make -f Makefile.gcc clean
 make -f Makefile.gcc
 make -f Makefile.gcc install
 make -f Makefile.gcc clean
-cd ..
+REM
+echo ======= usbtool.exe build =======
+cd libusb\usbtool
+make clean
+make
+make install
+make clean
+cd ..\..\..
 echo ======= firmware build =======
 cd firmware
 
@@ -56,4 +64,8 @@ echo ======= All update. =======
 popd
 avr-size ../bin/firmware/*.hex
 REM upx -9 ../bin/hid*.exe
+imagecfg -a 1 hidmon.dll
+imagecfg -a 1 hidmon.exe
+imagecfg -a 1 hidspx-gcc.exe
+imagecfg -a 1 hidspx.exe
 pause
