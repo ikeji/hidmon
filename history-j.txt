@@ -885,3 +885,8 @@ Type = HIDaspx, Delay = 4
 	0814 版は、make clean を実施していないために、中間ファイルが残り、
 	500kB ほど大きなアーカイブになっていたのを修正しました。
 
+■2010-08-19
+
+	(1) hidspx-GUI.exe を修正
+	avrdude-GUIで採用した右クリックメニューを追加(srec_**.exeも添付)
+
