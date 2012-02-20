@@ -1125,28 +1125,43 @@ int load_commands (int argc, char **argv)
 	}
 	cmdlst[cmd] = NULL;
 
-#if 1	/* Requst by miyamae , @@@ by senshu */
-	{	int i;
+#if 1	/* Requst from miyamae , @@@ by senshu */
+	{
 
-#define MESS_STR	"#### %s command line ####\n"
+		int i, found, len;
+		char *mess_str = "#### %s command line ####\n";
+		char *show_options = "--show-options";
+		int opt_len;
 
+		opt_len = strlen(show_options);
+		found = 0;
 		for (i = 0; cmdlst[i]!= NULL; i++) {
-			if (strcmp(cmdlst[i], "--show-options") == 0) {
-				printf(MESS_STR, progname);
-				printf("%s ", progname);
-
-				for (i=0; i<cmd; i++){
-					if( cmdlst[i][0]) {
-						printf("%s ", cmdlst[i]);
-					}
+			if (strcmp(cmdlst[i], show_options) == 0) {
+				found = 1;
+			} else if (strncmp(cmdlst[i], show_options, opt_len) == 0) {
+				if (cmdlst[i][opt_len] == '-') {
+					found = 0;
 				}
-				printf("\n");
-				for (i=0; i < (strlen(MESS_STR) + strlen(progname) -3); i++) {
-					printf("#");
-				}
-				printf("\n");
-				break;
 			}
+		}
+
+		if (found) {
+			printf(mess_str, progname);
+
+			len = 0;
+			len += printf("%s ", progname);
+
+			/* list options */
+			for (i=0; i<cmd; i++){
+				if (strncmp(cmdlst[i], show_options, opt_len) != 0) {
+					len += printf("%s ", cmdlst[i]);
+				}
+			}
+			printf("\n");
+			for (i=0; i < (len-1); i++) {
+				printf("-");
+			}
+			printf("\n");
 		}
 	}
 #endif
