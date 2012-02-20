@@ -1113,10 +1113,6 @@ void put_hexline (
 	const BYTE *p;
 
 	/* Byte count, Offset address and Record type */
-	if (ofs % 256 == 0) {
-		/* hidspx-GUI‘Îô(˜A‘±‚Å‘å—Ê‚Ìo—Í‚ÌHabgUp‘Îô) */
-		Sleep(1);
-	}
 	if (f_hex_dump_mode) {
 		if (ofs % 256 == 0) {
 			fprintf(fp, "\n");
