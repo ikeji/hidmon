@@ -1158,14 +1158,14 @@ void put_hexline (
 	}
 	if (f_hex_dump_mode) {
 		int ch;
-		fprintf(fp, " [");
+		fprintf(fp, " |");
 		while(char_count--) {
 			ch = *p++;
 			if (!isgraph(ch))
 				ch = '.';
 			fprintf(fp, "%c", ch);
 		}
-		fprintf(fp, "]");
+		fprintf(fp, "|");
 	}
 	/* Check sum */
 	if (f_hex_dump_mode) {
@@ -3044,6 +3044,9 @@ int main (int argc, char **argv)
 	/* Read device and terminate if -R{P|E|F} command is specified */
 	if(Command[0] == 'r') {
 		rc = read_device(Command[1]);
+#if 0
+		fprintf(stderr, "hidspx (rc = %d)\n", rc);
+#endif
 		terminate(rc);
 		return rc;
 	}
