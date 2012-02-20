@@ -94,6 +94,7 @@ typedef struct _DEVPROP {
 	char	FuseType;		/* Device specific fuse type */
 	char	Cals;			/* Number of calibration bytes */
 	BYTE	FuseMask[3];	/* Valid fuse bit mask [low, high, ext] */
+	BYTE	RSTDSBL[2];		/* RSTDSBL:	Valid fuse bit mask [FUSE type, Bit value] */
 	WORD	DocNumber;		/* http://www.avrfreaks.net/ @@@ by senshu */
 	char	*part_id;		/* Avrdude part's ID @@@ by senshu */
 } DEVPROP;

@@ -1,11 +1,27 @@
 @echo off
 REM 2008-11-13 (c) written by senshu
+REM 2009-08-07 Windows 98用のチェックを追加
 REM set COPY=echo (copy)
 set COPY=copy
 
 set PROJECT=hidspx
 REM コピー先のディレクトリをセットする
 set TARGET=C:\bin
+
+REM OSのチェック
+if "%comspec%"=="" goto unknown
+if "%comspec%"=="c:\command.com" goto Win9x
+if "%comspec%"=="%systemroot%\system32\cmd.exe" goto WinNT
+
+:unknown
+echo OSの種類が分かりません。
+goto END
+
+:Win9x
+echo 手作業で、ファイル群のコピーを行ってください。
+goto END
+
+:WinNT
 
 if "%1"=="" (
 REM 引数なし（標準設定）
@@ -47,7 +63,8 @@ IF NOT EXIST %TARGET% (
   mkdir %TARGET%
 )
 echo ==== [COPY to %TARGET%] ====
-echo hidspx.exe, hidspx-gcc.exe hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe, hidspx-GUI.exe
+echo hidspx.exe, hidspx-gcc.exe hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe,
+echo hidspxG.exe, hidspx-GUI.exe
 echo firmware\genserial.awk , firmware\main-12.hex , firmware\firmprog.bat
 echo ..\HIDaspx.pdf ..\hidspx_tips.pdf ..\Readme-j.txt ..\avrx-tool.txt
 %COPY% hidspx.exe %TARGET% > NUL
@@ -63,6 +80,7 @@ IF EXIST %TARGET%\hidspx.ini (
 %COPY% usbtool.exe %TARGET% > NUL
 %COPY% hidmon.exe %TARGET% > NUL
 %COPY% hidmon.dll %TARGET% > NUL
+%COPY% hidspxG.exe %TARGET% > NUL
 %COPY% hidspx-GUI.exe %TARGET% > NUL
 %COPY% firmware\genserial.awk %TARGET% > NUL
 %COPY% firmware\main-12.hex %TARGET% > NUL

@@ -2,7 +2,7 @@
 
                                                 2008”N 9Œ22“úiŒöŠJŠJnj
                                                           b
-                                                2009”N 6Œ23“úiÅVXVj
+                                                2009”N 8Œ 7“úiÅVXVj
 
                                       RŒ`Œ§—§Y‹Æ‹Zp’ZŠú‘åŠwZ  çHLK
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -15,6 +15,8 @@
 
 HIDaspx ‚ÍAƒhƒ‰ƒCƒo‚ÌƒCƒ“ƒXƒg[ƒ‹‚ª•s—v‚Ì USB Ú‘±•û®‚Ì AVR ƒ‰ƒCƒ^‚Å‚·B
 hidmon ƒRƒ}ƒ“ƒh‚â DLL ‚ğ—˜—p‚·‚ê‚ÎA”Ä—p‚Ì USB-IO ‚Æ‚µ‚Ä‚à—˜—p‚Å‚«‚Ü‚·B
+Windows 98SE/2000/XP/VistaALinux/Mac OS‚Å‚Ì“®ì‚ğŠm”F‚µ‚Ä‚¢‚Ü‚·B
+Linux/Mac OS—p‚Ìhidspx‚ÍA•Ê“rŒöŠJ‚ÌƒA[ƒJƒCƒu‚ğ“üè‚µ‚Ä‚­‚¾‚³‚¢B
 
 •r‹l“°‚³‚ñ‚Ìì¬‚³‚ê‚½ HIDasp ‚ğŒ³‚ÉAå‚É iruka ‚³‚ñ‚Æ senshu ‚ª‹¤“¯‚Å‰ü—Ç‚ğs‚È
 ‚¢‚Ü‚µ‚½Bˆê’è‚Ì¬‰Ê‚ª“¾‚ç‚ê‚Ü‚µ‚½‚Ì‚ÅA2008”N 9Œ 22“ú‚æ‚èŒöŠJ‚ğŠJn‚µ‚Ü‚µ‚½B
@@ -40,8 +42,20 @@ HIDaspx ‚ÍA•r‹l“°‚³‚ñ‚Ì hidasp ‚Æ“¯ˆê‚Ìƒn[ƒhƒEƒFƒA‚Å‚·‚ªAfirmware ‚Æ hidspx ƒ
 
 y2z ƒA[ƒJƒCƒu‚Ì\¬
 
+ÅV‚Ìî•ñ‚ÍAˆÈ‰º‚ÌURL‚ğQÆ‚µ‚Ä‚­‚¾‚³‚¢B
+
+http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx00
+
 .\
 „¥„Ÿ ŠeíƒhƒLƒ…ƒƒ“ƒg	c BSDƒ‰ƒCƒZƒ“ƒX(*1)
+„ 	Readme-j.txt	c ‚±‚Ìƒtƒ@ƒCƒ‹‚Å‚·B
+„ 	HIDaspx.pdf	c HIDaspx‚ÉŠÖ‚·‚éî•ñW
+„ 	hidspx_tips.pdf	c hidspxŠÖ˜A‚ÌƒmƒEƒnƒEW
+„ 	avrspx-doc.txt	c avrspxƒRƒ}ƒ“ƒh‚Ì‰ü—Ç‰ß’ö
+„ 	avrx-tool.txt	c hidspxƒRƒ}ƒ“ƒh‚Ìg‚¢•û
+„ 	Changelog.txt
+„ 	License.txt
+„ 	Readme.txt
 „¥„Ÿbin
 „ 	libusb0.dll	c LGPL
 „ ------------------------ (BSDƒ‰ƒCƒZƒ“ƒX) -----‚±‚±‚©‚ç-----------
@@ -54,7 +68,8 @@ HIDaspx ‚ÍA•r‹l“°‚³‚ñ‚Ì hidasp ‚Æ“¯ˆê‚Ìƒn[ƒhƒEƒFƒA‚Å‚·‚ªAfirmware ‚Æ hidspx ƒ
 „ 	fuse_en_orig.txtc FUSEî•ñ‚ğÚ×•\¦‚·‚éˆ×‚ÌƒeƒLƒXƒgƒtƒ@ƒCƒ‹i‰pŒêŠÂ‹«—pj
 „ 	hidmon.exe	c HIDaspx‚ÌƒeƒXƒg‚É—˜—p
 „ 	hidmon.dll	c HIDaspx‚ğŠO•”ƒvƒƒOƒ‰ƒ€‚©‚ç—˜—p‚·‚é‚É—˜—p
-„ 	hidspx-GUI.exe	c hidspx—p‚ÌGUIƒtƒƒ“ƒgƒGƒ“ƒh(Visual C# ‚Åì¬)
+„ 	hidspx-GUI.exe	c hidspx—pGUIƒtƒƒ“ƒgƒGƒ“ƒh(Às‚É‚Í.NET Framework‚ª•K—v)
+„ 	hidspxG.exe	c hidspx—pGUIƒtƒƒ“ƒgƒGƒ“ƒh(Às‚É‚Í.NET Framework‚Í•s—v)
 „ ------------------------ (BSDƒ‰ƒCƒZƒ“ƒX)  -----‚±‚±‚Ü‚Å-----------
 „ 
 „¥„Ÿbin			c ŠeÀsƒtƒ@ƒCƒ‹iBSDƒ‰ƒCƒZƒ“ƒXj
@@ -109,12 +124,13 @@ http://www.gnu.org/licenses/gpl-faq.ja.html
 “ú•t‚ÍA‰ü—Ç‚É‚æ‚èˆÙ‚È‚é‚±‚Æ‚ª‚ ‚è‚Ü‚·j
 
 **************************** d—v ****************************
-2009/05/25  12:10                2,394 setup.bat
+2009/08/07  09:22                2,787 setup.bat
 2009/05/21  14:29               32,780 hidmon.dll
 2007/03/20  11:33               43,520 libusb0.dll
-2009/05/21  14:29               30,208 hidmon.exe
-2009/05/12  08:59               72,192 hidspx.exe
-2009/05/12  09:00               43,008 hidspx-gcc.exe
+2009/05/21  14:29               16,384 hidmon.exe
+2009/08/07  08:54               70,144 hidspx.exe
+2009/07/16  09:32              237,056 hidspxG.exe
+2009/08/07  08:54               43,008 hidspx-gcc.exe
 2009/05/11  16:48               61,440 hidspx-GUI.exe
 2008/09/09  12:54                9,216 usbtool.exe
 2009/04/19  11:51                1,233 hidspx.ini
@@ -123,6 +139,8 @@ http://www.gnu.org/licenses/gpl-faq.ja.html
 2009/03/26  11:14               22,155 fuse_en.txt
 2008/12/07  13:08               22,152 fuse_en_orig.txt
 2008/12/10  08:41               20,115 fuse_j.txt
+              15 ŒÂ‚Ìƒtƒ@ƒCƒ‹             607,041 ƒoƒCƒg
+
 **************************** d—v ****************************
 
 ‚±‚ê‚ç‚Ìƒtƒ@ƒCƒ‹‚ÍA‘ŠŒİ‚ÉŠÖŒW‚µ‚Ä‚¢‚Ü‚·‚Ì‚ÅAhidspx.exe ‚¾‚¯‚Å‚È‚­ˆêŠ‡‚µ‚ÄƒRƒs[
@@ -166,7 +184,9 @@ circuit ƒtƒHƒ‹ƒ_‚ ‚é‰ñ˜H}iHIDaspx.pngj‚ğQl‚Éƒn[ƒhƒEƒFƒA‚ğ»ì‚µ‚Ü‚·B‚È‚¨
 q‚É‚ÍƒNƒŠƒXƒ^ƒ‹‚ğÀ‘•‚µ‚Ä‚­‚¾‚³‚¢BƒZƒ‰ƒ~ƒbƒNU“®q‚Å‚Í‰ñ˜H‚ª—v‹‚·‚é¸“x‚ÆˆÀ’è
 «‚ğ–‚½‚·‚±‚Æ‚ª‚Å‚«‚Ü‚¹‚ñB
 ‚±‚ÌŒã‚ÅAbin/main-12.hex ‚ğ Tiny2313 ‚É‘‚«‚ñ‚Å‚­‚¾‚³‚¢Bƒqƒ…[ƒYİ’è‚ÍCŠO•t
-‚¯‚Ì 12MHz ƒNƒŠƒXƒ^ƒ‹‚É‡‚í‚¹AˆÈ‰º‚Ì‚æ‚¤‚Éİ’è‚µ‚Ü‚·B
+‚¯‚Ì 12MHz ƒNƒŠƒXƒ^ƒ‹‚É‡‚í‚¹AˆÈ‰º‚Ì‚æ‚¤‚Éİ’è‚µ‚Ü‚·B‚½‚¾‚µAŠO•”‚É”­UŠí‚ğÚ‘±
+‚µ‚Ä‚¢‚È‚¢‚É‚±‚Ìİ’è‚ğs‚¤‚ÆA”­UŠí‚ğÚ‘±‚·‚é‚Ü‚Å ISP •û®‚Ìƒ‰ƒCƒ^‚É‚æ‚é“Ç‚İ‘
+‚«‚ªo—ˆ‚È‚­‚È‚è‚Ü‚·‚Ì‚ÅA‚²’ˆÓ‚­‚¾‚³‚¢B
 
 Low: 11111111 (0xFF)
      ||||++++-- CKSEL[3:0] ƒVƒXƒeƒ€ƒNƒƒbƒN‘I‘ğ
@@ -178,7 +198,7 @@ High:11-11011 (0xDB)
      |||||||+-- RSTDISBL (RESETƒsƒ“ 1:—LŒø, 0:–³Œø(PA2))
      ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
      |||+-- WDTON (WDT 0:íON, 1:’Êí)
-     ||+-- SPIEN (1:ISP‹Ö~, 0:ISP‹–‰Â) ¦Parallel‚Ì‚İ
+     ||+-- SPIEN (1:ISP‹Ö~, 0:ISP‹–‰Â) ¦Parallel‚Ì‚İ(*2)
      |+-- EESAVE (Á‹‚ÅEEPROM‚ğ 1:Á‹, 0:•Û)
      +-- DWEN (On-ChipƒfƒoƒbƒO 1:–³Œø, 0:—LŒø)
 
@@ -199,6 +219,13 @@ Ext: -------1 (0xFF)
 “Ç‚İ‘‚«‚ªo—ˆ‚È‚­‚È‚è‚Ü‚·‚Ì‚ÅA‚²’ˆÓ‚­‚¾‚³‚¢B
 
 > hidspx -d4 -fL0xff -fH0xdb -fX0xff <ENTER>
+
+yFUSEî•ñ‚Ì•â‘«zc ˆÈ‰º‚ÌFUSEî•ñ‚Ì•ÏX‚ÍA\•ª’ˆÓ‚µ‚Ä‚­‚¾‚³‚¢B
+*1 SPIEN (1:ISP‹Ö~, 0:ISP‹–‰Â)
+   ‚±‚Ìbit‚ğ1‚É‚·‚é‚ÆISP‚ª–³Œø‚É‚È‚é‚Ì‚ÅAhidspx‚Å‚Í1‚ÌWrite‚ğs‚¢‚Ü‚¹‚ñB
+
+*2 RSTDISBL (RESETƒsƒ“ 1:—LŒø, 0:–³Œø)
+   RSTƒsƒ“‚ğ–³Œø(0)‚ÅI/O‚ÉŠ„“–‚Ä‚é‚ÆAISP‚ªg—p‚Å‚«‚È‚­‚È‚è‚Ü‚·B
 
 
 y5z g‚¢•û
@@ -1243,3 +1270,21 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 ¡2009-06-23
 	hidspx-gcc.exe‚É‚ÄA-wƒIƒvƒVƒ‡ƒ“‚ğw’è‚µ‚½ê‡AƒƒbƒZ[ƒWo—Í‚ª’x‚­‚È‚é‚Ì‚ğC³
 	hidspxGƒRƒ}ƒ“ƒh‚ÅA-w3‚Ì‚æ‚¤‚Éw’è‚µ‚½ê‡A“à•”ƒGƒ‰[‚É‚È‚é‚Ì‚ğC³
+
+¡2009-08-07
+	RST ƒsƒ“‚ğ–³Œø‰»ƒrƒbƒg‚Ì‘‚«‚İ‚ğƒ`ƒFƒbƒN‚µAŒx‚·‚éBRST ƒsƒ“‚Ì–³Œø‰»
+	Œã‚ÍAhidspx ‚©‚ç‚Ì‘‚«‚İ‚Í–³Œø‚É‚È‚é‚Ì‚ÅA‚±‚Ìƒ`ƒFƒbƒN‹@\‚ğ’Ç‰Á‚µ‚½B
+	¦ IO ƒsƒ“‚ª•s‘«‚µA‰½‚Æ‚µ‚Ä‚à IO ƒsƒ“‚ÉŠ„“–‚Ä‚½‚¢ê‡‚ÉŒÀ‚èA‚±‚Ì‘‚«
+	   ‚İ‚ğs‚¤‚±‚ÆB‚±‚Ìî•ñ‚ğ‘‚«‚İŒã‚Í ISP ‚Í–³Œø‚É‚È‚è‚Ü‚·B‰ğœ‚É‚Í‚
+	   “dˆ³ƒpƒ‰ƒŒƒ‹ƒvƒƒOƒ‰ƒ}‚ª•K—v‚Å‚·B
+
+	—áj
+	>hidspx -fH0x07
+	Detected device is ATtiny26.
+	WARN: RST PIN disable detected. If you hope for the writing,
+	Enter the -f#H0x07 option.
+
+	-f#‚Ì‚æ‚¤‚Éw’è‚·‚ê‚ÎA‚±‚Ì‘‚«‚İ‚ğÀs‚Å‚«‚éBi×S‚Ì’ˆÓ‚ª•K—v‚Å‚·j
+
+	‚È‚¨ARSTDISBLƒrƒbƒg‚ÍAˆê•”‚Ì­ƒsƒ“AVRƒ}ƒCƒRƒ“‚É‚Ì‚İÀ‘•‚³‚ê‚Ä‚¢‚Ü‚·B
+	¦ ‚±‚Ì‰ü—Ç‚ÉŠÖ‚µ‚Ä‚ÍAje1htm‚ÆkugaAkawana‚É•Œ¾‚ğ‚¢‚½‚¾‚«‚Ü‚µ‚½B

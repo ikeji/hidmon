@@ -60,9 +60,10 @@
 /*---------------------------------------------------------------------------*/
 /* b10.12 2008-12-10 senshuがHIDaspxへの対応を追加、avrsp R0.44の変更を反映  */
 /*---------------------------------------------------------------------------*/
+/* b11.2  2009-08-06 RSTDSBL のビットを考慮  */
 /* TAB-SIZE = 4 */
 
-#define VERSION "b11.1"
+#define VERSION "b11.2"
 
 #include <stdio.h>
 #include <string.h>
@@ -99,6 +100,7 @@ typedef struct _DEVPROP {
 	char	FuseType;		/* FT:			Device specific fuse type */
 	char	Cals;			/* Cals:		Number of calibration bytes */
 	BYTE	FuseMask[3];	/* FuseMasks:	Valid fuse bit mask [low, high, ext] */
+	BYTE	RSTDSBL[2];		/* RSTDSBL:	Valid fuse bit mask [FUSE type, Bit value] */
 	WORD	DocNumber;		/* http://www.avrfreaks.net/ @@@ by senshu */
 	char	*part_id;		/* Avrdude part's ID @@@ by senshu */
 } DEVPROP;
@@ -106,80 +108,80 @@ typedef struct _DEVPROP {
 
 const DEVPROP DevLst[] =	/* Device property list */
 {
-	/* Name,         ID,    Signature,              FS,  PS,   ES, EP*,FW, EW,   PV,   LB, FT, Cals, FuseMasks, DocNum, part_id */
+	/* Name,         ID,    Signature,              FS,  PS,   ES, EP*,FW, EW,   PV,   LB, FT, Cals, FuseMasks,     RSTDSBL, DocNum, part_id */
 //------- AT90S
-	{ "90S1200",     S1200, {0x1E, 0x90, 0x01},   1024,   0,   64,  0, 11, 11, 0xFF, 0xF9, 0 ,0, {0},                 8, "1200"},
-	{ "90S2313",     S2313, {0x1E, 0x91, 0x01},   2048,   0,  128,  0, 11, 11, 0x7F, 0xF9, 0 ,0, {0},                 9, "2313"},
-	{ "90S2323",     S2323, {0x1E, 0x91, 0x02},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             30, "t22"},
-	{ "90S2333",     S2333, {0x1E, 0x91, 0x05},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F},             46, "2333"},
-	{ "90S2343",     S2343, {0x1E, 0x91, 0x03},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             32, "2343"},
-	{ "90S4414",     S4414, {0x1E, 0x92, 0x01},   4096,   0,  256,  0, 11, 11, 0x7F, 0xF9, 0, 0, {0},                48, "4414"},
-	{ "90S4433",     S4433, {0x1E, 0x92, 0x03},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F},             34, "4433"},
-	{ "90S4434",     S4434, {0x1E, 0x92, 0x02},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             13, "4434"},
-	{ "90S8515",     S8515, {0x1E, 0x93, 0x01},   8192,   0,  512,  0, 11, 11, 0x7F, 0xF9, 0, 0, {0},                37, "8515"},
-	{ "90S8535",     S8535, {0x1E, 0x93, 0x03},   8192,   0,  512,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             11, "8535"},
+	{ "90S1200",     S1200, {0x1E, 0x90, 0x01},   1024,   0,   64,  0, 11, 11, 0xFF, 0xF9, 0 ,0, {0},               {0, 0x00},   8, "1200"},
+	{ "90S2313",     S2313, {0x1E, 0x91, 0x01},   2048,   0,  128,  0, 11, 11, 0x7F, 0xF9, 0 ,0, {0},               {0, 0x00},   9, "2313"},
+	{ "90S2323",     S2323, {0x1E, 0x91, 0x02},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},            {0, 0x00},  30, "t22"},
+	{ "90S2333",     S2333, {0x1E, 0x91, 0x05},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F},            {0, 0x00},  46, "2333"},
+	{ "90S2343",     S2343, {0x1E, 0x91, 0x03},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},            {0, 0x00},  32, "2343"},
+	{ "90S4414",     S4414, {0x1E, 0x92, 0x01},   4096,   0,  256,  0, 11, 11, 0x7F, 0xF9, 0, 0, {0},               {0, 0x00},  48, "4414"},
+	{ "90S4433",     S4433, {0x1E, 0x92, 0x03},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 2, 0, {0x1F},            {0, 0x00},  34, "4433"},
+	{ "90S4434",     S4434, {0x1E, 0x92, 0x02},   4096,   0,  256,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},            {0, 0x00},  13, "4434"},
+	{ "90S8515",     S8515, {0x1E, 0x93, 0x01},   8192,   0,  512,  0, 11, 11, 0x7F, 0xF9, 0, 0, {0},               {0, 0x00},  37, "8515"},
+	{ "90S8535",     S8535, {0x1E, 0x93, 0x03},   8192,   0,  512,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},            {0, 0x00},  11, "8535"},
 //------- ATtiny
-	{ "tiny12",      T12,   {0x1E, 0x90, 0x05},   1024,   0,   64,  2,  5,  8, 0xFF, 0xF9, 3, 1, {0xFF},             15, "t12"},
-	{ "tiny13",      T13,   {0x1E, 0x90, 0x07},   1024,  32,   64,  4,  6,  5, 0xFF, 0xFC, 5, 1, {0x7F, 0x1F},       74, "t13"},
-	{ "tiny15",      T15,   {0x1E, 0x90, 0x06},   1024,   0,   64,  2,  6, 11, 0xFF, 0xF9, 3, 1, {0xD3},             44, "t15"},
-	{ "tiny22",      T22,   {0x1E, 0x91, 0x06},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},             25, "2343"},
-	{ "tiny2313",    T2313, {0x1E, 0x91, 0x0A},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 2, {0xFF, 0xDF, 0x01}, 75, "t2313"},
-	{ "tiny24",      T24,   {0x1E, 0x91, 0x0B},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},139, "t24"},
-	{ "tiny25",      T25,   {0x1E, 0x91, 0x08},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},100, "t25"},
-	{ "tiny26",      T26,   {0x1E, 0x91, 0x09},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 5, 4, {0xFF, 0x17},       60, "t26"},
-	{ "tiny261",     T261,  {0x1E, 0x91, 0x0C},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},142, "t261"},
-	{ "tiny44",      T44,   {0x1E, 0x92, 0x07},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},140, "t44"},
-	{ "tiny45",      T45,   {0x1E, 0x92, 0x06},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},101, "t45"},
-	{ "tiny461",     T461,  {0x1E, 0x92, 0x08},   4096,  64,  256,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},143, "t461"},
-	{ "tiny84",      T84,   {0x1E, 0x93, 0x0C},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},141, "t84"},
-	{ "tiny85",      T85,   {0x1E, 0x93, 0x0B},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},102, "t85"},
-	{ "tiny861",     T861,  {0x1E, 0x93, 0x0D},   8192,  64,  512,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},144, "t861"},
+	{ "tiny12",      T12,   {0x1E, 0x90, 0x05},   1024,   0,   64,  2,  5,  8, 0xFF, 0xF9, 3, 1, {0xFF},            {0, 0x10},  15, "t12"},
+	{ "tiny13",      T13,   {0x1E, 0x90, 0x07},   1024,  32,   64,  4,  6,  5, 0xFF, 0xFC, 5, 1, {0x7F, 0x1F},      {1, 0x01},  74, "t13"},
+	{ "tiny15",      T15,   {0x1E, 0x90, 0x06},   1024,   0,   64,  2,  6, 11, 0xFF, 0xF9, 3, 1, {0xD3},            {0, 0x10},  44, "t15"},
+	{ "tiny22",      T22,   {0x1E, 0x91, 0x06},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 1, 0, {0x01},            {0, 0x00},  25, "2343"},
+	{ "tiny2313",    T2313, {0x1E, 0x91, 0x0A},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 2, {0xFF, 0xDF, 0x01},{1, 0x01}, 75, "t2313"},
+	{ "tiny24",      T24,   {0x1E, 0x91, 0x0B},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},139, "t24"},
+	{ "tiny25",      T25,   {0x1E, 0x91, 0x08},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},100, "t25"},
+	{ "tiny26",      T26,   {0x1E, 0x91, 0x09},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 5, 4, {0xFF, 0x17}      ,{1, 0x10}, 60, "t26"},
+	{ "tiny261",     T261,  {0x1E, 0x91, 0x0C},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},142, "t261"},
+	{ "tiny44",      T44,   {0x1E, 0x92, 0x07},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},140, "t44"},
+	{ "tiny45",      T45,   {0x1E, 0x92, 0x06},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},101, "t45"},
+	{ "tiny461",     T461,  {0x1E, 0x92, 0x08},   4096,  64,  256,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},143, "t461"},
+	{ "tiny84",      T84,   {0x1E, 0x93, 0x0C},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},141, "t84"},
+	{ "tiny85",      T85,   {0x1E, 0x93, 0x0B},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},102, "t85"},
+	{ "tiny861",     T861,  {0x1E, 0x93, 0x0D},   8192,  64,  512,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80},144, "t861"},
 //------- ATmega
-	{ "mega48",      M48,   {0x1E, 0x92, 0x05},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01}, 76, "m48"},
-	{ "mega48P",     M48P,  {0x1E, 0x92, 0x0A},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01}, 76, "m48p"},
-	{ "mega8",       M8,    {0x1E, 0x93, 0x07},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       52, "m8"},
-	{ "mega8515",    M8515, {0x1E, 0x93, 0x06},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       63, "m8515"},
-	{ "mega8535",    M8535, {0x1E, 0x93, 0x08},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       64, "m8535"},
-	{ "mega88",      M88,   {0x1E, 0x93, 0x0A},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 77, "m88"},
-	{ "mega88P",     M88P,  {0x1E, 0x93, 0x0F},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 77, "m88p"},
-	{ "mega16",      M16,   {0x1E, 0x94, 0x03},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       56, "m16"},
-	{ "mega161",     M161,  {0x1E, 0x94, 0x01},  16384, 128,  512,  0, 20,  5, 0xFF, 0xFC, 4, 0, {0x7F},             41, "m161"},
-	{ "mega162",     M162,  {0x1E, 0x94, 0x04},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x1E}, 67, "m162"},
-	{ "mega163",     M163,  {0x1E, 0x94, 0x02},  16384, 128,  512,  0, 18,  5, 0xFF, 0xFC, 5, 1, {0xEF, 0x07},       38, "m163"},
-	{ "mega164P",    M164P, {0x1E, 0x94, 0x0A},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 99, "m164p"},
-	{ "mega165",     M165,  {0x1E, 0x94, 0x07},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0E}, 79, "m165"},
-	{ "mega168",     M168,  {0x1E, 0x94, 0x06},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78, "m168"},
-	{ "mega168P",    M168P, {0x1E, 0x94, 0x0B},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78, "m168p"},
-	{ "mega169",     M169,  {0x1E, 0x94, 0x05},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 73, "m169"},
-	{ "mega323",     M323,  {0x1E, 0x95, 0x01},  32768, 128, 1024,  4, 18,  5, 0xFF, 0xFC, 5, 1, {0xCF, 0xEF},       50, "m323"},
-	{ "mega325/9",   M325,  {0x1E, 0x95, 0x03},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 83, "m325"},
-	{ "mega3250/90", M3250, {0x1E, 0x95, 0x04},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 84, "m3250"},
-/**/{ "mega325P",    M325P, {0x1E, 0x95, 0x0D},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 83, "m325"},
-/**/{ "mega3250P",   M3250P,{0x1E, 0x95, 0x0E},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 84, "m3250p"},
-	{ "mega328P",    M328P, {0x1E, 0x95, 0x0F},  32768, 128, 1024,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},  0, "m328P"},
-	{ "mega32",      M32,   {0x1E, 0x95, 0x02},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF},       69, "m32"},
-	{ "mega324P",    M324P, {0x1E, 0x95, 0x08},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104, "m324p"},
-/**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104, "m324pa"},
-	{ "mega603",     M603,  {0x1E, 0x96, 0x01},  65536, 256, 2048,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B},              0, "m603"},
-	{ "mega644",     M644,  {0x1E, 0x96, 0x09},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106, "m644"},
-	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106, "m644p"},
-	{ "mega645/9",   M645,  {0x1E, 0x96, 0x03},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 87, "m645"},
-	{ "mega6450/90", M6450, {0x1E, 0x96, 0x04},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 88, "m6450"},
-	{ "mega64",      M64,   {0x1E, 0x96, 0x02},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03}, 58, "m64"},
-	{ "mega640",     M640,  {0x1E, 0x96, 0x08},  65536, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 91, "m640"},
-	{ "mega103",     M103,  {0x1E, 0x97, 0x01}, 131072, 256, 4096,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B},              7, "m103"},
-	{ "mega128",     M128,  {0x1E, 0x97, 0x02}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03}, 54, "m128"},
-	{ "mega1280",    M1280, {0x1E, 0x97, 0x03}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 92, "m1280"},
-	{ "mega1281",    M1281, {0x1E, 0x97, 0x04}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 93, "m1281"},
-/**/{ "mega1284P",   M1284P,{0x1E, 0x97, 0x05}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},  0, "m1284p"},
-	{ "mega2560",    M2560, {0x1E, 0x98, 0x01}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 95, "m2560"},
-	{ "mega2561",    M2561, {0x1E, 0x98, 0x02}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 94, "m2561"},
+	{ "mega48",      M48,   {0x1E, 0x92, 0x05},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80}, 76, "m48"},
+	{ "mega48P",     M48P,  {0x1E, 0x92, 0x0A},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80}, 76, "m48p"},
+	{ "mega8",       M8,    {0x1E, 0x93, 0x07},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF}      ,{1, 0x80}, 52, "m8"},
+	{ "mega8515",    M8515, {0x1E, 0x93, 0x06},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF}      ,{0, 0x00}, 63, "m8515"},
+	{ "mega8535",    M8535, {0x1E, 0x93, 0x08},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF}      ,{0, 0x00}, 64, "m8535"},
+	{ "mega88",      M88,   {0x1E, 0x93, 0x0A},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{1, 0x80}, 77, "m88"},
+	{ "mega88P",     M88P,  {0x1E, 0x93, 0x0F},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{1, 0x80}, 77, "m88p"},
+	{ "mega16",      M16,   {0x1E, 0x94, 0x03},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF}      ,{0, 0x00}, 56, "m16"},
+	{ "mega161",     M161,  {0x1E, 0x94, 0x01},  16384, 128,  512,  0, 20,  5, 0xFF, 0xFC, 4, 0, {0x7F}            ,{0, 0x00}, 41, "m161"},
+	{ "mega162",     M162,  {0x1E, 0x94, 0x04},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x1E},{0, 0x00}, 67, "m162"},
+	{ "mega163",     M163,  {0x1E, 0x94, 0x02},  16384, 128,  512,  0, 18,  5, 0xFF, 0xFC, 5, 1, {0xEF, 0x07}      ,{0, 0x00}, 38, "m163"},
+	{ "mega164P",    M164P, {0x1E, 0x94, 0x0A},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00}, 99, "m164p"},
+	{ "mega165",     M165,  {0x1E, 0x94, 0x07},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0E},{0, 0x00}, 79, "m165"},
+	{ "mega168",     M168,  {0x1E, 0x94, 0x06},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{1, 0x80}, 78, "m168"},
+	{ "mega168P",    M168P, {0x1E, 0x94, 0x0B},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{1, 0x80}, 78, "m168p"},
+	{ "mega169",     M169,  {0x1E, 0x94, 0x05},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F},{2, 0x01}, 73, "m169"},
+	{ "mega323",     M323,  {0x1E, 0x95, 0x01},  32768, 128, 1024,  4, 18,  5, 0xFF, 0xFC, 5, 1, {0xCF, 0xEF}      ,{0, 0x00}, 50, "m323"},
+	{ "mega325/9",   M325,  {0x1E, 0x95, 0x03},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{2, 0x01}, 83, "m325"},
+	{ "mega3250/90", M3250, {0x1E, 0x95, 0x04},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{2, 0x01}, 84, "m3250"},
+/**/{ "mega325P",    M325P, {0x1E, 0x95, 0x0D},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{2, 0x01}, 83, "m325p"},
+/**/{ "mega3250P",   M3250P,{0x1E, 0x95, 0x0E},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{2, 0x01}, 84, "m3250p"},
+	{ "mega328P",    M328P, {0x1E, 0x95, 0x0F},  32768, 128, 1024,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{1, 0x80},  0, "m328P"},
+	{ "mega32",      M32,   {0x1E, 0x95, 0x02},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 5, 4, {0xFF, 0xDF}      ,{0, 0x00}, 69, "m32"},
+	{ "mega324P",    M324P, {0x1E, 0x95, 0x08},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00},104, "m324p"},
+/**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00},104, "m324pa"},
+	{ "mega603",     M603,  {0x1E, 0x96, 0x01},  65536, 256, 2048,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B}            ,{0, 0x00},  0, "m603"},
+	{ "mega644",     M644,  {0x1E, 0x96, 0x09},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00},106, "m644"},
+	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00},106, "m644p"},
+	{ "mega645/9",   M645,  {0x1E, 0x96, 0x03},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{2, 0x01}, 87, "m645"},
+	{ "mega6450/90", M6450, {0x1E, 0x96, 0x04},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{2, 0x01}, 88, "m6450"},
+	{ "mega64",      M64,   {0x1E, 0x96, 0x02},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03},{0, 0x00}, 58, "m64"},
+	{ "mega640",     M640,  {0x1E, 0x96, 0x08},  65536, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00}, 91, "m640"},
+	{ "mega103",     M103,  {0x1E, 0x97, 0x01}, 131072, 256, 4096,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B}            ,{0, 0x00},  7, "m103"},
+	{ "mega128",     M128,  {0x1E, 0x97, 0x02}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03},{0, 0x00}, 54, "m128"},
+	{ "mega1280",    M1280, {0x1E, 0x97, 0x03}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00}, 92, "m1280"},
+	{ "mega1281",    M1281, {0x1E, 0x97, 0x04}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00}, 93, "m1281"},
+/**/{ "mega1284P",   M1284P,{0x1E, 0x97, 0x05}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00},  0, "m1284p"},
+	{ "mega2560",    M2560, {0x1E, 0x98, 0x01}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00}, 95, "m2560"},
+	{ "mega2561",    M2561, {0x1E, 0x98, 0x02}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},{0, 0x00}, 94, "m2561"},
 //------- PWM, CAN
-	{ "90PWM2/3",    PWM2,  {0x1E, 0x93, 0x81},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7}, 97, "pwm2"},
-/**/{ "90PWM216/316",PWM216,{0x1E, 0x94, 0x83},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7},  0, "pwm3"},
-	{ "90CAN32",     CAN32, {0x1E, 0x95, 0x81},  32768, 256, 1024,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c32"},
-	{ "90CAN64",     CAN64, {0x1E, 0x96, 0x81},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c64"},
-	{ "90CAN128",    CAN128,{0x1E, 0x97, 0x81}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c128"},
+	{ "90PWM2/3",    PWM2,  {0x1E, 0x93, 0x81},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7},{1, 0x80}, 97, "pwm2"},
+/**/{ "90PWM216/316",PWM216,{0x1E, 0x94, 0x83},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7},{1, 0x80},  0, "pwm3"},
+	{ "90CAN32",     CAN32, {0x1E, 0x95, 0x81},  32768, 256, 1024,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F},{0, 0x00}, 82, "c32"},
+	{ "90CAN64",     CAN64, {0x1E, 0x96, 0x81},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F},{0, 0x00}, 82, "c64"},
+	{ "90CAN128",    CAN128,{0x1E, 0x97, 0x81}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F},{0, 0x00}, 82, "c128"},
 //------- Misc
 	{ "Locked",      L0000, {0x00, 0x01, 0x02} },	/* Locked Device */
 	{ NULL,          N0000 }						/* Unknown */
@@ -257,6 +259,7 @@ bool f_version;				/* @@@ by senshu */
 bool f_report_mode = 1;		/* 0 = original, 1 = avrdude like */
 bool f_hex_dump_mode;		/* 0 = Intel HEX, 1 = HEX dump */
 
+bool f_RSTDSBL_prog;		/* 1 = RST program enable, @@@ add by senshu */
 
 char *out_filename = NULL;	/* @@@ by senshu */
 FILE *redirect_fp;
@@ -322,6 +325,19 @@ enum {
 	RD_DEV_OPT_I,	/* Web fuse list (new cgi) */
 	RD_DEV_OPT_d	/* Web document view */
 };
+
+/* 2009/08/07 by senshu */
+enum {	// FUSE INDEX
+	LOW=0,
+	HIGH,
+	EXT,
+	LOCK
+};
+
+enum {
+	RSTDSBL_BIT=1
+};
+
 
 #define MAX_BYTES	8192
 
@@ -756,11 +772,11 @@ void output_fuse (int mode)
 
 		printf("\nDEVICE=AT%s\n", Device->Name);
 		printf("### %s command line example ###\n", progname);
-		printf("%s -q%s -d10 -fL0x%02X", progname, Device->Name, FuseBuff[0]);
+		printf("%s -q%s -d10 -fL0x%02X", progname, Device->Name, FuseBuff[LOW]);
 		if(Device->FuseType >= 5)
-			printf(" -fH0x%02X", FuseBuff[1]);
+			printf(" -fH0x%02X", FuseBuff[HIGH]);
 		if(Device->FuseType >= 6)
-			printf(" -fX0x%02X", FuseBuff[2]);
+			printf(" -fX0x%02X", FuseBuff[EXT]);
 		printf("\n\n");
 
 /*
@@ -771,11 +787,11 @@ void output_fuse (int mode)
  */
 		printf("### avrdude command line example ###\n");
 		printf("avrdude -c avrdoper -P stk500v2  -p %s -U flash:w:main.hex:i \\\n", Device->part_id);
-		printf(" -u -U lfuse:w:0x%02x:m", FuseBuff[0]);
+		printf(" -u -U lfuse:w:0x%02x:m", FuseBuff[LOW]);
 		if(Device->FuseType >= 5)
-			printf(" -U hfuse:w:0x%02x:m", FuseBuff[1]);
+			printf(" -U hfuse:w:0x%02x:m", FuseBuff[HIGH]);
 		if(Device->FuseType >= 6)
-			printf(" -U efuse:w:0x%02x:m", FuseBuff[2]);
+			printf(" -U efuse:w:0x%02x:m", FuseBuff[EXT]);
 		printf("\n");
 		fflush(stdout);			// 2009/06/23
 
@@ -785,20 +801,20 @@ void output_fuse (int mode)
 		char lbuf[4], hbuf[4], xbuf[4], lmask[4], hmask[4], xmask[4];
 
 		if (Device->FuseType != 0) {
-			sprintf(lbuf,  "%02X", FuseBuff[0]);
-			sprintf(lmask, "%02X", Device->FuseMask[0]);
+			sprintf(lbuf,  "%02X", FuseBuff[LOW]);
+			sprintf(lmask, "%02X", Device->FuseMask[LOW]);
 
 			if (Device->FuseType >= 5) {
-				sprintf(hbuf,  "%02X", FuseBuff[1]);
-				sprintf(hmask, "%02X", Device->FuseMask[1]);
+				sprintf(hbuf,  "%02X", FuseBuff[HIGH]);
+				sprintf(hmask, "%02X", Device->FuseMask[HIGH]);
 			} else {
 				strcpy(hbuf,  "--");
 				strcpy(hmask, "--");
 			}
 
 			if (Device->FuseType >= 6) {
-				sprintf(xbuf,  "%02X", FuseBuff[2]);
-				sprintf(xmask, "%02X", Device->FuseMask[2]);
+				sprintf(xbuf,  "%02X", FuseBuff[EXT]);
+				sprintf(xmask, "%02X", Device->FuseMask[EXT]);
 			} else {
 				strcpy(xbuf,  "--");
 				strcpy(xmask, "--");
@@ -865,6 +881,7 @@ ATmega48
 ATmega64
 ATmega640
 ATmega644
+ATmega644P
 ATmega645
 ATmega6450
 ATmega649
@@ -897,9 +914,12 @@ ATtiny88
 
  */
 		/* 対応していないものは、類似のもので代用する */
+#if 0	/* 2009/08/06 M644Pがサポートされた */
 		if (Device->ID == M644P) {
 			chip = "mega644";
-		} else if (Device->ID == M48P) {
+		} else
+#endif
+		if (Device->ID == M48P) {
 			chip = "mega48";
 		} else if (Device->ID == M88P) {
 			chip = "mega88";
@@ -909,11 +929,11 @@ ATtiny88
 			chip = Device->Name;
 		}
 		len = sprintf(url, "start http://www.engbedded.com/cgi-bin/fc%s.cgi/?P=AT%s^&V_LOW=%02X",
-					(mode == RD_DEV_OPT_I)?"x":"", chip, FuseBuff[0]);
+					(mode == RD_DEV_OPT_I)?"x":"", chip, FuseBuff[LOW]);
 		if(Device->FuseType >= 5)
-			len += sprintf(url+len, "^&V_HIGH=%02X", FuseBuff[1]);
+			len += sprintf(url+len, "^&V_HIGH=%02X", FuseBuff[HIGH]);
 		if(Device->FuseType >= 6)
-			len += sprintf(url+len, "^&V_EXTENDED=%02X", FuseBuff[2]);
+			len += sprintf(url+len, "^&V_EXTENDED=%02X", FuseBuff[EXT]);
 
 		sprintf(url+len, "^&O_HEX=Apply+user+values");
 		r = system(url);	/* Start web browser */
@@ -940,13 +960,13 @@ ATtiny88
 	}
 
 	MESS("\n");
-	put_fuseval(FuseBuff[0], Device->FuseMask[0], "Low: ", fp);
+	put_fuseval(FuseBuff[LOW], Device->FuseMask[LOW], "Low: ", fp);
 
 	if(Device->FuseType >= 5)
-		put_fuseval(FuseBuff[1], Device->FuseMask[1], "High:", fp);
+		put_fuseval(FuseBuff[HIGH], Device->FuseMask[HIGH], "High:", fp);
 
 	if(Device->FuseType >= 6)
-		put_fuseval(FuseBuff[2], Device->FuseMask[2], "Ext: ", fp);
+		put_fuseval(FuseBuff[EXT], Device->FuseMask[EXT], "Ext: ", fp);
 
 	/* Output calibration values */
 	if(Device->Cals) {
@@ -1381,7 +1401,13 @@ int load_commands (int argc, char **argv)
 
 				case 'f' :	/* -f{l|h|x}<bin> */
 					c = tolower(*cp++);
-					if(*cp <= ' ') return RC_SYNTAX;
+					if(*cp <= ' ') {
+						return RC_SYNTAX;
+					}
+					if (c == '#') {	// @@@ by senshu
+						f_RSTDSBL_prog = 1;
+						c = tolower(*cp++);
+					}
 #if AVRSPX
 					ln = strtoul_ex(cp, &cp, 0);
 #else
@@ -1390,15 +1416,15 @@ int load_commands (int argc, char **argv)
 					switch (c) {
 						case 'l' :
 							CmdFuse.Cmd.Flag.Low = 1;
-							CmdFuse.Data[0] = (BYTE)ln;
+							CmdFuse.Data[LOW] = (BYTE)ln;
 							break;
 						case 'h' :
 							CmdFuse.Cmd.Flag.High = 1;
-							CmdFuse.Data[1] = (BYTE)ln;
+							CmdFuse.Data[HIGH] = (BYTE)ln;
 							break;
 						case 'x' :
 							CmdFuse.Cmd.Flag.Extend = 1;
-							CmdFuse.Data[2] = (BYTE)ln;
+							CmdFuse.Data[EXT] = (BYTE)ln;
 							break;
 						default :
 							return RC_SYNTAX;
@@ -1408,9 +1434,9 @@ int load_commands (int argc, char **argv)
 				case 'l' :	/* -l[<bin>] */
 					CmdFuse.Cmd.Flag.Lock = 1;
 #if AVRSPX
-					CmdFuse.Data[3] = (BYTE)strtoul_ex(cp, &cp, 0);
+					CmdFuse.Data[LOCK] = (BYTE)strtoul_ex(cp, &cp, 0);
 #else
-					CmdFuse.Data[3] = (BYTE)strtoul(cp, &cp, 2);
+					CmdFuse.Data[LOCK] = (BYTE)strtoul(cp, &cp, 2);
 #endif
 					break;
 
@@ -1799,7 +1825,7 @@ void read_fuse ()
 
 	if(Device->FuseType == 1) {
 #if AVRSPX
-		FuseBuff[0] = spi_transmit_R(
+		FuseBuff[LOW] = spi_transmit_R(
 			C_RD_FLB1,			/* Type 1 : Read fuse low */
 			0,
 			0,
@@ -1808,12 +1834,12 @@ void read_fuse ()
 		spi_xmit(C_RD_FLB1);			/* Type 1 : Read fuse low */
 		spi_xmit(0);
 		spi_xmit(0);
-		FuseBuff[0] = spi_rcvr(RM_SYNC);
+		FuseBuff[LOW] = spi_rcvr(RM_SYNC);
 #endif
 	}
 	else {
 #if AVRSPX
-		FuseBuff[0] = spi_transmit_R(
+		FuseBuff[LOW] = spi_transmit_R(
 			C_RD_FB1,				/* Type 2..6 : Read fuse low */
 			0,
 			0,
@@ -1822,12 +1848,12 @@ void read_fuse ()
 		spi_xmit(C_RD_FB1);				/* Type 2..6 : Read fuse low */
 		spi_xmit(0);
 		spi_xmit(0);
-		FuseBuff[0] = spi_rcvr(RM_SYNC);
+		FuseBuff[LOW] = spi_rcvr(RM_SYNC);
 #endif
 
 		if(Device->FuseType >= 5) {
 #if AVRSPX
-			FuseBuff[1] = spi_transmit_R(
+			FuseBuff[HIGH] = spi_transmit_R(
 				C_RD_FLB1,		/* Type 5..6 : Read fuse high */
 				0x08,
 				0,
@@ -1836,12 +1862,12 @@ void read_fuse ()
 			spi_xmit(C_RD_FLB1);		/* Type 5..6 : Read fuse high */
 			spi_xmit(0x08);
 			spi_xmit(0);
-			FuseBuff[1] = spi_rcvr(RM_SYNC);
+			FuseBuff[HIGH] = spi_rcvr(RM_SYNC);
 #endif
 
 			if(Device->FuseType >= 6) {
 #if AVRSPX
-			FuseBuff[2] = spi_transmit_R(
+			FuseBuff[EXT] = spi_transmit_R(
 				C_RD_FB1,		/* Type 6 : Read fuse extend */
 				0x08,
 				0,
@@ -1850,7 +1876,7 @@ void read_fuse ()
 				spi_xmit(C_RD_FB1);		/* Type 6 : Read fuse extend */
 				spi_xmit(0x08);
 				spi_xmit(0);
-				FuseBuff[2] = spi_rcvr(RM_SYNC);
+				FuseBuff[EXT] = spi_rcvr(RM_SYNC);
 #endif
 			}
 		}
@@ -2697,78 +2723,104 @@ int write_fuse ()
 	BYTE fuse, vfuse;
 #endif
 
-
 	rc = init_devices();
 	if(rc != 0) return rc;
 	if(Device->ID <= L0000) return RC_DEV;		/* Abort if unknown device or locked device */
 
 	if(CmdFuse.Cmd.Flag.Low && (Device->FuseType > 0)) {
 #if AVRSPX
-		vfuse = fuse = CmdFuse.Data[0] & Device->FuseMask[0];
+		if (f_RSTDSBL_prog == 0 && (Device->RSTDSBL[LOW] == 0 && Device->RSTDSBL[RSTDSBL_BIT] != 0)) {
+			if ((CmdFuse.Data[LOW] & Device->RSTDSBL[RSTDSBL_BIT]) == 0) {
+				fprintf(stderr, "WARN: RST PIN disable detected. If you hope for the writing,\n"
+								"Enter the -f#L0x%02x option.\n", CmdFuse.Data[LOW]);
+				return RC_DEV;
+			}
+			vfuse = fuse = (CmdFuse.Data[LOW] & Device->FuseMask[LOW]) | Device->RSTDSBL[RSTDSBL_BIT];
+		} else {
+			vfuse = fuse = CmdFuse.Data[LOW] & Device->FuseMask[LOW];
+		}
 
 		/* -v : Skip programming process when verify mode */
 		if (CmdWrite.Verify != 1)
-			write_fuselock(F_LOW, fuse | ~Device->FuseMask[0]);
+			write_fuselock(F_LOW, fuse | ~Device->FuseMask[LOW]);
 
 		/* -v- : Skip verifying process when programming only mode */
 		if (CmdWrite.Verify != 2)
-			vfuse = get_fuse_lock_byte(F_LOW, fuse) & Device->FuseMask[0];
+			vfuse = get_fuse_lock_byte(F_LOW, fuse) & Device->FuseMask[LOW];
 
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Low byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
 			fprintf(stderr, "Fuse Low byte was programmed (0x%02X).\n", fuse);
 #else
-		write_fuselock(F_LOW, (BYTE)(CmdFuse.Data[0] | ~Device->FuseMask[0]));
+		write_fuselock(F_LOW, (BYTE)(CmdFuse.Data[LOW] | ~Device->FuseMask[LOW]));
 		MESS("Fuse Low byte was programmed.\n");
 #endif
 	}
 
 	if(CmdFuse.Cmd.Flag.High && (Device->FuseType >= 5)) {
 #if AVRSPX
-		vfuse = fuse = CmdFuse.Data[1] & Device->FuseMask[1];
+		if (f_RSTDSBL_prog == 0 && (Device->RSTDSBL[LOW] == 1 && Device->RSTDSBL[RSTDSBL_BIT] != 0)) {
+			if ((CmdFuse.Data[HIGH] & Device->RSTDSBL[RSTDSBL_BIT]) == 0) {
+				fprintf(stderr, "WARN: RST PIN disable detected. If you hope for the writing,\n"
+								"Enter the -f#H0x%02x option.\n", CmdFuse.Data[HIGH]);
+				return RC_DEV;
+			}
+			vfuse = fuse = (CmdFuse.Data[HIGH] & Device->FuseMask[HIGH]) | Device->RSTDSBL[RSTDSBL_BIT];
+		} else {
+			vfuse = fuse = CmdFuse.Data[HIGH] & Device->FuseMask[HIGH];
+		}
 
 		/* -v : Skip programming process when verify mode */
 		if (CmdWrite.Verify != 1)
-			write_fuselock(F_HIGH, fuse | ~Device->FuseMask[1]);
+			write_fuselock(F_HIGH, fuse | ~Device->FuseMask[HIGH]);
 
 		/* -v- : Skip verifying process when programming only mode */
 		if (CmdWrite.Verify != 2)
-			vfuse = get_fuse_lock_byte(F_HIGH, fuse) & Device->FuseMask[1];
+			vfuse = get_fuse_lock_byte(F_HIGH, fuse) & Device->FuseMask[HIGH];
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse High byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
 			fprintf(stderr, "Fuse High byte was programmed (0x%02X).\n", fuse);
 #else
-		write_fuselock(F_HIGH, (BYTE)(CmdFuse.Data[1] | ~Device->FuseMask[1]));
+		write_fuselock(F_HIGH, (BYTE)(CmdFuse.Data[HIGH] | ~Device->FuseMask[HIGH]));
 		MESS("Fuse High byte was programmed.\n");
 #endif
 	}
 
 	if(CmdFuse.Cmd.Flag.Extend && (Device->FuseType >= 6)) {
 #if AVRSPX
-		vfuse = fuse = CmdFuse.Data[2] & Device->FuseMask[2];
+		if (f_RSTDSBL_prog == 0 && (Device->RSTDSBL[LOW] == 2 && Device->RSTDSBL[RSTDSBL_BIT] != 0)) {
+			if ((CmdFuse.Data[EXT] & Device->RSTDSBL[RSTDSBL_BIT]) == 0) {
+				fprintf(stderr, "WARN: RST PIN disable detected. If you hope for the writing,\n"
+								"Enter the -f#X0x%02x option.\n", CmdFuse.Data[EXT]);
+				return RC_DEV;
+			}
+			vfuse = fuse = (CmdFuse.Data[EXT] & Device->FuseMask[EXT]) | Device->RSTDSBL[RSTDSBL_BIT];
+		} else {
+			vfuse = fuse = CmdFuse.Data[EXT] & Device->FuseMask[EXT];
+		}
 
 		/* -v : Skip programming process when verify mode */
 		if (CmdWrite.Verify != 1)
-			write_fuselock(F_EXTEND, fuse | ~Device->FuseMask[2]);
+			write_fuselock(F_EXTEND, fuse | ~Device->FuseMask[EXT]);
 
 		/* -v- : Skip verifying process when programming only mode */
 		if (CmdWrite.Verify != 2)
-			vfuse = get_fuse_lock_byte(F_EXTEND, fuse) & Device->FuseMask[2];
+			vfuse = get_fuse_lock_byte(F_EXTEND, fuse) & Device->FuseMask[EXT];
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Extend byte was programm error. (%02X -> %02X)\n",fuse,vfuse);
 		else
 			fprintf(stderr, "Fuse Extend byte was programmed (0x%02X).\n",fuse);
 #else
-		write_fuselock(F_EXTEND, (BYTE)(CmdFuse.Data[2] | ~Device->FuseMask[2]));
+		write_fuselock(F_EXTEND, (BYTE)(CmdFuse.Data[EXT] | ~Device->FuseMask[EXT]));
 		MESS("Fuse Extend byte was programmed.\n");
 #endif
 	}
 
 	if(CmdFuse.Cmd.Flag.Lock) {
 #if AVRSPX
-		fuse  = CmdFuse.Data[3] ? CmdFuse.Data[3] : Device->LockData;
+		fuse  = CmdFuse.Data[LOCK] ? CmdFuse.Data[LOCK] : Device->LockData;
 		vfuse = fuse;
 
 		/* -v : Skip programming process when verify mode */
@@ -2784,7 +2836,7 @@ int write_fuse ()
 		else
 			fprintf(stderr, "Lock bits are programmed (0x%02X).\n", fuse);
 #else
-		write_fuselock(F_LOCK, (BYTE)(CmdFuse.Data[3] ? CmdFuse.Data[3] : Device->LockData));
+		write_fuselock(F_LOCK, (BYTE)(CmdFuse.Data[LOCK] ? CmdFuse.Data[LOCK] : Device->LockData));
 		MESS("Lock bits are programmed.\n");
 #endif
 	}
