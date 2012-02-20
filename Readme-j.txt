@@ -2,7 +2,7 @@
 
                                                         2008年 9月22日（公開開始）
                                                                ｜
-                                                        2009年 1月21日（最新更新）
+                                                        2009年 1月22日（最新更新）
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -938,3 +938,27 @@ EEPROM Size       = 128 bytes
 
   「Makefile.gcc」の修正
 	hidspx-gcc.exe にアイコン情報が欠けていたのを修正
+
+2009-01-21 ...	HIDaspx用のファームウェアを修正
+	* Linux上でmain-12.hexを利用するとエラーになり利用できないのを修正
+	  この不具合は、2008年11月27日に実施した変更の副作用です。それ以前の
+	  版を使っている場合には問題なく動作します。
+
+	#define USB_CFG_HAVE_INTRIN_ENDPOINT    1
+	#define USB_CFG_SUPPRESS_INTR_CODE      1
+	#define USB_CFG_INTR_POLL_INTERVAL      200 //無駄なので長いinterval
+	
+	  この修正は、BSD OSやMac OSでの動作に対応する為の変更ですが、正しい解決方法が
+	  不明なので、以前の設定に戻しました。
+
+	#define USB_CFG_HAVE_INTRIN_ENDPOINT    0
+	#define USB_CFG_SUPPRESS_INTR_CODE      0
+	#define USB_CFG_INTR_POLL_INTERVAL      10
+	
+
+ Error hidWrite(): error sending control message: Device or resource busy ...
+ Error hidRead(): error sending control message: Device or resource busy ...
+
+	* avrspx-doc.txt を追加
+	  kkk さんの書かれた avrsp に対する改良点の説明です。hidspx は、こ
+	  の改良点の全てを継承しています。

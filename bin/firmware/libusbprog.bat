@@ -1,5 +1,5 @@
 @echo off
-echo *** For HIDaspx firmware (default) ***
+echo *** For HIDaspx firmware (libusb) ***
 echo === Set FUSE data. === 
 hidspx -qtiny2313 -d10 -fL0xFF -fH0xDB -fX0xFF
 echo.
