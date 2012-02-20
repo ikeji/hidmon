@@ -65,7 +65,8 @@ IF NOT EXIST %TARGET% (
 echo ==== [COPY to %TARGET%] ====
 echo hidspx.exe, hidspx-gcc.exe hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe,
 echo hidspxG.exe, hidspx-GUI.exe
-echo firmware\genserial.awk , firmware\main-12.hex , firmware\firmprog.bat
+echo firmware\genserial.awk , firmware\addserial.awk, firmware\main-12.hex , 
+echo firmware\firmprog.bat, firmware\hexcleanup.bat
 echo ..\HIDaspx.pdf ..\hidspx_tips.pdf ..\Readme-j.txt ..\avrx-tool.txt
 %COPY% hidspx.exe %TARGET% > NUL
 %COPY% hidspx-gcc.exe %TARGET% > NUL
@@ -83,8 +84,10 @@ IF EXIST %TARGET%\hidspx.ini (
 %COPY% hidspxG.exe %TARGET% > NUL
 %COPY% hidspx-GUI.exe %TARGET% > NUL
 %COPY% firmware\genserial.awk %TARGET% > NUL
+%COPY% firmware\addserial.awk %TARGET% > NUL
 %COPY% firmware\main-12.hex %TARGET% > NUL
 %COPY% firmware\firmprog.bat %TARGET% > NUL
+%COPY% firmware\hexcleanup.bat %TARGET% > NUL
 %COPY% ..\HIDaspx.pdf %TARGET% > NUL
 %COPY% ..\hidspx_tips.pdf %TARGET% > NUL
 %COPY% ..\Readme-j.txt %TARGET% > NUL

@@ -1,7 +1,11 @@
 @echo off
 REM Written by senshu (2008/11/04)
-REM Modified by senshu (2010/02/01)
+REM Modified by senshu (2010/02/10)
 pushd ..
+echo ======= cleanup firmware =======
+cd bin\firmware
+call cleanup.bat
+cd ..\..
 echo ======= hidspx.exe build =======
 cd src
 make clean
