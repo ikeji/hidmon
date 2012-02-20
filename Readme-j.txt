@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 9月16日（最新更新）
+                                                2009年 9月25日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1342,4 +1342,28 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 	    クリックすることで、該当のページを開くことができるように配慮しました。
 	(2) 添付回路図を見直し、誤解の生じにくいものに修正しました。
 	(3) hidspx-GUI.exeのログ窓にて、右クリックメニューを有効にしました。
+
+■2009-09-25
+	(1) hidspx の -e コマンドを他のFUSEオプションと同様の扱いにしました。
+	    従来は、-e を実行すると、hidspx の処理を終了していましたが、この版か
+	    らはエラーが起きない限り、継続して処理を行います。この変更により、こ
+	    れは、avrdude との互換性が増し、avrdude からの移行を容易になりました。
+
+	(2) -rF オプションでのavrdude向けの表示を変更しました。Efuseの表示がhidspx
+	    の場合と異なる点に注目してください。
+
+	>hidspx -rF
+	Detected device is ATmega168.
+
+	DEVICE=ATmega168
+	### hidspx command line example ###
+	hidspx -qmega168 -d10 -fL0xFF -fH0xDD -fX0xF8
+	                                        ~~~~~
+	### avrdude command line example ###
+	avrdude -cavrdoper -Pstk500v2  -pm168 -u -Uflash:w:main.hex:i \
+	 -Ulfuse:w:0xff:m -Uhfuse:w:0xdd:m -Uefuse:w:0x00:m
+	                                             ~~~~~
+
+	(3) hidspx-GUI.exeのEfuse右の表示をavrdude互換表示を行います。
+	    （従来はマスク値でしたが、わかりにくかったので改めました）
 

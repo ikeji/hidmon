@@ -784,16 +784,16 @@ void output_fuse (int mode)
 /*
  PORT = avrdoper
  PROGRAMMER = stk500v2
- avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE) \
- -u -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m -U efuse:w:$(FUSE_X):m
+ avrdude -c $(PROGRAMMER) -P$(PORT) -p$(DEVICE) -u  -Uflash:w:main.hex:i
+ -Uhfuse:w:$(FUSE_H):m -Ulfuse:w:$(FUSE_L):m -Uefuse:w:$(FUSE_X):m
  */
 		printf("### avrdude command line example ###\n");
-		printf("avrdude -c avrdoper -P stk500v2  -p %s -U flash:w:main.hex:i \\\n", Device->part_id);
-		printf(" -u -U lfuse:w:0x%02x:m", FuseBuff[LOW]);
+		printf("avrdude -cavrdoper -Pstk500v2  -p%s -u -Uflash:w:main.hex:i \\\n", Device->part_id);
+		printf(" -Ulfuse:w:0x%02x:m", FuseBuff[LOW]);
 		if(Device->FuseType >= 5)
-			printf(" -U hfuse:w:0x%02x:m", FuseBuff[HIGH]);
+			printf(" -Uhfuse:w:0x%02x:m", FuseBuff[HIGH]);
 		if(Device->FuseType >= 6)
-			printf(" -U efuse:w:0x%02x:m", FuseBuff[EXT]);
+			printf(" -Uefuse:w:0x%02x:m", FuseBuff[EXT] & Device->FuseMask[EXT]);
 		printf("\n");
 		fflush(stdout);			// 2009/06/23
 
@@ -3129,8 +3129,14 @@ int main (int argc, char **argv)
 	/* Erase device and terminate if -E command is specified */
 	if(Command[0] == 'e') {
 		rc = erase_device();
+#if 1	/* 2009/09/25 */
+		if(rc != 0) {
+			terminate(rc);
+			return rc;
+		}
+#else
 		terminate(rc);
-		return rc;
+#endif
 	}
 
 	/* Timing test if -Z command is specified */
