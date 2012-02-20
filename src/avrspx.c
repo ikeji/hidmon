@@ -384,7 +384,10 @@ void report_update(int bytes)
 
 			if (num_cnt <= MAX_NUMBERS) {
 				i = num_cnt - num_save;
-				while (i--) MESS("#");
+				while (i--) {
+					MESS("#");
+					fflush(stderr);	/* for GCC */
+				}
 				num_save = num_cnt;
 			}
 		}

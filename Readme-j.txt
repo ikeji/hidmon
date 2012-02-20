@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 4月 7日（最新更新）
+                                                2009年 4月 9日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -18,7 +18,7 @@ HIDaspx は、ドライバのインストールが不要の USB 接続方式の AVR ライタです。
 
 瓶詰堂さんの作成された HIDasp を元に、iruka さんと senshu が共同で改良を行
 ないました。一定の成果が得られましたので、2008年 9月 22日より公開を開始しま
-す。HIDaspx は、瓶詰堂さんの公開しているものとは内容が異なり、firmware, 
+す。HIDaspx は、瓶詰堂さんの公開しているものとは内容が異なり、firmware,
 hidspx コマンド共に互換性はありませんので区別して扱ってください。
 
 ※ HIDaspxは、エイチ・アイ・ディー アスペックスとお読みください。
@@ -51,6 +51,7 @@ hidspx コマンド共に互換性はありませんので区別して扱ってください。
 │	fuse_en.txt	… FUSE情報を詳細表示する為のテキストファイル（英字表示）
 │	fuse_en_orig.txt… FUSE情報を詳細表示する為のテキストファイル（英語環境用）
 │	hidmon.exe	… HIDaspxのテスト時に利用
+│	hidspx-GUI.exe	… Visual C# で作成した hidspx用のGUIフロントエンド
 │
 ├─bin
 │  └─firmware	… main-12.hex（HIDaspx用）, main_libusb.hex（MacOS, Linux用）
@@ -150,7 +151,7 @@ Ext: -------1 (0xFF)
 
 ※ 今までは、PD2からのクロック出力を有効にしていました。この機能を利用したい
    場合には、Low=0xBF と設定します。
-   
+
    この版では、PD2 は開放で通常のライタ、GND と接続すると USB-IO として機能
    します。ライタモードでは PB2 （LED 兼用) 端子から 1MHz の矩形波を出力し
    ますので、PD2 （12MHz）よりも広範囲に利用できます。
@@ -365,7 +366,7 @@ usage: gawk -f genserial.awk -v t={aspx|mon88} start-number  [end-number]
 
  > gawk -f genserial.awk ABCD
 
-このファイルを main.hex のファームとともに以下のように書き込めば、HIDaspx 
+このファイルを main.hex のファームとともに以下のように書き込めば、HIDaspx
 はそのシリアル番号を持ったものになります。
 
  > hidspx main.hex _0001.hex
@@ -442,7 +443,7 @@ EEPROM Size       = 128 bytes
     2 と 3 は一つにできますが、ファイルを削除するコマンドは、分離するのが無
     難と考えています。この変更で不都合がある場合には、ご指摘ください。
 
-    また、iruka さんも書いていますが、現在、全ての機能を有効にしても 2044 
+    また、iruka さんも書いていますが、現在、全ての機能を有効にしても 2044
     バイトであり、2048 以内に収まっています。
 
     * senshu 2008-10-18 (土) 20:23:54 New
@@ -561,7 +562,7 @@ EEPROM Size       = 128 bytes
 	        * 説明書の加筆（メモリロック部分）
 	        * USB-IOモードの処理を追加した(PORTBを入力モードにする)
 	        * hidmonにて提供していたファームウエアのsmall版をこの版に含めた
-	        * 十分な安定性が確認できたので、Borland C++ でコンパイルしたものを 
+	        * 十分な安定性が確認できたので、Borland C++ でコンパイルしたものを
 		  hidspx.exeとし、MinGW-gcc でコンパイルしたものを hidspx-gcc.exe とした。
 	        * 重複して出力されるメッセージを1度のみ、出力するようにした。
 
@@ -597,11 +598,11 @@ EEPROM Size       = 128 bytes
 
                   VID=0x16c0 PID=0x05df vendor="YCIT" product="HIDaspx" serial="0000"
                   VID=0x16c0 PID=0x05df vendor="AVRetc" product="bmon" serial="0001"
-                  
+
                   Makefileにソースファイル間の依存情報を追加
 
 ■2008-11-27 ...
-        * kugaさんのアドバイスにより、何もサポートしない(NAKしか返さない) 
+        * kugaさんのアドバイスにより、何もサポートしない(NAKしか返さない)
 	  interrupt_in ENDPOINT を作る機能を追加しました。
 
 	usbconfig.h に追加
@@ -628,7 +629,7 @@ EEPROM Size       = 128 bytes
 
 	#define USB_CFG_HAVE_INTRIN_ENDPOINT    1
 	#define USB_CFG_SUPPRESS_INTR_CODE      1
-	
+
 	  そのため、以下のように生成されるコードサイズが若干小さくなっています。
 
 	   text    data     bss     dec     hex filename
@@ -645,11 +646,11 @@ EEPROM Size       = 128 bytes
 	  この版から、エラーの発生時も、読み込んだデータ全ての照合を行うよ
 	  うに仕様を変更しました。その結果、以下のように有益な情報を得るこ
 	  とができます。
-	  
+
 	  この例は、12MHz で動作する ATtiny2313 に対し -d0 という規格外の条
 	  件で書き込みを行ったため、多くのエラーが発生していますが、2038 バ
 	  イト中 20 バイト程度のエラー率であることがわかります。
-	  
+
 	>hidspx -d0 main-12.hex
 	Detected device is ATtiny2313.
 	Erase Flash memory.
@@ -726,14 +727,14 @@ EEPROM Size       = 128 bytes
 
         上記のWebサイトでfuse情報をサポートしているAVRマイコンの一覧
         (2009年1月10日現在)
-        
+
         AT86RF401       AT89S51         AT89S52         AT90CAN128
         AT90CAN32       AT90CAN64       AT90PWM2        AT90PWM3
-        
+
         AT90S1200       AT90S2313       AT90S2323       AT90S2343
         AT90S4414       AT90S4433       AT90S4434       AT90S8515
-        AT90S8515comp   AT90S8535       AT90S8535comp   
-        
+        AT90S8515comp   AT90S8535       AT90S8535comp
+
         ATmega48        ATmega8         ATmega8515      ATmega8535
         ATmega88        ATmega103       ATmega103comp   ATmega16
         ATmega161       ATmega161comp   ATmega162       ATmega163
@@ -743,7 +744,7 @@ EEPROM Size       = 128 bytes
         ATmega64        ATmega640       ATmega644       ATmega645
         ATmega6450      ATmega649       ATmega6490      ATmega128
         ATmega1280      ATmega1281      ATmega2560      ATmega2561
-        
+
         ATtiny10        ATtiny11        ATtiny12        ATtiny13
         ATtiny15        ATtiny167       ATtiny22        ATtiny24
         ATtiny25        ATtiny26        ATtiny261       ATtiny28
@@ -771,17 +772,17 @@ EEPROM Size       = 128 bytes
 
         >hidspx -rF
         Detected device is ATtiny2313.
-        
+
         DEVICE=attiny2313
         ### hidspx command line example ###
         hidspx -d10 -fL0xE4 -fH0xDF -fX0xFF
-        
+
         ### avrdude command line example ###
          avrdude -c avrdoper -P stk500v2  -p tiny2313 -U flash:w:main.hex:i \
          -U lfuse:w:0xe4:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
 
         * -rd Docment view機能を追加
-        このオプションを指定することにより、該当する AVR マイコンの概要を 
+        このオプションを指定することにより、該当する AVR マイコンの概要を
         Web ブラウザに表示します。この機能は、http://www.avrfreaks.net/ さ
         んが提供する情報を利用しています。
 
@@ -792,7 +793,7 @@ EEPROM Size       = 128 bytes
         > hidspx --atmel-avr    ... Atmel社のAVRマイコンのページを開く
         > hidspx --avr-devices  ... AVR FreaksのDevicesページを開く
 
-          私がよく利用している「Atmel 社の AVR のページ」と AVR Freaks の 
+          私がよく利用している「Atmel 社の AVR のページ」と AVR Freaks の
           AVR デバイス一覧のページを開く機能を追加しました。Web ブラウザの
           ブックマークに登録しておけば済むことですが、AVR マイコンを開発す
           る全ての PC にブックマークするのは手間がかかり（複数の PC を
@@ -806,7 +807,7 @@ EEPROM Size       = 128 bytes
 	>hidspx -rd
 	Detected device is AT90S8515.
 	Fuse bits are not accessible.
-	
+
 	>hidspx -rd
 	Detected device is AT90S2313.
 	Fuse bits are not accessible.
@@ -898,7 +899,7 @@ EEPROM Size       = 128 bytes
  RD  Flash [##################################################] 8192,   5.20s
  Passed.
  Total read/write size = 8192 B / 5.25 s (1.52 kB/s)
- 
+
  >hidspx -rp -onul -d1
  Detected device is ATmega88.
  RD  Flash [##################################################] 8192,   1.52s
@@ -925,7 +926,7 @@ EEPROM Size       = 128 bytes
 	その他にもヘルプ表示を変更しています。詳細は「-?」で確認してください。
 
 ■2009-01-21  -rFオプションでの表示を改良
-  
+
   「-rF」の改良
         誤った FUSE データの書き込みは AVR チップを使用不能にする可能性があ
         ります。そこで、-rF オプションで表示するコマンド行に -q(query) オプ
@@ -933,7 +934,7 @@ EEPROM Size       = 128 bytes
 
  >hidspx -rF
  Detected device is ATtiny2313.
- 
+
  DEVICE=attiny2313
  ### hidspx command line example ###
  hidspx -qtiny2313 -d10 -fL0xE4 -fH0xDF -fX0xFF
@@ -956,14 +957,14 @@ EEPROM Size       = 128 bytes
 	#define USB_CFG_HAVE_INTRIN_ENDPOINT    1
 	#define USB_CFG_SUPPRESS_INTR_CODE      1
 	#define USB_CFG_INTR_POLL_INTERVAL      200 //無駄なので長いinterval
-	
+
 	  この修正は、BSD OSやMac OSでの動作に対応する為の変更ですが、正しい解決方法が
 	  不明なので、以前の設定に戻しました。
 
 	#define USB_CFG_HAVE_INTRIN_ENDPOINT    0
 	#define USB_CFG_SUPPRESS_INTR_CODE      0
 	#define USB_CFG_INTR_POLL_INTERVAL      10
-	
+
 
  Error hidWrite(): error sending control message: Device or resource busy ...
  Error hidRead(): error sending control message: Device or resource busy ...
@@ -1030,16 +1031,16 @@ EEPROM Size       = 128 bytes
 
  >cat a.hex
  :00000001FF
- 
+
  >cat a.eep
  :00000001FF
- 
+
  これらの書き込みを実行すると
- 
+
  >hidspx a.hex a.eep
  a.hex : HEX File is empty.
  a.eep : HEX File is empty.
- 
+
 上記の表示を行ない書き込みをスキップします。従来の版も同じ動作ですが、usage メッ
 セージを表示するため、コマンド指定を間違ったと誤認する可能性があります。（私も、
 このメッセージの意味を理解するのにしばらく悩みました）
@@ -1053,7 +1054,16 @@ EEPROM Size       = 128 bytes
 	* FUSEの書き込みとHEXファイルとhidspx.exeのドロップを可能にしました。
 	* ISPではFUSEを操作できない場合でも認識を可能にしました（AT90S2313など）。
 
+
 ■2009-04-07 hidspx-GUI.exeのBUGを修正
 	* コマンド起動時のファイル指定の不具合を修正
 	* 起動直後はFUSE READボタンをフォーカスする
+
+■2009-04-09
+	hidspx-GUI.exeの機能を拡張
+	* 実行の様子を示すログウインドウの追加
+	* 各種の修正
+
+	hidspx-gcc.exeをhidspx-GUIとの組合せた時に発生する表示の不具合を修正
+	（'#'を出力する都度、fflushすることで対応）
 
