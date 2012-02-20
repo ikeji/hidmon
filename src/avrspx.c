@@ -485,7 +485,7 @@ void put_fuseval (BYTE val, BYTE mask, const char *head, FILE *fp)
 
 /* Output fuse bytes and calibration byte */
 
-void output_fuse ()
+void output_fuse (int mode)
 {
 	int n;
 	FILE *fp;
@@ -496,7 +496,18 @@ void output_fuse ()
 		MESS("Fuse bits are not accessible.\n");
 		return;
 	}
+#if 1	/* @@@ by senshu */
+	if (mode) {
+		printf("http://www.engbedded.com/cgi-bin/fc.cgi/?P=AT%s&V_LOW=%02X", Device->Name, FuseBuff[0]);
+		if(Device->FuseType >= 5)
+			printf("&V_HIGH=%02X", FuseBuff[1]);
+		if(Device->FuseType >= 6)
+			printf("&V_EXTENDED=%02X", FuseBuff[2]);
 
+		printf("&O_HEX=Apply+user+values\n");
+		return;
+	}
+#endif
 	/* Open FUSE.TXT and seek to the device */
 	fp = open_cfgfile(FUSEFILE);
 	if(fp == NULL) {
@@ -815,7 +826,15 @@ int load_commands (int argc, char **argv)
 
 				case 'r' :	/* -r{p|e|f} */
 					Command[0] = 'r';
+#if AVRSPX	/* -rF ƒIƒvƒVƒ‡ƒ“‚ð’Ç‰Á, @@@ by senshu*/
+					if (*cp == 'f' || *cp == 'F') {
+						Command[1] = *cp++;
+					} else {
+						Command[1] = tolower(*cp++);
+					}
+#else
 					if(*cp) Command[1] = tolower(*cp++);
+#endif
 					break;
 
 				case 'f' :	/* -f{l|h|x}<bin> */
@@ -1745,7 +1764,12 @@ int read_device (char cmd)
 
 		case 'f' :	/* -rf : read fuses */
 			read_fuse();
-			output_fuse();
+			output_fuse(0);
+			break;
+
+		case 'F' :	/* -rf : read fuses */
+			read_fuse();
+			output_fuse(1);
 			break;
 
 		default :

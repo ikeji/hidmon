@@ -1,6 +1,6 @@
 # TAB size = 8で編集しています。
 
-                                                             2008年12月10日
+                                                             2009年 1月 9日
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -641,6 +641,27 @@ EEPROM Size       = 128 bytes
 	Passed.
 
 2008-12-10 ...	
-	- mega325P/3250P/324PA, PWM216,316に対応を追加
+	- mega325P/3250P/324PA, PWM216,316対応を追加
 
+
+2009-01-09
+	- -rFオプションを追加
+	  > hidspx -rF で以下のような情報を出力します。
+
+http://www.engbedded.com/cgi-bin/fc.cgi/?P=ATtiny2313&V_LOW=E4&V_HIGH=DF&V_EXTENDED=FF&O_HEX=Apply+user+values
+
+	> hidspx -rF | gclip <Enter> 
+	※ gclip はWinAVRに含まれるコマンドです。
+
+	この情報を、gclipコマンドで取り込み、ブラウザのURLにペーストすると
+	現在のヒューズ設定をGUIで確認することができます。
+
+	gclipが使えない場合には、
+	「hidspx -rF > url.txt」と入力し、url.txtに書きこまれた内容を
+	WebブラウザのURL窓にコピーするか、多くのエディタではこのURL情報を
+	クリックすることで、該当のページを開くことができます。
+	この機能を持ったエディタをお使いの方は、上のURLをクリックしてください。
+
+	このアイディアは audin さんの BLOG から得たものです。どうもありがと
+	うございました。
 
