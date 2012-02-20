@@ -738,7 +738,7 @@ void output_fuse (int mode)
 #if AVRSPX		/* @@@ by senshu */
 	if (mode==RD_DEV_OPT_F) {
 
-		printf("\nDEVICE=at%s\n", Device->Name);
+		printf("\nDEVICE=AT%s\n", Device->Name);
 		printf("### %s command line example ###\n", progname);
 		printf("%s -q%s -d10 -fL0x%02X", progname, Device->Name, FuseBuff[0]);
 		if(Device->FuseType >= 5)
@@ -786,7 +786,7 @@ void output_fuse (int mode)
 			strcpy(xmask, "--");
 		}
 
-		printf("at%s %s:%s %s:%s %s:%s %02X\n", Device->Name,
+		printf("AT%s %s:%s %s:%s %s:%s %02X\n", Device->Name,
 				lbuf, lmask, hbuf, hmask, xbuf, xmask, get_fuse_lock_byte(F_LOCK, 0));
 
 		return;
@@ -794,10 +794,96 @@ void output_fuse (int mode)
 	} else if (mode==RD_DEV_OPT_i || mode==RD_DEV_OPT_I) {
 		char url[512], *chip;
 		int len, r;
+/*
+2009/03/31現在のサポート一覧
 
-		/* ATmega644PはATmega644で代用する */
+AT86RF401
+AT89S51
+AT89S52
+AT90CAN128
+AT90CAN32
+AT90CAN64
+AT90PWM2
+AT90PWM3
+AT90S1200
+AT90S2313
+AT90S2323
+AT90S2343
+AT90S4414
+AT90S4433
+AT90S4434
+AT90S8515
+AT90S8515comp
+AT90S8535
+AT90S8535comp
+ATmega103
+ATmega103comp
+ATmega128
+ATmega1280
+ATmega1281
+ATmega16
+ATmega161
+ATmega161comp
+ATmega162
+ATmega163
+ATmega164P
+ATmega165
+ATmega168
+ATmega169
+ATmega2560
+ATmega2561
+ATmega32
+ATmega323
+ATmega325
+ATmega3250
+ATmega328P
+ATmega329
+ATmega3290
+ATmega406
+ATmega48
+ATmega64
+ATmega640
+ATmega644
+ATmega645
+ATmega6450
+ATmega649
+ATmega6490
+ATmega8
+ATmega8515
+ATmega8535
+ATmega88
+ATtiny10
+ATtiny11
+ATtiny12
+ATtiny13
+ATtiny15
+ATtiny167
+ATtiny22
+ATtiny2313
+ATtiny24
+ATtiny25
+ATtiny26
+ATtiny261
+ATtiny28
+ATtiny44
+ATtiny45
+ATtiny461
+ATtiny48
+ATtiny84
+ATtiny85
+ATtiny861
+ATtiny88
+
+ */
+		/* 対応していないものは、類似のもので代用する */
 		if (Device->ID == M644P) {
 			chip = "mega644";
+		} else if (Device->ID == M48P) {
+			chip = "mega48";
+		} else if (Device->ID == M88P) {
+			chip = "mega88";
+		} else if (Device->ID == M168P) {
+			chip = "mega168";
 		} else {
 			chip = Device->Name;
 		}

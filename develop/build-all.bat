@@ -38,4 +38,5 @@ cd ..
 echo ======= All update. =======
 popd
 avr-size ../bin/firmware/*.hex
+upx -9 ../bin/*.exe
 pause
