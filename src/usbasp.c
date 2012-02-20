@@ -71,7 +71,7 @@ static int usbasp_transmit(unsigned char receive, unsigned char function_id,
                (send[1] << 8) | send[0],
                (send[3] << 8) | send[2],
                (char *)buffer, buffersize,
-               10000);   //@@@ by t.k
+               10*1000);   //@@@ by t.k (10.0sec)
 //             5000);
 
     if (nbytes < 0) {
@@ -381,7 +381,11 @@ int usbasp_blockwrite(
     unsigned char  blockflags = USBASP_BLOCKFLAG_FIRST;
 
     while (wbytes > 0) {
-        if (wbytes > USBASP_WRITEBLOCKSIZE) {
+
+		if (function == USBASP_FUNC_WRITEEEPROM) {
+			blocksize = 1;
+			wbytes -= 1;
+        } else if (wbytes > USBASP_WRITEBLOCKSIZE) {
             blocksize = USBASP_WRITEBLOCKSIZE;
             wbytes   -= USBASP_WRITEBLOCKSIZE;
         } else {
@@ -397,6 +401,10 @@ int usbasp_blockwrite(
         blockflags = 0;
 
         n = usbasp_transmit(0, function, cmd, buffer, blocksize);
+		if (function == USBASP_FUNC_WRITEEEPROM) {
+			delay_ms(Device->EepromWait);
+		}
+
         if (n != blocksize)
             break;
 
@@ -823,7 +831,8 @@ int usbasp_list(void)
     }
 
     if (!usbasp_found) {
-        fprintf(stderr, "%s: did not find any USBasp device \n", progname);
+		fprintf(stderr, "%s: did not find any USBaspx device (VID=0x%04x, PID=0x%04x)\n",
+						progname, USBDEV_VENDOR, USBDEV_PRODUCT);
         return -1;
     }
     return usbasp_found;

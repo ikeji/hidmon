@@ -954,3 +954,27 @@ Type = HIDaspx, Delay = 4
 	　　(avrspx.c内のデータテーブルの誤り)
 
 	(2) Srecode関連の実行ファイルを更新【ver 1.47　→ ver 1.56】
+
+■2011-07-20
+
+	(1) Flash, EEPROMのデータがすべて 0xffの時の表示を変更。
+
+	>hidspx -rp > nul
+	Detected device is AT90S2313.
+	Flash Memory...
+	Reading   [##################################################]   2048,   1.22s
+	Passed.
+	Flash memory is erased. (data is all 0xFF). ← この行を表示する
+	EEPROM is erased. (data is all 0xFF)
+	Total read/write size = 2048 B / 1.56 s (1.28 kB/s)
+
+	EEPROMの場合には、以下の行を出力する。
+
+	EEPROM is erased. (data is all 0xFF)
+
+	(2) USBaspxへの対応強化
+	EEPROMの書き込み速度を改善（USBaspの3倍を要していたのを同等に改善）
+
+	(3) 表示メッセージの変更
+	  USBasp(x) → USBaspxに変更(最近のUSBaspには対応していないため)
+

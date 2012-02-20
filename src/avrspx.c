@@ -586,7 +586,7 @@ void output_usage (bool detail)
         "Supported Adapter:\n",
         "AVRSP adapter (COM -pc<n>|-pv<n> / LPT -pl<n>), SPI Bridge (COM -pb<n>[:BAUD]),\n"
         "STK200 ISP dongle, Xilinx JTAG, Lattice isp, Altera ByteBlasterMV (LPT -pl<n>)\n",
-        "USBasp(x) (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
+        "USBaspx   (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
         "HIDaspx   (USB -ph<:XXXX>), HIDaspx(p) (USB -php<:XXXX>)\n",
         NULL
     };
@@ -1356,7 +1356,7 @@ void put_hexline (
 
 /* Output data in Intel Hex format */
 
-void output_hexfile (
+int output_hexfile (
     FILE *fp,           /* output stream */
     const BYTE *buffer, /* pointer to data buffer */
     DWORD datasize,     /* number of bytes to be output */
@@ -1365,7 +1365,7 @@ void output_hexfile (
     WORD seg = 0, ofs = 0;
     BYTE segbuff[2], d, n;
     DWORD bc = datasize;
-
+    int counts = 0;
 
     while(bc) {
         if((ofs == 0) && (datasize > 0x10000)) {
@@ -1375,19 +1375,26 @@ void output_hexfile (
         }
         if(bc >= blocksize) {   /* full data block */
             for(d = 0xFF, n = 0; n < blocksize; n++) d &= *(buffer+n);
-            if(d != 0xFF) put_hexline(fp, buffer, ofs, blocksize, 0);
+            if(d != 0xFF) {
+	            put_hexline(fp, buffer, ofs, blocksize, 0);
+	            counts += blocksize;
+            }
             buffer += blocksize;
             bc -= blocksize;
             ofs += blocksize;
         } else {                /* fractional data block */
             for(d = 0xFF, n = 0; n < bc; n++) d &= *(buffer+n);
-            if(d != 0xFF) put_hexline(fp, buffer, ofs, (BYTE)bc, 0);
+            if(d != 0xFF) {
+	            put_hexline(fp, buffer, ofs, (BYTE)bc, 0);
+	            counts += bc;
+            }
             bc = 0;
         }
     }
     if (!f_hex_dump_mode) {
         put_hexline(fp, NULL, 0, 0, 1); /* End block */
     }
+    return counts;
 }
 
 
@@ -2498,7 +2505,7 @@ int read_device (char cmd)
 {
     DWORD adr, ws;
     int rc;
-
+	int counts;
 
     rc = init_devices();
     if(rc != 0) return rc;
@@ -2535,9 +2542,12 @@ int read_device (char cmd)
 #endif
             MESS("Passed.\n");
             if (f_hex_dump_mode) {
-                output_hexfile(stdout, CodeBuff, Device->FlashSize, 16);
+                counts = output_hexfile(stdout, CodeBuff, Device->FlashSize, 16);
             } else {
-                output_hexfile(stdout, CodeBuff, Device->FlashSize, 32);
+                counts = output_hexfile(stdout, CodeBuff, Device->FlashSize, 32);
+            }
+            if (counts == 0) {
+            	MESS("Flash memory is erased. (data is all 0xFF).\n");
             }
             break;
 
@@ -2564,9 +2574,12 @@ int read_device (char cmd)
 #endif
             MESS("Passed.\n");
             if (f_hex_dump_mode) {
-                output_hexfile(stdout, DataBuff, Device->EepromSize, 16);
+                counts = output_hexfile(stdout, DataBuff, Device->EepromSize, 16);
             } else {
-                output_hexfile(stdout, DataBuff, Device->EepromSize, 32);
+                counts = output_hexfile(stdout, DataBuff, Device->EepromSize, 32);
+            }
+            if (counts == 0) {
+            	MESS("EEPROM is erased. (data is all 0xFF)\n");
             }
             break;
 

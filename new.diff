@@ -1,0 +1,170 @@
+Only in src: AVRSP-orig.ico
+Only in src: avrsp.ico
+diff -u src/avrspx.c new/avrspx.c
+--- src/avrspx.c	Tue Jul 12 08:09:58 2011
++++ new/avrspx.c	Mon Jul 11 13:14:04 2011
+@@ -26,7 +26,6 @@
+ /* R0.44  Dec  7, '08  ATmega325P/3250P/324PA, AT90PWM216/316                */
+ /* R0.45  Feb  8, '10  ATtiny43U/48/88/87/167                                */
+ /* R0.46 (C)ChaN, 2010                                                       */
+-/* R0.46  Jul 21, '10  Supported Flash/EEPROM/Fuse combined hex file         */
+ /*---------------------------------------------------------------------------*/
+ /* R0.43b Base                                                                */
+ /*   b2   2006-05-06  USBasp support, by mutech,t.kuroki                     */
+@@ -61,7 +60,7 @@
+ /*---------------------------------------------------------------------------*/
+ /* b10.11 2008-01-01 senshuがavrspとavrspx(b10.10)のソースを参考に作成       */
+ /*---------------------------------------------------------------------------*/
+-/* b10.12 2008-12-10 senshuがHIDaspxへの対応を追加、avrsp R, の変更を反映  */
++/* b10.12 2008-12-10 senshuがHIDaspxへの対応を追加、avrsp R0.44の変更を反映  */
+ /*---------------------------------------------------------------------------*/
+ /* b11.2  2009-08-06 RSTDISBL のビットを考慮  */
+ /* b11.3  2009-08-14 DWEN のビットを考慮  */
+@@ -284,7 +283,7 @@
+ char *new_serial;           // USBaspx
+ 
+ char usb_serial[8];         // Serial number of USBasp and HIDaspx device
+-char DeviceName[20];        // -q query device type (compared to Device->Name)
++char DeviceName[20];        // -q check device type (compared to Device->Name)
+ 
+ #if 1   /* 2010/01/21 10:36:43 */
+ int hidaspx_type;
+@@ -586,8 +585,8 @@
+         "Supported Adapter:\n",
+         "AVRSP adapter (COM -pc<n>|-pv<n> / LPT -pl<n>), SPI Bridge (COM -pb<n>[:BAUD]),\n"
+         "STK200 ISP dongle, Xilinx JTAG, Lattice isp, Altera ByteBlasterMV (LPT -pl<n>)\n",
+-        "USBasp(x) (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
+-        "HIDaspx   (USB -ph<:XXXX>), HIDaspx(p) (USB -php<:XXXX>)\n",
++        "USBaspx   (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
++        "pic18spx  (USB -ph<:XXXX>)\n",
+         NULL
+     };
+ 
+@@ -1150,8 +1149,6 @@
+     }
+ }
+ 
+-
+-
+ /* Load Intel/Motorola hex file into data buffer */
+ 
+ long input_hexfile (
+@@ -1576,17 +1573,14 @@
+                             CmdFuse.Cmd.Flag.Low = 1;
+                             CmdFuse.Data[LOW] = (BYTE)ln;
+                             break;
+-
+                         case 'h' :
+                             CmdFuse.Cmd.Flag.High = 1;
+                             CmdFuse.Data[HIGH] = (BYTE)ln;
+                             break;
+-
+                         case 'x' :
+                             CmdFuse.Cmd.Flag.Extend = 1;
+                             CmdFuse.Data[EXT] = (BYTE)ln;
+                             break;
+-
+                         default :
+                             return RC_SYNTAX;
+                     }
+@@ -1606,19 +1600,15 @@
+                         case 'c' :
+                             CtrlPort.PortClass = TY_COMM;
+                             break;
+-
+                         case 'l' :
+                             CtrlPort.PortClass = TY_LPT;
+                             break;
+-
+                         case 'v' :
+                             CtrlPort.PortClass = TY_VCOM;
+                             break;
+-
+                         case 'b' :
+                             CtrlPort.PortClass = TY_BRIDGE;
+                             break;
+-
+ #if AVRSPX
+                         case 'h' :
+                             CtrlPort.PortClass = TY_HIDASP;
+@@ -1631,7 +1621,7 @@
+                                 } else {
+                                     hidaspx_type = 0;
+                                 }
+-                                chg_vid_pid(hidaspx_type);
++//                              chg_vid_pid(hidaspx_type);
+                             }
+ #endif
+                             {
+@@ -2547,7 +2537,7 @@
+                 counts = output_hexfile(stdout, CodeBuff, Device->FlashSize, 32);
+             }
+             if (counts == 0) {
+-            	MESS("Flash memory is erased. (data is all 0xFF).\n");
++            	MESS("Flash memory is all 0xFF.\n");
+             }
+             break;
+ 
+@@ -2579,7 +2569,7 @@
+                 counts = output_hexfile(stdout, DataBuff, Device->EepromSize, 32);
+             }
+             if (counts == 0) {
+-            	MESS("EEPROM is erased. (data is all 0xFF)\n");
++            	MESS("EEPROM memory is all 0xFF.\n");
+             }
+             break;
+ 
+@@ -2618,8 +2608,8 @@
+             output_deviceinfo();
+             break;
+     }
+-#if 1
+-    fflush(stdout); /* 2010/03/26 15:28:48 by senshu */
++#if 1   /* for GCC */
++    fflush(stdout);
+ #endif
+     return 0;
+ }
+@@ -3384,7 +3374,6 @@
+             extern char *progpathname, progpath[];
+             char * p, ini_file_path[MAX_PATH];
+             FILE *fp;
+-            int r;
+ 
+             if (strchr(progpathname, ':') != NULL) {
+                 fprintf(stderr, "program  '%s'\n", progpathname);
+@@ -3392,12 +3381,7 @@
+                 fprintf(stderr, "program  '%s%s'\n", progpath, progpathname);
+             }
+ 
+-            r = snprintf(ini_file_path, sizeof ini_file_path, "%s%s", progpath, INIFILE);
+-		    if (r < 0) {
+-		        MESS("ini_file_path error");
+-			    atexit(do_exit);
+-		    }
+-
++            sprintf(ini_file_path, "%s%s", progpath, INIFILE);
+             fp = fopen(ini_file_path, "rt");
+             if (fp != NULL) {
+                 fclose(fp);
+Only in src: avrspx.h
+Only in src: cleanup.bat
+Only in src: hidasp.c
+Only in src: hidasp.h
+Only in src: hwctrl.c
+Only in src: hwctrl.h
+Only in src: icon.rc
+Only in src: inst-exe.bat
+Only in src: libusb
+Only in src: libusb_dyn.c
+Only in src: Makefile
+Only in src: Makefile.gcc
+Only in src: null
+Only in src: rebuild.bat
+Only in src: rscr.c
+Only in src: Thumbs.db
+Only in src: usb.h
+Only in src: usbasp.h
+Only in src: usbhid.h
+Only in src: utils.c
+Only in src: wronly.c
