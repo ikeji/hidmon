@@ -18,11 +18,12 @@
 /* ------------------------------------------------------------------------- */
 //	コンフィギュレーションスイッチ:
 #define	INCLUDE_FUSION		1	// 融合命令を実装.
-#define	INCLUDE_POLL_CMD 	1	// ReportID:4  POLLING PORTを実装する.
+#define	INCLUDE_POLL_CMD 	0	// ReportID:4  POLLING PORTを実装する.
 
 #define	INCLUDE_MONITOR_CMD 1	// 62:POKE(),63:PEEK()を実装する.
-#define	INCLUDE_LED_CMD 	0	// 02:SET_STATUS()を実装する.
-//	↑ LED_CMD / MONITOR_CMD は２択と考えてください.
+#define	INCLUDE_LED_CMD 	1	// 02:SET_STATUS()を実装する.
+//	↑ LED_CMD / MONITOR_CMD は、少なくともどちらかは必要ですが、
+//	HIDmonを使用しない場合は MONITOR_CMD は不要です.
 
 //	FUSIONをOffにした場合は、メモリーに余裕が出来るので追加機能の作成に便利.
 //	FUSIONをOffにしても、ライターソフトが自動判別して旧版互換で動作します.
@@ -129,7 +130,6 @@ static void cmd_peek_poke(MonCommand_t *cmd,uchar data0)
 {
 	uchar *p =cmd->addr;
 	if(data0 == HIDASP_PEEK) {
-//	if(cmd->hidasp_cmd == HIDASP_PEEK) {
 		//メモリー連続読み出し.
 		uchar cnt=cmd->count;
 		uchar i;
@@ -157,6 +157,34 @@ static void cmd_peek_poke(MonCommand_t *cmd,uchar data0)
 #define lbyte(a) (*((uchar*)&(a)))
 inline static uint8_t byte(uint8_t t) {return t;}
 
+// 遅延用.
+#if	0
+#define	DLY_2clk()	asm("nop");
+#else
+#define	DLY_2clk()	asm("rjmp .+0");
+#endif
+
+
+#if	0
+//
+#define	N_10us		(3*10)		// 30回ループで10uS待つ.
+
+static void delay_10us(uchar d)
+{
+	do {
+		// １０μ秒消費.
+		uchar n = N_10us;
+		do {
+			asm("nop");	//何か書かないと最適化でループごと消える.
+		}while(--n);	//このループは 4clk * N_10us クロック.
+		// ここまで.
+	}while(--d);
+}
+#else
+void delay_10us(uchar d);
+void delay_8clk(void);
+#endif
+
 /* ------------------------------------------------------------------------- */
 /* -----------------------------  USI Transfer  ---------------------------- */
 /* ------------------------------------------------------------------------- */
@@ -164,7 +192,7 @@ inline static uint8_t byte(uint8_t t) {return t;}
 
 //
 //	wait:
-//		0 =  2clk    3 MHz
+//		0 =  3clk    2 MHz
 //		1 =  4clk  1.5 MHz
 //		2 =  9clk  666 kHz
 //		3 = 21clk  285 kHz
@@ -182,27 +210,29 @@ static uint8_t usi_trans(uint8_t data){
 		uchar CR0=(1<<USIWM0)|(1<<USICS1)|(1<<USITC);
 		USICR=CR0;
 		uchar CR1=(1<<USIWM0)|(1<<USICS1)|(1<<USITC)|(1<<USICLK);
-								USICR=CR1;	asm("nop");
-		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
-		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
-		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
-		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
-		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
-		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
-		USICR=CR0;	asm("nop");	USICR=CR1;
+		//↑これは1clkなので↓直後に nop必要.
+					asm("nop");	USICR=CR1;	DLY_2clk();
+		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
+		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
+		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
+		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
+		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
+		USICR=CR0;	DLY_2clk();	USICR=CR1;	DLY_2clk();
+		USICR=CR0;	DLY_2clk();	USICR=CR1;//DLY_2clk(); :else のrjmpで代用.
 	}else if(wait==1) {
 		do{
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
 	}else{
 		do {
-			uchar d=wait;		// 12clk * (wait-2)
-			while(d != 2) {		// 1 loop = 12clk
-				asm("rjmp .+0");
-				asm("rjmp .+0");
-				asm("rjmp .+0");
-				asm("rjmp .+0");
-				d--;
+			uchar d=wait;		// 12clk * (wait-2)としたいところだが13clk *(wait-2)
+			while(d != 2) {		// 1+1: cpi,breq
+				delay_8clk();	// 4+4: call,ret
+//				asm("rjmp .+0");// 2
+//				asm("rjmp .+0");// 2
+//				asm("rjmp .+0");// 2
+//				asm("nop");		// 1
+				d--;			// 1+2: subi,rjmp
 			}
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
@@ -217,6 +247,44 @@ static inline void isp_command(uint8_t *data){
 	}
 }
 
+//
+#define	ISP_DDR		DDRB
+#define	ISP_OUT		PORTB
+//	PORTB PIN ASSIGN
+#define	ISP_SCK		7
+#define	ISP_MOSI	6
+#define	ISP_MISO	5
+#define	ISP_RST		4
+#define	ISP_LED		3
+#define	ISP_DDR_DEFAULT	0x0f	/* PB7-4=in PB3-0=out */
+
+
+static	void ispConnect(void)
+{
+	/* all ISP pins are inputs before */
+	/* now set output pins */
+	ISP_DDR = (1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI) | ISP_DDR_DEFAULT;
+
+	/* reset device */
+	ISP_OUT &= ~(1 << ISP_RST);		/* RST low */
+	ISP_OUT &= ~(1 << ISP_SCK);		/* SCK low */
+
+	/* positive reset pulse > 2 SCK (target) */
+	delay_10us(6);				//@@x  ispDelay();
+	ISP_OUT |= (1 << ISP_RST);		/* RST high */
+	delay_10us(100);			//@@x  ispDelay(); -> 1ms
+	ISP_OUT &= ~((1 << ISP_RST)|(1 << ISP_LED));	/* RST low , LED Low*/
+}
+
+static	void ispDisconnect(void)
+{
+	/* set all ISP pins inputs */
+	//ISP_DDR &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
+	ISP_DDR = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
+	/* switch pullups off */
+	//ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
+	ISP_OUT = 0x0f;				// PB7-4=Hi-Z PB3-0=Hi
+}
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- execute Buffer ---------------------------- */
 /* ------------------------------------------------------------------------- */
@@ -248,6 +316,8 @@ void hidasp_main()	//uchar *data)
 #endif
 #if	INCLUDE_LED_CMD
 	if ( data0 == HIDASP_SET_STATUS ) { // SET_LED
+
+#if	0
 		PORTD = (PORTD&~3)    | (data1 & 3);
 		// RESETピンを保持、それ以外をOR出力
 		PORTB = (PORTB&~0x1F) | (data[2]&0x1f) ;
@@ -257,6 +327,13 @@ void hidasp_main()	//uchar *data)
 		}else{
 			DDRB = 0xdf;	// 1101_1111 SCLK,MOSI,RSTを出力に.
 		}
+#else
+		if(data[2] & 0x10) {// RST解除の場合に:
+			ispDisconnect();
+		}else{
+			ispConnect();
+		}
+#endif
 		usbData[0] = 0xaa;	// コマンド実行完了をHOSTに知らせる.
 	} else
 #endif
@@ -274,6 +351,7 @@ void hidasp_main()	//uchar *data)
 	}
 #if	INCLUDE_FUSION
 	else if (cmdtx == HIDASP_PAGE_TX ) { // Page buf
+        usbDisableAllRequests();
 		//
 		//	page_write開始時にpage_addrをdata[1]で初期化.
 		//
@@ -304,6 +382,7 @@ void hidasp_main()	//uchar *data)
 		if(data0 & (HIDASP_PAGE_TX_FLUSH & MODE_MASK)) {
 			isp_command(data+i+2);
 		}
+        usbEnableAllRequests();
 	}
 #else
 	else if ( cmd == HIDASP_PAGE_TX ) { // Page buf
@@ -348,9 +427,8 @@ uchar usbFunctionSetup(uchar data[8])
 			report.id[0] = rq->wValue.bytes[0];    /* store report ID */
 			usbMsgPtr = report.id;
 #if	INCLUDE_POLL_CMD 	// ReportID:4  POLLING PORTを実装する.
-			if(report.id[0]==ID4) {
-				uchar *port   = (uchar *) page_addr;
-				report.buf[0] = *port;
+			if(	report.id[0]==ID4) {
+				report.buf[0] = *( (uchar *)page_addr );
 			}
 #endif
 			return rq->wLength.word;
@@ -399,15 +477,15 @@ PD0(NC) [2       19] PB7(SCK)
 PD1(NC) [3       18] PB6(MISO)
 XTAL2   [4       17] PB5(MOSI)
 XTAL1   [5       16] PB4(RST)
-PD2(12M)[6       15] PB3(PWR LED)
-PD3     [7       14] PB2(ACC LED)
+PD2(12M)[6       15] PB3(BUSY LED)
+PD3     [7       14] PB2(READY LED)
 PD4     [8       13] PB1(NC)
 PD5(NC) [9       12] PB0(NC)
 GND     [10      11] PD6(NC)
         ~~~~~~~~~~~
 
    ---------------------------------------
-   SPI:     PB7-4 ===> [Target AVR Device]
+   SPI:     PB7-4 ===> [Target AVR Device](MISOとMOSIは交差)
    USB:     PD4   ===> USB D-
             PD3   ===> USB D+
    XTAL:    XTAL1,2 => Crystal 12MHz
@@ -417,12 +495,14 @@ GND     [10      11] PD6(NC)
 
 int main(void)
 {
+#if 1
+	PORTD |= (1<<PD5);		/* PD5 USB D- pullup */
+#endif
 	DDRD = ~USBMASK;        /* all outputs except USB data */
 	PORTB = (1<<3);			/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
-	DDRB = 0x0f;			/* PB7-4=in PB3-0=out */
+	DDRB = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
 	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
 
-	wait=60;
     usbInit();
     sei();
     for(;;){    /* main event loop */

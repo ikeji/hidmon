@@ -247,7 +247,7 @@ int hidPeekMem(int addr)
 	return buf[1];
 }
 
-#define	USICR			0x2d	// 
+#define	USICR			0x2d	//
 #define	DDRB			0x37	// PB4=RST PB3=LED
 #define	DDRB_WR_MASK	0xf0	// êßå‰â¬î\bit = 1111_0000
 #define	PORTB			0x38	// PB4=RST PB3=LED
@@ -539,10 +539,10 @@ int hidasp_init(char *string)
 	}
 
 	GetDevCaps();
-	Sleep(100);
+//	Sleep(100);
 
 #if DEBUG
-	fprintf(stderr, "HIDASP Connection check!\n");
+	fprintf(stderr, "HIDaspx Connection check!\n");
 #endif
 
 	for (i = 0; i < CHECK_COUNT; i++) {

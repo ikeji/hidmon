@@ -444,7 +444,7 @@ int open_ifport (PORTPROP *pc)
 #if AVRSPX
 	if (pc->PortClass == TY_HIDASP)	{ //@@+ by k-k
 		if (hidasp_init(pc->SerialNumber) != 0)	{
-			pc->Info1 = "HIDASP not fonud.\n";
+			pc->Info1 = "HIDaspx not found.\n";
 			return 1;
 		}
 		PortType = TY_HIDASP;

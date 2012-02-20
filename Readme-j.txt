@@ -1,4 +1,4 @@
-                                                             2008年10月06日
+                                                             2008年10月10日
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,13 +58,13 @@ avrspx の機能に意図しない副作用が生じる可能性もあります。そのため、十分な動
 bin/main.hex を Tiny2313 に書き込んでください．ヒューズの設定は，外付けの 
 12MHz のクリスタルに合わせ、以下のように設定します。
 
-Low: 10001111
+Low: 10111111 (0xBF)
      ||||++++-- CKSEL[3:0] システムクロック選択
      ||++-- SUT[1:0] 起動時間
      |+-- CKOUT (0:PD2にシステムクロックを出力)
      +-- CKDIV8 クロック分周初期値 (1:1/1, 0:1/8)
 
-High:11-11011
+High:11-11011 (0xDB)
      |||||||+-- RSTDISBL (RESETピン 1:有効, 0:無効(PA2))
      ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
      |||+-- WDTON (WDT 0:常時ON, 1:通常)
@@ -72,7 +72,7 @@ High:11-11011
      |+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
      +-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
 
-Ext: -------1
+Ext: -------1 (0xFF)
             +-- SPMEN (SPM命令 1:無効, 0:有効)
 
 
@@ -153,24 +153,31 @@ AVR USBに準じてGPL2とします．
                firmware -d0オプションをUSBasp互換性を高めた(iruka)
                MOSI, SCK の競合を回避（Hi-Z化する）
 
-2008-10-03 ... - hidspxのメッセージをHIDaspxに統一
-               - Borland C++ での警告メッセージを抑止(avrspx.hを修正)
-               - usbtool を追加
-               - kugaさんのアドバイスにより、Firmwareサイズを40バイト縮小(1968バイト)
-                 avr-size --mcu=attiny2313 main.elf
-                   text    data     bss     dec     hex filename
-                   1966       4      85    2055     807 main.elf
-               - USBのProductID 0x5dc (libusb device) との競合を避ける為、
-                 0x5df(HID devide)に変更
-               - firmwareの変更 （今のところサポートしているAVRデバイスでは）
-                 page_addr は 256 以下なので、uint16 から uint8 に降格。
+2008-10-03 ...	- hidspxのメッセージをHIDaspxに統一
+				- Borland C++ での警告メッセージを抑止(avrspx.hを修正)
+				- usbtool を追加
+				- kugaさんのアドバイスにより、Firmwareサイズを40バイト縮小(1968バイト)
+				 avr-size --mcu=attiny2313 main.elf
+				   text    data     bss     dec     hex filename
+				   1966       4      85    2055     807 main.elf
+				- USBのProductID 0x5dc (libusb device) との競合を避ける為、
+				 0x5df(HID devide)に変更
+				- firmwareの変更 （今のところサポートしているAVRデバイスでは）
+				 page_addr は 256 以下なので、uint16 から uint8 に降格。
 
-2008-10-06 ... - irukaさんの10-05までの修正分を反映（ほぼ同じ内容です）
-               - -d2以上の値を指定した時の不具合は、senshuの修正ミスでした。
-                 （irukaさん、大変お手数をお掛けしました）
-               - ATtiny2313の認識が不十分だった件に関しては、このミスに起因して
-                 シーケンスが見直され？、より適切なものになっています
+2008-10-06 ...	- irukaさんの10-05までの修正分を反映（ほぼ同じ内容です）
+				- -d2以上の値を指定した時の不具合は、senshuの修正ミスでした。
+				 （irukaさん、大変お手数をお掛けしました）
+				- ATtiny2313の認識が不十分だった件に関しては、このミスに起因して
+				 シーケンスが見直され？、より適切なものになっています
 
+2008-10-10 ...	- irukaさんの10-09までの修正分を反映（ほぼ同じ内容です）
+				- 2008.10.9a delay_10us()関数がコンパイル環境によっては最適化されて
+				             消えていたのを修正. 
+				- 2008.10.9a '-d2'以上の遅延クロック数が1clk間違っていたを修正.
+				- 2008.10.9 12MHzターゲットに '-d0'が使えるようにしました(SCLK=2MHz)
+				- 2008.10.9 ispConnect/ispDisconnectを入れてみました.
+				- 2008.10.9 高速化: flow-controlを入れてみました.
 
 # TAB size = 8で編集しています。
 

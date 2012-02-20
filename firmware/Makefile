@@ -20,7 +20,7 @@ AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
 CFLAGS = $(DEFINES) -Iusbdrv -I. -DDEBUG_LEVEL=0 -DF_CPU=$(F_CPU)
 
 #OBJECTS = main.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
-OBJECTS = main.o crt.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
+OBJECTS = main.o crt.o delay.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
 
 COMPILE = avr-gcc -Wall -Os $(CFLAGS) -mmcu=$(DEVICE)
 
