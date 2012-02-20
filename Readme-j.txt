@@ -2,7 +2,7 @@
 
                                                         2008年 9月22日（公開開始）
                                                                ｜
-                                                        2009年 1月14日（最新更新）
+                                                        2009年 1月15日（最新更新）
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -259,10 +259,10 @@ hidmon で 15kB/s を超える環境を用意すれば速度向上につながります。USB-HUB を
 
 【7】 利用上の注意点
 
-　2009年 1月から公開した版では、「-ri, -rd, --atmel, --avr-devices」などの
-コマンドを使うことで、Web ブラウザを使った機能を提供していますが、接続先の
-サービスが停止している場合もあり、その時には白紙のページが表示されたり、エ
-ラーが表示される場合があることをご理解ください。
+　2009年 1月から公開した版では、「-ri, -rd, --atmel-avr, --avr-devices」な
+どのコマンドを使うことで、Web ブラウザを使った機能を提供していますが、接続
+先のサービスが停止している場合もあり、その時には白紙のページが表示されたり、
+エラーが表示される場合があることをご理解ください。
 
 【8】 ライセンス（瓶詰堂さんに同じ）
 AVR USBに準じ、GPL2とします．
@@ -778,9 +778,9 @@ EEPROM Size       = 128 bytes
 
 2009-01-12 ...	Atmel社とAVR Freaks のURLを開く機能を追加
 
-        * 「--atmel」「--avr-devices」オプションの追加
+        * 「--atmel-avr」「--avr-devices」オプションの追加
 
-        > hidspx --atmel        ... Atmel社のAVRマイコンのページを開く
+        > hidspx --atmel-avr    ... Atmel社のAVRマイコンのページを開く
         > hidspx --avr-devices  ... AVR FreaksのDevicesページを開く
 
           私がよく利用している「Atmel 社の AVR のページ」と AVR Freaks の 
@@ -807,23 +807,70 @@ EEPROM Size       = 128 bytes
 	* avrdude -pオプションをavrdudeで指定可能なパーツ名で出力するように修正。
 
 	* hidspx.iniにブックマーク機能を追加
-	  ;# に続いて、keyword URL のペアを書きます。「hidspx --keyword」と
-	  指定すれば、対応する URL を開くことができます。現時点では、20 件
-	  までの登録が可能です。なお、この形式で ini ファイルにブックマーク
-	  を登録した場合、従来の hidspx はコメントとして扱う為、バージョン
-	  を戻した場合でも不具合は生じません。
+	  「hidspx -- 登録した keyword」とすれば、対応の URL を開くことがで
+	  き、最大 100 件まで登録できます。登録内容は、以下のコマンドで確認
+	  できます。以下のように、HELP メッセージの後方に登録したブックマー
+	  クが表示できます。
 
-============= hidspx.ini ==================
-; AVR Book Marks
-;
-;# avrlibc http://www11.ocn.ne.jp/~akibow/avr-libc-user-manual-1.4.3/
-;# avrwiki http://avrwiki.jpn.ph/wiki.cgi
-;# hidaspx http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx00
-
-	  hidspx -? と指定すると、HELPメッセージの最後に登録したブックマークが
-	  表示されます。
+	> hidspx -? | more (あるいはless) で以下のように表示できます。
 
   === user bookmarks ===
   --avrlibc = [http://www11.ocn.ne.jp/~akibow/avr-libc-user-manual-1.4.3/]
   --avrwiki = [http://avrwiki.jpn.ph/wiki.cgi]
 
+	  なお、この形式で ini ファイルにブックマークを登録した場合でも、従
+	  来の hidspx はコメントとして扱う為、バージョンを戻した場合でも不
+	  具合は生じません。
+
+	  setup.bat でバージョンアップする時、上書きで設定した内容を失うこ
+	  とがないように hidspx-save.ini に保存する仕組みを追加しました。
+	  更新時、設定内容をご確認ください。
+
+	* hidspx.iniへの登録方法
+	  以下のように「;# 」に続いて、keyword URL のペアを空白で区切って登
+	  録します。
+
+============= hidspx.ini ==================
+; AVR Book Marks
+;
+;# avrlibc   http://www11.ocn.ne.jp/~akibow/avr-libc-user-manual-1.4.3/
+;# avrwiki   http://avrwiki.jpn.ph/wiki.cgi
+;# hidaspx   http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx00
+
+	  keyword は、予約済みのオプションと区別できる 8 文字程度までの英字・
+	  数字から構成される文字列とし、入力容易なものをお薦めします。
+	  登録は利用者の使い慣れたエディタ（メモ帳も利用可能）を利用してく
+	  ださい。なお、大文字・小文字は 区別します。
+
+	  予約語は登録できませんが、以下のもの以外が利用できます。-- 以降の
+	  オプションには help を除き「-」を含めていますので、英字と数字のみ
+	  で登録すれば予約語との重複を避けることができます。
+
+	  注：URL の部分に & を含む場合、^& のように ^ を追加し、空白を含む
+	  URL は %20 に置き換え、さらに実行ファイルでは空白を含まない短いフ
+	  ァイル形式で登録してください。
+
+	 --pause-on-start=msg       Pause on Port Open
+	 --pause-on-exit=msg        Pause on exit
+	 --list-port or -p?       List COM Port
+	 --list-usbasp or -pu?    List USBasp devices
+	 --set-serial=XXXXXX      Set USBasp serial number
+	 --help
+	 --atmel-avr
+	 --avr-devices
+
+	 また、登録できるのはhttp以外も可能です。以下のように登録すれば、
+	 pdfファイルの参照や実行ファイルの起動も可能です。
+
+;# Help       file://c:/bin/HIDaspx.pdf
+;# hidspx     file://c:/bin/avrx-tool.txt
+
+	  と登録し、該当するファイルを所定の場所にコピーしておくことで、付
+	  属の文書を迅速・かつ容易に参照できます。
+
+;# avrstudio  C:\PROGRA~1\atmel\avrtoo~1\AVRSTU~1\AVRSTU~1.exe
+	  この例は、Atmel 社の AVRstudio を起動することができます。
+
+	 これらは非常に便利に使えますが、同時に危険なコマンドも登録も可能な
+	 ことを意味します。hidspx.ini を更新したあとは、必ず -? で登録状態
+	 を確認し、内容を理解した上でご利用ください。

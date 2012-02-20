@@ -68,6 +68,7 @@
 #include "avrspx.h"
 #if AVRSPX
 #include <conio.h>
+#include <io.h>
 #include <windows.h>
 #include "usbasp.h"
 #include "hidasp.h"
@@ -224,6 +225,8 @@ int Pause;						/* -w Pause before exiting program */
 char ForcedName[20];			/* -t Forced device type (compared to Device->Name)*/
 
 #define OPT_MAX 20
+#define BOOKMARK_MAX 100
+#define LINE_SIZE 512
 
 #if AVRSPX
 /* for USBasp */
@@ -240,7 +243,7 @@ struct url_list {
 	char *key;
 	char *url;
 	int open;
-} user_bookmarks[OPT_MAX+1];
+} user_bookmarks[BOOKMARK_MAX+1];
 #endif
 
 
@@ -411,7 +414,7 @@ void output_usage (bool detail)
 		"@\n",
 		"@  ========= Open URL by Web browser =========\n",
 		"@  --avr-devices            AVR Devices list\n",
-		"@  --atmel                  Atmel (AVR 8-Bit RISC)\n",
+		"@  --atmel-avr              Atmel (AVR 8-Bit RISC)\n",
 		NULL
 	};
 
@@ -454,7 +457,7 @@ void output_usage (bool detail)
 				);
 				j++;
 			}
-			printf("  --%s = [%s]\n", user_bookmarks[i].key, user_bookmarks[i].url);
+			printf("  --%-10s = [%s]\n", user_bookmarks[i].key, user_bookmarks[i].url);
 			i++;
 		}
 	}
@@ -904,7 +907,7 @@ void output_hexfile (
 
 int load_commands (int argc, char **argv)
 {
-	char *cp, c, *cmdlst[OPT_MAX], cmdbuff[256];
+	char *cp, c, *cmdlst[OPT_MAX], cmdbuff[LINE_SIZE];
 	int cmd;
 	FILE *fp;
 	DWORD ln;
@@ -932,8 +935,8 @@ int load_commands (int argc, char **argv)
 #if AVRSPX
 			if(*cp == ';' || *cp == '#') {
 #ifdef USER_BOOKMARKS
-				if (strncmp(cp, ";#", 2)==0 && (url_index < OPT_MAX)) {
-					char key[128], url[256];
+				if (strncmp(cp, ";#", 2)==0 && (url_index < BOOKMARK_MAX)) {
+					char key[128], url[LINE_SIZE];
 					if (sscanf(cp+2, "%s %s", key, url) == 2) {
 						user_bookmarks[url_index].key  = strdup(key);
 						user_bookmarks[url_index].url  = strdup(url);
@@ -1191,7 +1194,7 @@ int load_commands (int argc, char **argv)
                     } else if (strcmp(cp, "avr-devices") == 0) {
 					    f_open_device_url = true;
 
-                    } else if (strcmp(cp, "atmel") == 0) {
+                    } else if (strcmp(cp, "atmel-avr") == 0) {
 					    f_open_atmel_url = true;
 
                     } else if (strcmp(cp, "help") == 0) {
