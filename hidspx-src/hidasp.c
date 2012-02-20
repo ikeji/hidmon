@@ -55,7 +55,7 @@ static	int have_ledcmd = 0;	// LED制御の有無.
 //----------------------------------------------------------------------------
 //--------------------------    Tables    ------------------------------------
 //----------------------------------------------------------------------------
-//  HID Report のパケットはサイズ毎に ３種類用意されている.
+//  HID Report のパケットはサイズ毎に 3種類用意されている.
 #define	REPORT_ID1			1	// 8  REPORT_COUNT(6)
 #define	REPORT_ID2			2	// 32 REPORT_COUNT(30)
 #define	REPORT_ID3			3	// 40 REPORT_COUNT(38)
@@ -81,7 +81,7 @@ static	void memdump(char *msg, char *buf, int len);
 //----------------------------------------------------------------------------
 /*
  *	HIDデバイスから HID Report を取得する.
- *	受け取ったバッファは先頭の１バイトに必ずReportIDが入っている.
+ *	受け取ったバッファは先頭の1バイトに必ずReportIDが入っている.
  *
  *	id と Length の組はデバイス側で定義されたものでなければならない.
  *
@@ -101,8 +101,8 @@ static int hidRead(HANDLE h, char *buf, int Length, int id)
 
 /*
  *	HIDデバイスに HID Report を送信するする.
- *	送信バッファの先頭の１バイトにReportID を入れる処理は
- *	この関数内で行うので、先頭１バイトを予約しておくこと.
+ *	送信バッファの先頭の1バイトにReportID を入れる処理は
+ *	この関数内で行うので、先頭1バイトを予約しておくこと.
  *
  *	id と Length の組はデバイス側で定義されたものでなければならない.
  *
@@ -180,8 +180,8 @@ int	hidReadBuffer(char *buf, int len)
 	return hidRead(hHID, buf, length, report_id);
 }
 /*
- *	hidWrite()を使用して、デバイス側に４バイトの情報を送る.
- *	４バイトの内訳は cmd , arg1 , arg2 , arg 3 である.
+ *	hidWrite()を使用して、デバイス側に4バイトの情報を送る.
+ *	4バイトの内訳は cmd , arg1 , arg2 , arg 3 である.
  *  ReportIDはID1を使用する.
  *
  *	戻り値はHidD_SetFeatureの戻り値( 0 = 失敗 )
@@ -202,8 +202,8 @@ int hidCommand(int cmd,int arg1,int arg2,int arg3)
 }
 
 //
-//	mask　が   0 の場合は、 addr に data0 を１バイト書き込み.
-//	mask　が 非0 の場合は、 addr に data0 と mask の論理積を書き込む.
+//	mask が   0 の場合は、 addr に data0 を1バイト書き込み.
+//	mask が 非0 の場合は、 addr に data0 と mask の論理積を書き込む.
 //		但し、その場合は mask bitが 0 になっている部分に影響を与えないようにする.
 //
 //	例:	PORTB の 8bit に dataを書き込む.
@@ -247,6 +247,7 @@ int hidPeekMem(int addr)
 	return buf[1];
 }
 
+#define	USICR			0x2d	// 
 #define	DDRB			0x37	// PB4=RST PB3=LED
 #define	DDRB_WR_MASK	0xf0	// 制御可能bit = 1111_0000
 #define	PORTB			0x38	// PB4=RST PB3=LED
@@ -266,15 +267,20 @@ static void hidSetStatus(int ledstat)
 		hidCommand(HIDASP_SET_STATUS,0,ledstat,0);	// cmd,portd(&0000_0011),portb(&0001_1111),0
 	}else{
 		if(ledstat & HIDASP_RST) {	// RST解除.
-			ddrb = 0x00;			// PORTB 全入力.
-									// PORTB.
-									// PORTB.RST=1 なので、RST のpull up のみ行われる.
+			ddrb = 0x10;			// PORTB 全入力.
+			hidPokeMem(USICR,0      ,0);
+			hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);
+			hidPokeMem(DDRB ,ddrb   ,DDRB_WR_MASK);
 		}else{
+			// RSTをLにする.
 			ddrb = 0xd0;			// DDRB 1101_1100 : 1が出力ピン ただしbit3-0は影響しない.
+			hidPokeMem(USICR,0      ,0);
+			hidPokeMem(DDRB ,ddrb   ,DDRB_WR_MASK);
+			hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);
+			hidPokeMem(PORTB,ledstat|HIDASP_RST,PORTB_WR_MASK);	// RSTはまだHi
+			hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);	// RSTはあとでLに.
+			hidPokeMem(USICR,0x1a   ,0);
 		}
-
-		hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);
-		hidPokeMem(DDRB ,ddrb   ,DDRB_WR_MASK);
 	}
 }
 
@@ -579,21 +585,22 @@ int hidasp_init(char *string)
 }
 
 //----------------------------------------------------------------------------
-//  プログラム許可.
+//  ターゲットマイコンをプログラムモードに移行する.
 //----------------------------------------------------------------------------
 int hidasp_program_enable(int delay)
 {
 	unsigned char buf[128];
 	unsigned char res[4];
-	int i;
+	int i, rc;
 
-	// エラー時にはリトライするように修正 by senshu(2008-9-16)
+	// ISPモード移行が失敗したら再試行するように修正 by senshu(2008-9-16)
+	rc = 1;
 	for (i = 0; i < 3; i++) {
-		Sleep(2);
-		hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
-		Sleep(10);				// 10 => 100
-		hidSetStatus(HIDASP_RST_L_BOTH);		// RESET LOW
-		hidCommand(HIDASP_SET_DELAY,delay,0,0);					// SET_DELAY
+		hidSetStatus(HIDASP_RST_H_GREEN);			// RESET HIGH
+		Sleep(2);				// 10 => 100
+
+		hidSetStatus(HIDASP_RST_L_BOTH);			// RESET LOW
+		hidCommand(HIDASP_SET_DELAY,delay,0,0);		// SET_DELAY
 		Sleep(30);				// 30
 
 		buf[0] = 0xAC;
@@ -603,18 +610,22 @@ int hidasp_program_enable(int delay)
 		hidasp_cmd(buf, res);
 
 		if (res[2] == 0x53) {
-#if DEBUG
-			fprintf(stderr, "hidasp_program_enable() == OK\n");
-#endif
-			return 0;
+			/* AVRマイコンからの同期(ISPモード)が確認できた */
+			rc = 0;
+			break;
 		} else {
-#if DEBUG
-			fprintf(stderr, "hidasp_program_enable() == NG\n");
-#endif
-			Sleep(100);
+			/* AVRマイコンからの同期が確認できないので再試行 */
+			Sleep(50);
 		}
 	}
-	return 1;
+#if DEBUG
+	if (rc == 0) {
+		fprintf(stderr, "hidasp_program_enable() == OK\n");
+	} else  {
+		fprintf(stderr, "hidasp_program_enable() == NG\n");
+	}
+#endif
+	return rc;
 }
 
 
@@ -632,7 +643,7 @@ void hidasp_close()
 		buf[1] = HIDASP_NOP;
 		buf[2] = 0x00;
 		buf[3] = 0x00;
-		hidasp_cmd(buf, NULL);	// AVOID BUG!
+		hidasp_cmd(buf, NULL);					// AVOID BUG!
 		hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
 		CloseHandle(hHID);
 	}
@@ -644,7 +655,7 @@ void hidasp_close()
 }
 
 //----------------------------------------------------------------------------
-//  ＩＳＰコマンド発行.
+//  ISPコマンド発行.
 //----------------------------------------------------------------------------
 int hidasp_cmd(const unsigned char cmd[4], unsigned char res[4])
 {

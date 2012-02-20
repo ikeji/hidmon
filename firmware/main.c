@@ -18,15 +18,16 @@
 /* ------------------------------------------------------------------------- */
 //	コンフィギュレーションスイッチ:
 #define	INCLUDE_FUSION		1	// 融合命令を実装.
+#define	INCLUDE_POLL_CMD 	1	// ReportID:4  POLLING PORTを実装する.
+
 #define	INCLUDE_MONITOR_CMD 1	// 62:POKE(),63:PEEK()を実装する.
 #define	INCLUDE_LED_CMD 	0	// 02:SET_STATUS()を実装する.
-//	↑ LED_CMDをONにしない場合はMONITOR_CMDでPin制御する必要があります.
-//	   その場合ライターソフトが自動判別してMONITOR_CMDを発行します.
+//	↑ LED_CMD / MONITOR_CMD は２択と考えてください.
 
-//	↑ メモリー容量の関係で、３つ全部Onにすることはできません.
-//
 //	FUSIONをOffにした場合は、メモリーに余裕が出来るので追加機能の作成に便利.
 //	FUSIONをOffにしても、ライターソフトが自動判別して旧版互換で動作します.
+
+//	POLL_CMD はライターソフトでは使用しません. HIDmon専用です.
 
 /* ------------------------------------------------------------------------- */
 
@@ -35,13 +36,15 @@
 #define ID1    1
 #define ID2    2
 #define ID3    3
+#define ID4    4
 
 //	REPORT_COUNT+2の値.
 #define	LENGTH1  8
 #define	LENGTH2 32
 #define	LENGTH3 40
+#define	LENGTH4  6
 
-PROGMEM char usbHidReportDescriptor[42] = {
+PROGMEM char usbHidReportDescriptor[51] = {
     0x06, 0x00, 0xff,              // USAGE_PAGE (Generic Desktop)
     0x09, 0x01,                    // USAGE (Vendor Usage 1)
     0xa1, 0x01,                    // COLLECTION (Application)
@@ -64,8 +67,14 @@ PROGMEM char usbHidReportDescriptor[42] = {
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
+    0x85, 0x04,                    //   REPORT_ID (4)
+    0x95, 0x04,                    //   REPORT_COUNT (4)
+    0x09, 0x00,                    //   USAGE (Undefined)
+    0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
+
     0xc0                           // END_COLLECTION
 };
+
 /* Note: REPORT_COUNT does not include report-ID byte */
 
 #if	INCLUDE_FUSION
@@ -83,12 +92,14 @@ register uchar bytesRemaining asm("r5");
 register uchar page_mode   asm("r6");
 register uchar page_addr   asm("r7");
 register uchar page_addr_h asm("r8");
+register uint8_t wait      asm("r9");
 #else
 static uchar currentPosition;
 static uchar bytesRemaining; // Receive Data Pointer
 static uchar page_mode;
 static uchar page_addr;
 static uchar page_addr_h;
+static uint8_t wait;
 #endif
 
 typedef struct {
@@ -150,7 +161,6 @@ inline static uint8_t byte(uint8_t t) {return t;}
 /* -----------------------------  USI Transfer  ---------------------------- */
 /* ------------------------------------------------------------------------- */
 
-static uint8_t wait=60; // 160
 
 //
 //	wait:
@@ -185,8 +195,8 @@ static uint8_t usi_trans(uint8_t data){
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
 	}else{
-		uchar d=wait;		// 12clk * (wait-2)
 		do {
+			uchar d=wait;		// 12clk * (wait-2)
 			while(d != 2) {		// 1 loop = 12clk
 				asm("rjmp .+0");
 				asm("rjmp .+0");
@@ -254,8 +264,13 @@ void hidasp_main()	//uchar *data)
 		isp_command(data+1);
 	} else if ( data0 == HIDASP_SET_PAGE ) { // Page set
 		page_mode = data1;
+#if	INCLUDE_POLL_CMD 	// ReportID:4  POLLING PORTを実装する.
+		page_addr = data[2];
+		page_addr_h = data[3];
+#else
 		page_addr = 0;
 		page_addr_h = 0;
+#endif
 	}
 #if	INCLUDE_FUSION
 	else if (cmdtx == HIDASP_PAGE_TX ) { // Page buf
@@ -332,6 +347,12 @@ uchar usbFunctionSetup(uchar data[8])
         if(	bRequest == USBRQ_HID_GET_REPORT ) {
 			report.id[0] = rq->wValue.bytes[0];    /* store report ID */
 			usbMsgPtr = report.id;
+#if	INCLUDE_POLL_CMD 	// ReportID:4  POLLING PORTを実装する.
+			if(report.id[0]==ID4) {
+				uchar *port   = (uchar *) page_addr;
+				report.buf[0] = *port;
+			}
+#endif
 			return rq->wLength.word;
 		}
         if(	bRequest == USBRQ_HID_SET_REPORT ) {
@@ -401,6 +422,7 @@ int main(void)
 	DDRB = 0x0f;			/* PB7-4=in PB3-0=out */
 	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
 
+	wait=60;
     usbInit();
     sei();
     for(;;){    /* main event loop */

@@ -48,4 +48,4 @@ icon.o:	icon.rc
 	$(RC) -i icon.rc -o icon.o
 
 install:
-	install $(EXE) c:/bin
+	install *.exe ../bin
