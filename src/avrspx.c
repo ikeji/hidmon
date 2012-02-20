@@ -403,9 +403,9 @@ void report_finish(int count)
 			while (i--) MESS("#");
 		}
 #if TIME_DISPLAY
-		fprintf(stderr, "] %ld, %6.2lfs\n", total_size, (double)(clock() - start_time) / CLOCKS_PER_SEC);
+		fprintf(stderr, "] %6ld, %6.2lfs\n", total_size, (double)(clock() - start_time) / CLOCKS_PER_SEC);
 #else
-		fprintf(stderr, "] %ld\n", total_size);
+		fprintf(stderr, "] %6ld\n", total_size);
 #endif
 	} else {
 		int last;
@@ -502,7 +502,7 @@ void output_usage (bool detail)
         "@  -rf                      Read Fuse (use fuse.txt)\n",
         "@  -rF                      Read Fuse list (HEX style)\n",
         "@  -rl                      Read Fuse and lock bits\n",
-		"Get AVR Infomation(Web) : -r{i|d}\n",
+		"Get AVR Information(Web): -r{i|d}\n",
         "@  -ri                      Read Fuse Information\n",
         "@  -rd                      Read chip Datasheet\n",
 		"Write fuse byte         : -f{l|h|x}<bin>\n",
@@ -2086,7 +2086,8 @@ int read_device (char cmd)
 	switch (cmd) {
 		case 'p' :	/* -rp : read program memory */
 #if AVRSPX
-			report_setup("RD  Flash", Device->FlashSize);
+			MESS("Flash Memory...\n");
+			report_setup("Reading  ", Device->FlashSize);
 			if (CtrlPort.PortClass == TY_USBASP) {
 				usbasp_paged_load(FLASH, CodeBuff, Device->FlashPage,
 							 Device->FlashSize, Device->FlashSize > (128*1024));
@@ -2110,7 +2111,8 @@ int read_device (char cmd)
 
 		case 'e' :	/* -re : read eeprom */
 #if AVRSPX
-			report_setup("RD EEPROM", Device->EepromSize);
+			MESS("EEPROM...\n");
+			report_setup("Reading  ", Device->EepromSize);
 			if (CtrlPort.PortClass == TY_USBASP) {
 				usbasp_paged_load(EEPROM, DataBuff, Device->EepromPage,
 								 Device->EepromSize, false);
@@ -2212,7 +2214,8 @@ int write_flash ()
 		}
 
 #if AVRSPX
-		report_setup("WR  Flash", CmdWrite.CodeSize);
+		MESS("Flash memory...\n");				/* Erase device before programming */
+		report_setup("Writing  ", CmdWrite.CodeSize);
 		if (CtrlPort.PortClass == TY_USBASP) {
 			rc = usbasp_paged_write(FLASH, CodeBuff, Device->FlashPage,
 							CmdWrite.CodeSize, Device->FlashSize > (128*1024));
@@ -2259,7 +2262,7 @@ int write_flash ()
 
 	if(CmdWrite.Verify != 2) {	/* -v- : Skip verifying process when programming only mode */
 #if AVRSPX
-		report_setup("VF  Flash", CmdWrite.CodeSize);
+		report_setup("Verifying", CmdWrite.CodeSize);
 
 		error_found_count = 0;
 		if (CtrlPort.PortClass == TY_USBASP) {
@@ -2307,7 +2310,6 @@ int write_flash ()
 		report_finish(0);
 #else
 		MESS("Verifying...");
-
 		if (CtrlPort.PortClass == TY_USBASP) {
 			rc = usbasp_paged_verify(FLASH, CodeBuff, Device->FlashPage,
 							CmdWrite.CodeSize, Device->FlashSize > (128*1024));
@@ -2351,6 +2353,7 @@ int write_eeprom ()
 	if(Device->ID <= L0000) return RC_DEV;	/* Abort if unknown device or locked device */
 
 #if AVRSPX
+	MESS("EEPROM...\n");
 	if(CmdWrite.DataSize > Device->EepromSize) {
 		MESS("EEPROM write error: data size > memory size.\n");
 		return RC_FAIL;
@@ -2365,7 +2368,7 @@ int write_eeprom ()
 
 	if(CmdWrite.Verify != 1) {	/* -v : Skip programming process when verify mode */
 #if AVRSPX
-		report_setup("WR EEPROM", CmdWrite.DataSize);
+		report_setup("Writing  ", CmdWrite.DataSize);
 		if (CtrlPort.PortClass == TY_USBASP) {		/* Write EEPROM in page mode */
 			rc = usbasp_paged_write(EEPROM, DataBuff, Device->EepromPage, CmdWrite.DataSize, false);
 			if (rc != CmdWrite.DataSize) {
@@ -2397,7 +2400,7 @@ int write_eeprom ()
 
 	if(CmdWrite.Verify != 2) {	/* -v- : Skip verifying process when programming only mode */
 #if AVRSPX
-		report_setup("VF EEPROM", CmdWrite.DataSize);
+		report_setup("Verifying", CmdWrite.DataSize);
 		error_found_count = 0;
 		if (CtrlPort.PortClass == TY_USBASP) {		/* Read eeprom in page mode */
 			rc = usbasp_paged_verify(EEPROM, DataBuff, Device->EepromPage ,
