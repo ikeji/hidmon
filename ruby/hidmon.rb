@@ -180,7 +180,7 @@ class HIDmon
     val = peek_byte(sfr)
     print "#{sfr}#{" " * (6-sfr.size)} :"
     print " #{sprintf("0x%02X", val)} :"
-    print " 0b#{byte2bin(val)}  "
+    print " #{byte2bin(val)}  "
     puts if hasCr
   end
 
