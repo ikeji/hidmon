@@ -73,7 +73,7 @@ PROGMEM char usbHidReportDescriptor[] = {
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
-#if 0	// codeçÌå∏ÇÃÇΩÇﬂ
+#if 1	// codeçÌå∏ÇÃÇΩÇﬂ
     0x85, 0x04,                    //   REPORT_ID (4)
     0x95, 0x04,                    //   REPORT_COUNT (4)
     0x09, 0x00,                    //   USAGE (Undefined)

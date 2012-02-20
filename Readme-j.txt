@@ -189,6 +189,7 @@ AVR USBに準じてGPL2とします．
 2008-10-14 ...	- firmware main.c「USICR=0;		/* SCKをポートに戻しておく */」を有効化
 				-- USIの初期化をmain関数から、usi_trans関数に移動(SCK発生時の互換性向上)
 				- usbHidReportDescriptorの大きさを9バイト縮小(現在 2038バイト)
+				- hidmonとの整合性を考慮し、元に戻しました(現在 2046バイト)
 				- ソース中のコメントを修正（不整合部分を修正）
 
 # TAB size = 8で編集しています。
