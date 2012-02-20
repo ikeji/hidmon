@@ -68,6 +68,7 @@
 #include <windows.h>
 #include "usbasp.h"
 #include "hidasp.h"
+int hidmon_mode = 0;	/* for hidasp.c */
 #endif
 
 
@@ -215,6 +216,8 @@ char report_msg[128];
 
 #define MAX_BYTES	8192
 
+int error_found_count;		/* verify error found */
+
 void report_setup(char *msg, long size)
 {
 	total_bytes = 0L;
@@ -231,6 +234,8 @@ void report_setup(char *msg, long size)
 
 void report_update(int bytes)
 {
+	if (error_found_count)
+		return;
 	if (report_msg) {
 		total_bytes += bytes;
 		if (total_size <= MAX_BYTES) {
@@ -241,7 +246,7 @@ void report_update(int bytes)
 	}
 }
 
-void report_finish()
+void report_finish(int count)
 {
 	int last;
 	if (report_msg[0]) {
@@ -254,6 +259,9 @@ void report_finish()
 			strcat(report_msg, "  (%dbytes)\n");
 			fprintf(stderr, report_msg, total_size_kb, total_size_kb, total_bytes);
 		}
+	}
+	if (count != 0) {
+		fprintf(stderr, "Verify  %d errors.\n", count);
 	}
 	report_msg[0] ='\0';
 	total_bytes = 0L;
@@ -834,19 +842,50 @@ int load_commands (int argc, char **argv)
 #if AVRSPX
 						case 'h' :
 							CtrlPort.PortClass = TY_HIDASP;
-							s = strchr(cp, ':');
-							if (s) {
-								strncpy(usb_serial, s+1, sizeof(usb_serial));
-								CtrlPort.SerialNumber = usb_serial;
-								cp += strlen(cp);
-							} else  {
-								CtrlPort.SerialNumber = "0000";
+							{
+								char *s;
+								s = cp;
+								if (s) {
+									if (*s == ':') s++;
+									if (*cp == '?') {
+									    f_usblist = true;
+									    ++cp;
+									} else if (isdigit(*s)) {
+										if (s) {
+											int n, l;
+											l = strlen(s);
+											if (l < 4 && isdigit(s[0])) {
+												n = atoi(s);
+												if ((0 <= n) && (n <= 999)) {
+													sprintf(usb_serial, "%04d", n);
+												} else {
+													if (l == 1) {
+														usb_serial[3] = s[0];
+													} else if  (l == 2) {
+														usb_serial[2] = s[0];
+														usb_serial[3] = s[1];
+													} else if  (l == 3) {
+														usb_serial[1] = s[0];
+														usb_serial[2] = s[1];
+														usb_serial[3] = s[2];
+													}
+												}
+											} else {
+												strncpy(usb_serial, s, 4);
+											}
+										}
+									} else if (*s == '\0'){
+										strcpy(usb_serial, "0000");		// È—ªŽž‚ÍA"0000"‚ð‘I‘ð‚·‚é
+									} else {
+										strncpy(usb_serial, s, 4);
+									}
+									strupr(usb_serial);
+									CtrlPort.SerialNumber = usb_serial;
+									cp += strlen(cp);
+								}
 							}
-							if (*cp == '?') {
-							    f_usblist = true;
-							    ++cp;
-                            }
 							break;
+
 						case 'u' :
 							CtrlPort.PortClass = TY_USBASP;	//@@@ by t.k
 							s = strchr(cp, ':');
@@ -1642,7 +1681,7 @@ int read_device (char cmd)
 					report_update(PIPE_WINDOW);
 				}
 			}
-			report_finish();
+			report_finish(0);
 #else
 			MESS("Reading Flash...");
 			for(adr = 0; adr < Device->FlashSize; adr += PIPE_WINDOW)
@@ -1665,7 +1704,7 @@ int read_device (char cmd)
 					report_update(ws);
 				}
 			}
-			report_finish();
+			report_finish(0);
 #else
 			MESS("Reading EEPROM...");
 			ws = (Device->EepromSize < PIPE_WINDOW) ? Device->EepromSize : PIPE_WINDOW;
@@ -1699,7 +1738,6 @@ int write_flash ()
 	DWORD adr;
 	BYTE rd[PIPE_WINDOW];
 	int rc, n;
-
 
 	rc = init_devices();
 	if(rc != 0) return rc;
@@ -1741,7 +1779,7 @@ int write_flash ()
 			rc = usbasp_paged_write(FLASH, CodeBuff, Device->FlashPage,
 							CmdWrite.CodeSize, Device->FlashSize > (128*1024));
 			if (rc != CmdWrite.CodeSize) {
-				report_finish();
+				report_finish(0);
 				return RC_FAIL;
 			}
 		} else {
@@ -1753,7 +1791,7 @@ int write_flash ()
 			} else {						/* Write flash in byte-by-byte mode */
 				for(adr = 0; adr < CmdWrite.CodeSize; adr++) {
 					if(write_byte(FLASH, adr, CodeBuff[adr])) {
-						report_finish();
+						report_finish(0);
 						fprintf(stderr, "Time out at %04X\n", (int)adr);
 						return RC_FAIL;
 					}
@@ -1762,7 +1800,7 @@ int write_flash ()
 			}
 			spi_flush();
 		}
-		report_finish();
+		report_finish(0);
 #else	// @@@
 		MESS("Writing...");
 		if(Device->FlashPage) {		/* Write flash in page mode */
@@ -1772,7 +1810,6 @@ int write_flash ()
 		} else {						/* Write flash in byte-by-byte mode */
 			for(adr = 0; adr < CmdWrite.CodeSize; adr++) {
 				if(write_byte(FLASH, adr, CodeBuff[adr])) {
-					report_finish();
 					fprintf(stderr, "Time out at %04X\n", adr);
 					return RC_FAIL;
 				}
@@ -1786,12 +1823,13 @@ int write_flash ()
 #if AVRSPX
 		report_setup("Verify  Flash:", CmdWrite.CodeSize);
 
+		error_found_count = 0;
 		if (CtrlPort.PortClass == TY_USBASP) {
 			rc = usbasp_paged_verify(FLASH, CodeBuff, Device->FlashPage,
 							CmdWrite.CodeSize, Device->FlashSize > (128*1024));
 			if (rc != 0) {
-				report_finish();
-				return RC_FAIL;
+				error_found_count++;
+				goto verify_finish;
 			}
 		} else if (CtrlPort.PortClass == TY_HIDASP) {
 			hidasp_page_read(0, rd, 0);
@@ -1799,9 +1837,11 @@ int write_flash ()
 				hidasp_page_read(-1, rd, PIPE_WINDOW);
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
-						fprintf(stderr, "\nFailed at %04X:%02X->%02X\n",
-							(int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
-						return RC_FAIL;
+						if (error_found_count == 0) {
+							fprintf(stderr, "\n");
+						}
+						fprintf(stderr, "Failed at %04X:%02X->%02X\n", (int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
+							error_found_count++;
 					}
 				}
 			}
@@ -1810,16 +1850,23 @@ int write_flash ()
 				read_multi(FLASH, adr, PIPE_WINDOW, rd);
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
-						report_finish();
-						fprintf(stderr, "\nFailed at %04X:%02X->%02X\n",
-							(int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
-						return RC_FAIL;
+						if (error_found_count == 0) {
+							fprintf(stderr, "\n");
+						}
+						fprintf(stderr, "Failed at %04X:%02X->%02X\n", (int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
+						error_found_count++;
 					}
 				}
 				report_update(PIPE_WINDOW);
 			}
 		}
-		report_finish();
+
+	verify_finish:
+		if (error_found_count) {
+			report_finish(error_found_count);
+			return RC_FAIL;
+		}
+		report_finish(0);
 #else
 		MESS("Verifying...");
 
@@ -1827,7 +1874,7 @@ int write_flash ()
 			rc = usbasp_paged_verify(FLASH, CodeBuff, Device->FlashPage,
 							CmdWrite.CodeSize, Device->FlashSize > (128*1024));
 			if (rc != 0) {
-				report_finish();
+				report_finish(0);
 				return RC_FAIL;
 			}
 		} else {
@@ -1835,7 +1882,7 @@ int write_flash ()
 				read_multi(FLASH, adr, PIPE_WINDOW, rd);
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
-						report_finish();
+						report_finish(0);
 						fprintf(stderr, "Failed at %04X:%02X->%02X\n", adr+n, CodeBuff[adr+n], rd[n]);
 						return RC_FAIL;
 					}
@@ -1861,7 +1908,6 @@ int write_eeprom ()
 	BYTE rd[PIPE_WINDOW];
 	int rc;
 
-
 	rc = init_devices();
 	if(rc != 0) return rc;
 	if(Device->ID <= L0000) return RC_DEV;	/* Abort if unknown device or locked device */
@@ -1885,7 +1931,7 @@ int write_eeprom ()
 		if (CtrlPort.PortClass == TY_USBASP) {		/* Write EEPROM in page mode */
 			rc = usbasp_paged_write(EEPROM, DataBuff, Device->EepromPage, CmdWrite.DataSize, false);
 			if (rc != CmdWrite.DataSize) {
-				report_finish();
+				report_finish(0);
 				return (RC_FAIL);
 			}
 		} else {
@@ -1898,7 +1944,7 @@ int write_eeprom ()
 			}
 			spi_flush();
 		}
-		report_finish();
+		report_finish(0);
 #else
 		MESS("Writing...");
 		for(adr = 0; adr < CmdWrite.DataSize; adr++) {	/* Write EEPROM without erase */
@@ -1914,12 +1960,12 @@ int write_eeprom ()
 	if(CmdWrite.Verify != 2) {	/* -v- : Skip verifying process when programming only mode */
 #if AVRSPX
 		report_setup("Verify EEPROM:", CmdWrite.DataSize);
+		error_found_count = 0;
 		if (CtrlPort.PortClass == TY_USBASP) {		/* Read eeprom in page mode */
 			rc = usbasp_paged_verify(EEPROM, DataBuff, Device->EepromPage ,
 							CmdWrite.DataSize, false);
 			if (rc != 0) {
-				report_finish();
-				return RC_FAIL;
+				error_found_count++;
 			}
 		} else {
 			ws = (Device->EepromSize < PIPE_WINDOW) ? Device->EepromSize : PIPE_WINDOW;
@@ -1927,15 +1973,21 @@ int write_eeprom ()
 				read_multi(EEPROM, adr, ws, rd);
 				for(n = 0; n < ws; n++) {
 					if(rd[n] != DataBuff[adr+n]) {
-						fprintf(stderr, "\nFailed at %04X:%02X->%02X\n",
-							(int)(adr+n), (int)DataBuff[adr+n], (int)rd[n]);
-						return RC_FAIL;
+						if (error_found_count == 0) {
+							fprintf(stderr, "\n");
+						}
+						fprintf(stderr, "Failed at %04X:%02X->%02X\n", (int)(adr+n), (int)DataBuff[adr+n], (int)rd[n]);
+						error_found_count++;
 					}
 				}
 				report_update(ws);
 			}
 		}
-		report_finish();
+		if (error_found_count) {
+			report_finish(error_found_count);
+			return RC_FAIL;
+		}
+		report_finish(0);
 #else
 		MESS("Verifying...");
 		ws = (Device->EepromSize < PIPE_WINDOW) ? Device->EepromSize : PIPE_WINDOW;
@@ -1955,8 +2007,6 @@ int write_eeprom ()
 
 	return 0;
 }
-
-
 
 
 /* -f{l|h|x}, -l command */
@@ -2150,7 +2200,7 @@ int main (int argc, char **argv)
 
     if (f_usblist) {
 		if (CtrlPort.PortClass == TY_HIDASP) {
-	        if (hidasp_list() < 1)
+	        if (hidasp_list(progname) < 1)
 	            return 1;
 			terminate(rc = 0);
 	        return rc;

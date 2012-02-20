@@ -2,14 +2,23 @@
  * original: binzume.net
  * modify: senshu , iruka
  * 2008-09-22 : for HIDaspx.
+ * 2008-11-07 : for HIDaspx, hidmon, bootmon88
  */
+
+#if 0
+	#define HIDMON88		0		// この内の一つを選択（1にする）
+	#define HIDMON			0
+	#define HIDASPX			0
+	#define HIDBOOT			0
+#endif
 
 #define DEBUG 		   	0		// for DEBUG
 
 #define DEBUG_PKTDUMP  	0		// HID Reportパケットをダンプする.
 #define DUMP_PRODUCT   	0		// 製造者,製品名を表示.
 
-#define CHECK_COUNT		2		// 4: Connect時の Ping test の回数.
+#define CHECK_COUNT		1		// 4: Connect時の Ping test の回数.
+#define BUFF_SIZE	256
 
 #include <windows.h>
 #include <stdio.h>
@@ -27,11 +36,22 @@
 #define MY_VID 0x16c0				/* 5824 in dec, stands for VOTI */
 #define MY_PID 0x05df				/* 1503 in dec, obdev's free PID */
 
-#define	MY_Manufacturer	"YCIT"
-#define	MY_Product		"HIDaspx"
+#if	HIDMON88
+	#define	MY_Manufacturer	"AVRetc"
+	#define	MY_Product		"bmon"
+#elif (HIDASPX || HIDMON)
+	#define	MY_Manufacturer	"YCIT"
+	#define	MY_Product		"HIDaspx"
+#else
+	#define	MY_Manufacturer	"obdev.at"
+	#define	MY_Product		"HIDBoot"
+#endif
+
 //	MY_Manufacturer,MY_Product のdefine を外すと、VID,PIDのみの照合になる.
 //	どちらかをはずすと、その照合を省略するようになる.
 static int found_hidaspx;
+
+extern int hidmon_mode;
 
 
 // HID API (from w2k DDK)
@@ -58,20 +78,34 @@ static	int have_isp_cmd = 0;	// ISP制御の有無.
 //--------------------------    Tables    ------------------------------------
 //----------------------------------------------------------------------------
 //  HID Report のパケットはサイズ毎に 3種類用意されている.
-#define	REPORT_ID1			1	// 8  REPORT_COUNT(6)
-#define	REPORT_ID2			2	// 32 REPORT_COUNT(30)
-#define	REPORT_ID3			3	// 40 REPORT_COUNT(38)
+#if HIDMON88
+	#define	REPORT_ID1			1	// 8  REPORT_COUNT(6)
+	#define	REPORT_ID2			3	// 40 REPORT_COUNT(38)
+	#define	REPORT_ID3			2	// 32 REPORT_COUNT(30)
 
-#define	REPORT_LENGTH1		7	// 8  REPORT_COUNT(6)
-#define	REPORT_LENGTH2		31	// 32 REPORT_COUNT(30)
-#define	REPORT_LENGTH3		39	// 40 REPORT_COUNT(38)
+	#define	REPORT_LENGTH1		7	// REPORT_COUNT(6)
+	#define	REPORT_LENGTH2		39	// 40 REPORT_COUNT(38)
+	#define	REPORT_LENGTH3		132	// REPORT_COUNT(131)
 
-#define	PAGE_WRITE_LENGTH	32	// Page Writeでは32byte単位の転送を心掛ける.
-								// Length5より7バイト少ない値である必要がある.
+	//	最大の長さをもつ HID ReportID,Length
+	#define	REPORT_IDMAX		REPORT_ID2
+	#define	REPORT_LENGTHMAX	REPORT_LENGTH2
+#else
+	#define	REPORT_ID1			1	// 8  REPORT_COUNT(6)
+	#define	REPORT_ID2			2	// 32 REPORT_COUNT(30)
+	#define	REPORT_ID3			3	// 40 REPORT_COUNT(38)
 
-//	最大の長さをもつ HID ReportID,Length
-#define	REPORT_IDMAX		REPORT_ID3
-#define	REPORT_LENGTHMAX	REPORT_LENGTH3
+	#define	REPORT_LENGTH1		7	// 8  REPORT_COUNT(6)
+	#define	REPORT_LENGTH2		31	// 32 REPORT_COUNT(30)
+	#define	REPORT_LENGTH3		39	// 40 REPORT_COUNT(38)
+
+	#define	PAGE_WRITE_LENGTH	32	// Page Writeでは32byte単位の転送を心掛ける.
+									// Length5より7バイト少ない値である必要がある.
+
+	//	最大の長さをもつ HID ReportID,Length
+	#define	REPORT_IDMAX		REPORT_ID3
+	#define	REPORT_LENGTHMAX	REPORT_LENGTH3
+#endif
 
 
 #if	DEBUG_PKTDUMP
@@ -97,6 +131,7 @@ static int hidRead(HANDLE h, char *buf, int Length, int id)
 	rc = HidD_GetFeature(h, buf, Length);
 #if	DEBUG_PKTDUMP
 	memdump("RD", buf, Length);
+	printf("id=%d Length=%d rc=%d\n",id,Length,rc);
 #endif
 	return rc;
 }
@@ -114,7 +149,7 @@ int	hidReadPoll(char *buf, int Length, int id)
 
 
 /*
- *	HIDデバイスに HID Report を送信するする.
+ *	HIDデバイスに HID Report を送信する.
  *	送信バッファの先頭の1バイトにReportID を入れる処理は
  *	この関数内で行うので、先頭1バイトを予約しておくこと.
  *
@@ -157,11 +192,15 @@ int	hidWriteBuffer(char *buf, int len)
 	if( report_id == 0) {
 		// 適切な長さが選択できなかった.
 		fprintf(stderr, "Error at hidWriteBuffer. len=%d\n",len);
+#if DLL
+		return 0;
+#else
 		exit(1);
 		return 0;
+#endif
+	} else {
+		return hidWrite(hHID, buf, length, report_id);
 	}
-
-	return hidWrite(hHID, buf, length, report_id);
 }
 
 /*
@@ -187,11 +226,15 @@ int	hidReadBuffer(char *buf, int len)
 	if( report_id == 0) {
 		// 適切な長さが選択できなかった.
 		fprintf(stderr, "Error at hidWriteBuffer. len=%d\n",len);
+#if DLL
+		return 0;
+#else
 		exit(1);
 		return 0;
+#endif
+	} else {
+		return hidRead(hHID, buf, length, report_id);
 	}
-
-	return hidRead(hHID, buf, length, report_id);
 }
 /*
  *	hidWrite()を使用して、デバイス側に4バイトの情報を送る.
@@ -203,7 +246,7 @@ int	hidReadBuffer(char *buf, int len)
  */
 int hidCommand(int cmd,int arg1,int arg2,int arg3)
 {
-	unsigned char buf[128];
+	unsigned char buf[BUFF_SIZE];
 
 	memset(buf , 0, sizeof(buf) );
 
@@ -229,7 +272,7 @@ int hidCommand(int cmd,int arg1,int arg2,int arg3)
 //
 int hidPokeMem(int addr,int data0,int mask)
 {
-	unsigned char buf[128];
+	unsigned char buf[BUFF_SIZE];
 	memset(buf , 0, sizeof(buf) );
 
 	buf[1] = HIDASP_POKE;
@@ -248,7 +291,7 @@ int hidPokeMem(int addr,int data0,int mask)
 
 int hidPeekMem(int addr)
 {
-	unsigned char buf[128];
+	unsigned char buf[BUFF_SIZE];
 	memset(buf , 0, sizeof(buf) );
 
 	buf[1] = HIDASP_PEEK;
@@ -261,6 +304,13 @@ int hidPeekMem(int addr)
 	return buf[1];
 }
 
+#if HIDMON88
+static void hidSetDevCaps(void)
+{
+	hidCommand(HIDASP_GET_CAPS,0,0,0);	// bootloadHIDが取得すべき情報をバッファに置く.
+}
+#endif
+
 #define	USICR			0x2d	//
 #define	DDRB			0x37	// PB4=RST PB3=LED
 #define	DDRB_WR_MASK	0xf0	// 制御可能bit = 1111_0000
@@ -270,7 +320,7 @@ int hidPeekMem(int addr)
 #define HIDASP_RST		0x10	// RST bit
 
 /*
- *	LEDの制御.
+ *	LEDの制御. (hidasp.h)
 #define HIDASP_RST_H_GREEN	0x18	// RST解除,LED OFF
 #define HIDASP_RST_L_BOTH	0x00	// RST実行,LED ON
 #define HIDASP_SCK_PULSE 	0x80	// RST-L SLK-pulse ,LED ON	@@kuga
@@ -279,12 +329,22 @@ int hidPeekMem(int addr)
 
 static void hidSetStatus(int ledstat)
 {
+	static int once = 0;
 	int ddrb;
 	if (have_isp_cmd) {
 		hidCommand(HIDASP_SET_STATUS,0,ledstat,0);	// cmd,portd(&0000_0011),portb(&0001_1111),0
 	}else{
-		fprintf(stderr, "Warnning: Please update HIDaspx firmware.\n");
-		if(ledstat & HIDASP_RST) {	// RST解除.
+		if (once == 0 && !hidmon_mode) {
+//			fprintf(stderr, "Warnning: Please update HIDaspx firmware.\n");
+			fprintf(stderr, "Warnning: Please check HIDaspx mode.\n");
+			once++;
+		}
+
+		if (hidmon_mode) {
+			ddrb = 0xff;			// DDRB = 0xff : 1が出力ピン ただしbit3-0は影響しない.
+			hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);
+			hidPokeMem(DDRB ,ddrb   ,DDRB_WR_MASK);
+		} else if(ledstat & HIDASP_RST) {	// RST解除.
 			ddrb = 0x10;			// PORTB 全入力.
 			hidPokeMem(USICR,0      ,0);
 			hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);
@@ -406,12 +466,12 @@ static char *uni_to_string(char *t, unsigned short *u)
 /*  Manufacturer & Product name check.
  *  名前チェック : 成功=1  失敗=0 読み取り不能=(-1)
  */
-static int check_product_string(HANDLE handle, char *serial)
+static int check_product_string(HANDLE handle, const char *serial)
 {
-	unsigned short unicode[512];
-	char string1[256];
-	char string2[256];
-	char string3[256];
+	unsigned short unicode[BUFF_SIZE*2];
+	char string1[BUFF_SIZE];
+	char string2[BUFF_SIZE];
+	char string3[BUFF_SIZE];
 
 	if (!HidD_GetManufacturerString(handle, unicode, sizeof(unicode))) {
 		return -1;
@@ -429,7 +489,7 @@ static int check_product_string(HANDLE handle, char *serial)
 	uni_to_string(string3, unicode);
 
 	if (serial[0]=='*') {
-		fprintf(stderr, "Manufacturer: [%s], Product: [%s], serial number: [%s]\n", string1,  string2, string3);
+		fprintf(stderr, "Manufacturer: [%6s], Product: [%7s], serial number: [%s]\n", string1,  string2, string3);
 	}
 
 #ifdef	MY_Manufacturer
@@ -451,7 +511,7 @@ static int check_product_string(HANDLE handle, char *serial)
 
 ////////////////////////////////////////////////////////////////////////
 // HIDディバイス一覧からUSB-IOを検索
-static int OpenTheHid(char *serial)
+static int OpenTheHid(const char *serial)
 {
 	int f, i, rc;
 	ULONG Needed, l;
@@ -530,7 +590,7 @@ void memdump(char *msg, char *buf, int len)
 #endif
 
 
-int hidasp_list()
+int hidasp_list(char * string)
 {
 	int r, rc;
 
@@ -543,7 +603,7 @@ int hidasp_list()
 		rc = 0;
 	}
 	if (found_hidaspx==0) {
-		fprintf(stderr, "HIDaspx not found.\n");
+		fprintf(stderr, "%s not found.\n", string);
 	}
 	if (hHID_DLL) {
 		FreeLibrary(hHID_DLL);
@@ -554,17 +614,18 @@ int hidasp_list()
 //----------------------------------------------------------------------------
 //  初期化.
 //----------------------------------------------------------------------------
-int hidasp_init(char *serial)
+int hidasp_init(const char *serial)
 {
-	unsigned char rd_data[128];
-	int i, r;
+	unsigned char rd_data[BUFF_SIZE];
+	int i, r, result;
 
+	result = 0;
 	LoadHidDLL();
 	if (OpenTheHid(serial) == 0) {
 #if DEBUG
 		fprintf(stderr, "ERROR: fail to OpenTheHid(%s)\n", serial);
 #endif
-		return 1;
+		return HIDASP_MODE_ERROR;
 	}
 
 	GetDevCaps();
@@ -581,100 +642,86 @@ int hidasp_init(char *serial)
 		fprintf(stderr, "HIDasp Ping(%2d) = %d\n", i, rd_data[1]);
 #endif
 		if (r == 0) {
-			fprintf(stderr, "ERR. fail to Read().\n");
-			return 1;
+			fprintf(stderr, "Error: fail to Read().\n");
+			return HIDASP_MODE_ERROR;
 		}
 		dev_id = rd_data[1];
-		if((dev_id != DEV_ID_FUSION) && (dev_id != DEV_ID_STD)) {
-			fprintf(stderr, "ERR. fail to ping test. (id = %x)\n",dev_id);
-			return 1;
+		if((dev_id != DEV_ID_FUSION)
+		 &&(dev_id != DEV_ID_STD)
+		 &&(dev_id != DEV_ID_MEGA88)
+		 &&(dev_id != DEV_ID_MEGA88_USERMODE)) {
+			fprintf(stderr, "Error: fail to ping test. (id = %x)\n",dev_id);
+			return HIDASP_MODE_ERROR;
 		}
+
+		if (hidmon_mode) {
+			fprintf(stderr, "TARGET DEV_ID=%x\n",dev_id);
+		}
+
 		if (rd_data[2] != i) {
-			fprintf(stderr, "ERR. fail to ping test. %d != %d\n", rd_data[2] , i);
-			return 1;
+			fprintf(stderr, "Error: fail to ping test. %d != %d\n", rd_data[2] , i);
+			return HIDASP_MODE_ERROR;
 		}
 	}
-	hidCommand(HIDASP_SET_STATUS,0,HIDASP_RST_H_GREEN,0);	// RESET HIGH
+	if (!hidmon_mode) {
+		hidCommand(HIDASP_SET_STATUS,0,HIDASP_RST_H_GREEN,0);	// RESET HIGH
+	}
+#if	HIDMON88
+		hidCommand(HIDASP_BOOT_RWW,0,0,0);	// Read-While-Write-Section Read Enable.
+#endif
 	r = hidRead(hHID, rd_data ,REPORT_LENGTH1, REPORT_ID1);
-	if( rd_data[1] == 0xaa ) {	// ISPコマンド(isp_enable)が正常動作した.
-		have_isp_cmd = 1;		// ISP制御OK.
+	if( rd_data[1] == 0xaa ) {				// ISPコマンド(isp_enable)が正常動作した.
+		have_isp_cmd = HIDASP_ISP_MODE;		// ISP制御OK.
+		result |= HIDASP_ISP_MODE;
+	} else if( rd_data[1] == DEV_ID_FUSION ) {
+		result |= HIDASP_FUSION_OK;			// NEW firmware
+	} else if( rd_data[1] == DEV_ID_STD ) {
+		result &= ~HIDASP_FUSION_OK;		// OLD firmware
+	} else if( rd_data[1] == DEV_ID_MEGA88 ) {		// USB-IO mode
+		result |= HIDASP_USB_IO_MODE;		// ISP制御NG.
+	} else if( rd_data[1] == DEV_ID_MEGA88_USERMODE ) {		// USB-IO mode
+		result |= HIDASP_USB_IO_MODE;		// ISP制御NG.
 	}
 #if DEBUG
-	if (have_isp_cmd) {
-		fprintf(stderr, "ISP CMD support.\n");
-	}else{
+	if (result & HIDASP_ISP_MODE) {
+		fprintf(stderr, "[ISP CMD] ");
+	}
+	if (result & HIDASP_FUSION_OK) {
+		fprintf(stderr, "[FUSION] ");
+	}
+	if (result & HIDASP_USB_IO_MODE) {
+		fprintf(stderr, "[USB-IO mode] ");
+	}
+	if (result == 0) {
 		fprintf(stderr, "ISP CMD Not support.\n");
-	}
-	fprintf(stderr, "OK.\n");
-#endif
-	return 0;
-}
-
-//----------------------------------------------------------------------------
-//  ターゲットマイコンをプログラムモードに移行する.
-//----------------------------------------------------------------------------
-int hidasp_program_enable(int delay)
-{
-	unsigned char buf[128];
-	unsigned char res[4];
-	int i, rc;
-	int tried;	//AVRSP と同様のプロトコルを採用
-
-	rc = 1;
-	hidSetStatus(HIDASP_RST_H_GREEN);			// RESET HIGH
-	hidSetStatus(HIDASP_RST_L_BOTH);			// RESET LOW (H PULSE)
-	hidCommand(HIDASP_SET_DELAY,delay,0,0);		// SET_DELAY
-	Sleep(30);				// 30
-
-	for(tried = 0; tried < 3; tried++) {
-		for(i = 0; i < 32; i++) {
-
-			buf[0] = 0xAC;
-			buf[1] = 0x53;
-			buf[2] = 0x00;
-			buf[3] = 0x00;
-			hidasp_cmd(buf, res);
-
-			if (res[2] == 0x53) {
-				rc = 0;					// AVRマイコンと同期を確認
-				goto hidasp_program_enable_exit;
-			}
-			if (tried < 2) {			// 2回までは通常の同期方法
-				break;
-			}
-			// AT90S用の同期方法で同期を取る
-			hidSetStatus(HIDASP_SCK_PULSE);			// RESET LOW SCK H PULSE shift scan point
-		}
-	}
-
-	hidasp_program_enable_exit:
-#if DEBUG
-	if (rc == 0) {
-		fprintf(stderr, "hidasp_program_enable() == OK\n");
-	} else  {
-		fprintf(stderr, "hidasp_program_enable() == NG\n");
+	} else {
+		fprintf(stderr, "OK.\n");
 	}
 #endif
-	return rc;
+	return result;
 }
-
-
-#define HIDASP_NOP 			  0	//これは ISPのコマンドと思われる?
 
 //----------------------------------------------------------------------------
 //  終了.
 //----------------------------------------------------------------------------
 void hidasp_close()
 {
+#define HIDASP_NOP 			  0	//これは ISPのコマンドと思われる?
+
 	if (hHID) {
-		unsigned char buf[128];
+		unsigned char buf[BUFF_SIZE];
 
 		buf[0] = 0x00;
 		buf[1] = HIDASP_NOP;
 		buf[2] = 0x00;
 		buf[3] = 0x00;
 		hidasp_cmd(buf, NULL);					// AVOID BUG!
-		hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
+		if (!hidmon_mode) {
+			hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
+		}
+#if	HIDMON88
+		hidSetDevCaps();
+#endif
 		CloseHandle(hHID);
 	}
 	if (hHID_DLL) {
@@ -719,6 +766,58 @@ int hidasp_cmd(const unsigned char cmd[4], unsigned char res[4])
 }
 
 
+#if (HIDMON || HIDASPX)
+//----------------------------------------------------------------------------
+//  ターゲットマイコンをプログラムモードに移行する.
+//----------------------------------------------------------------------------
+int hidasp_program_enable(int delay)
+{
+	unsigned char buf[BUFF_SIZE];
+	unsigned char res[4];
+	int i, rc;
+	int tried;	//AVRSP と同様のプロトコルを採用
+
+	rc = 1;
+	hidSetStatus(HIDASP_RST_H_GREEN);			// RESET HIGH
+	hidSetStatus(HIDASP_RST_L_BOTH);			// RESET LOW (H PULSE)
+	hidCommand(HIDASP_SET_DELAY,delay,0,0);		// SET_DELAY
+	Sleep(30);				// 30
+
+	for(tried = 0; tried < 3; tried++) {
+		for(i = 0; i < 32; i++) {
+
+			buf[0] = 0xAC;
+			buf[1] = 0x53;
+			buf[2] = 0x00;
+			buf[3] = 0x00;
+			hidasp_cmd(buf, res);
+
+			if (res[2] == 0x53) {
+				rc = 0;					// AVRマイコンと同期を確認
+				goto hidasp_program_enable_exit;
+			}
+			if (tried < 2) {			// 2回までは通常の同期方法
+				break;
+			}
+			// AT90S用の同期方法で同期を取る
+			hidSetStatus(HIDASP_SCK_PULSE);			// RESET LOW SCK H PULSE shift scan point
+		}
+	}
+
+	hidasp_program_enable_exit:
+#if DEBUG
+	if (rc == 0) {
+		fprintf(stderr, "hidasp_program_enable() == OK\n");
+	} else  {
+		fprintf(stderr, "hidasp_program_enable() == NG\n");
+	}
+#endif
+	return rc;
+}
+
+
+
+
 static	void hid_transmit(BYTE cmd1, BYTE cmd2, BYTE cmd3, BYTE cmd4)
 {
 	unsigned char cmd[4];
@@ -736,7 +835,7 @@ static	void hid_transmit(BYTE cmd1, BYTE cmd2, BYTE cmd3, BYTE cmd4)
 int hidasp_page_write_fast(long addr, const unsigned char *wd, int pagesize)
 {
 	int n, l;
-	char buf[128];
+	char buf[BUFF_SIZE];
 	int cmd = HIDASP_PAGE_TX_START;
 
 	memset(buf , 0, sizeof(buf) );
@@ -776,7 +875,7 @@ int hidasp_page_write_fast(long addr, const unsigned char *wd, int pagesize)
 int hidasp_page_write(long addr, const unsigned char *wd, int pagesize,int flashsize)
 {
 	int n, l;
-	char buf[128];
+	char buf[BUFF_SIZE];
 
 	if(	(dev_id == DEV_ID_FUSION) && (flashsize <= (128*1024)) ) {
 //		((addr & 0xFF) == 0 	) ) {
@@ -828,7 +927,7 @@ int hidasp_page_write(long addr, const unsigned char *wd, int pagesize,int flash
 int hidasp_page_read(long addr, unsigned char *wd, int pagesize)
 {
 	int n, l;
-	char buf[128];
+	char buf[BUFF_SIZE];
 
 	// set page
 	if (addr >= 0) {
@@ -865,4 +964,5 @@ int hidasp_page_read(long addr, unsigned char *wd, int pagesize)
 
 	return 0;
 }
+#endif
 //----------------------------------------------------------------------------

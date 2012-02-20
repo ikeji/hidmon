@@ -1,14 +1,16 @@
 ### Makefile.gcc
-SRCS = avrspx.c hidasp.c hwctrl.c rscr.c usbasp.c utils.c wronly.c icon.rc
-OBJS = avrspx.o hidasp.o hwctrl.o rscr.o usbasp.o utils.o wronly.o icon.o
-PROG = hidspx
+
+O = .o
+SRCS = avrspx.c hidasp.c hwctrl.c rscr.c usbasp.c utils.c wronly.c
+OBJS = avrspx$(O) hidasp$(O) hwctrl$(O) rscr$(O) usbasp$(O) utils$(O) wronly$(O)
+PROG = hidspx-gcc
 LIB =  libusb/lib/gcc/libusb.a
 #RES  = $(PROG).coff
 EXE  = $(PROG).exe
 
 RC = windres
 CC = gcc
-CFLAGS = -O2 -I. -Wall -DAVRSPX=1 -Ilibusb/include
+CFLAGS = -O2 -I. -Wall -DHIDASPX=1 -DAVRSPX=1 -Ilibusb/include
 
 LD = gcc
 LDFLAGS = -mwindows -s -Wl,--subsystem,console
@@ -49,3 +51,11 @@ icon.o:	icon.rc
 
 install:
 	install *.exe ../bin
+###
+avrspx$(O): avrspx.h usbasp.h hidasp.h
+hidasp$(O): usbhid.h hidasp.h avrspx.h ../firmware/hidcmd.h
+hwctrl$(O): avrspx.h hwctrl.h
+rscr$(O): avrspx.h
+usbasp$(O): ./usb.h avrspx.h usbasp.h
+utils$(O): avrspx.h
+wronly$(O): avrspx.h

@@ -10,6 +10,10 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
+#if	F_CPU == 12800000	/* RC OSC mode */
+#error This file doesn't support RC-OSC mode.
+#endif
+
 #include "usbdrv.h"
 #include "hidcmd.h"
 
@@ -30,7 +34,7 @@
 #define	LENGTH3 40
 #define	LENGTH4  6
 
-#ifndef USE_LIBUSB
+#if !USE_LIBUSB
 /*
 
  「重要」
@@ -82,25 +86,31 @@ PROGMEM char usbHidReportDescriptor[] = {
 #define	DEV_ID				0x5a	// FUSIONなしのファーム.
 #endif
 
-//
-//	受信バッファ.
-//
+/*
+ hidspx-1023でも r2～r13は使用可能
+ */
+
 #if OPTIMIZE_SIZE
 register uchar currentPosition asm("r4");
 register uchar bytesRemaining asm("r5");
 register uchar page_mode   asm("r6");
 register uchar page_addr   asm("r7");
 register uchar page_addr_h asm("r8");
-register uint8_t wait      asm("r9");
+register uchar wait      asm("r9");
+register uchar programmer_mode    asm("r10");
 #else
 static uchar currentPosition;
 static uchar bytesRemaining; // Receive Data Pointer
 static uchar page_mode;
 static uchar page_addr;
 static uchar page_addr_h;
-static uint8_t wait;
+static uchar wait;
+static uchar programmer_mode;
 #endif
 
+//
+//	受信バッファ.
+//
 typedef struct {
 	uchar id[1];
 	uchar buf[39];
@@ -153,7 +163,7 @@ static void cmd_peek_poke(MonCommand_t *cmd,uchar data0)
 // 最適化用
 #define hbyte(a) (*((uchar*)&(a)+1))
 #define lbyte(a) (*((uchar*)&(a)))
-inline static uint8_t byte(uint8_t t) {return t;}
+inline static uchar byte(uchar t) {return t;}
 
 // 遅延用.
 #define	DLY_2clk()	asm("rjmp .+0");
@@ -195,7 +205,7 @@ void delay_7clk(void);
 //
 //		2以上は 9 + (12 * wait) clk （CALL-RETを採用した場合も同様）
 //
-static uint8_t usi_trans(uint8_t data){
+static uchar usi_trans(uchar data){
 	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);	//by kuga
 	USIDR=data;
 	USISR=(1<<USIOIF);
@@ -241,7 +251,7 @@ static uint8_t usi_trans(uint8_t data){
 	return USIDR;
 }
 
-static inline void isp_command(uint8_t *data){
+static inline void isp_command(uchar *data){
 	uchar i;
 	for (i=0;i<4;i++) {
 		usbData[i]=usi_trans(data[i]);
@@ -264,11 +274,7 @@ static	void ispConnect(void)
 	delay_10us(6);					//@@x  ispDelay();
 	ISP_OUT |= (1 << ISP_RST);		/* RST high */
 	delay_10us(100);				//@@x  ispDelay(); -> 1ms
-#if INCLUDE_LED_NON
 	ISP_OUT &= ~((1 << ISP_RST)|(1 << ISP_RDY));	/* RST low , LED Low*/
-#else
-	ISP_OUT &= ~((1 << ISP_RST));	/* RST low */
-#endif
 }
 
 static	void ispDisconnect(void)
@@ -279,11 +285,7 @@ static	void ispDisconnect(void)
 
 	/* switch pullups off */
 	//ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
-#if INCLUDE_LED_NON
 	ISP_OUT = 0b00001011;			// PB7-4=Hi-Z,  PB3-0=Hi, LED(PWR)を除く
-#else
-	ISP_OUT = 0b00001111;			// PB7-4=Hi-Z,  PB3-0=Hi
-#endif
 }
 
 static	void ispSckPulse(void)
@@ -310,40 +312,30 @@ void hidasp_main()	//uchar *data)
 	uchar *data = report.buf;	//こうすると縮む.
 
 	uchar i;
-	uint8_t data0 = data[0];
-	uint8_t data1 = data[1];
-	uint8_t cmd   = data0 & 0xfe;
-	uint8_t cmdtx = data0 & CMD_MASK;
+	uchar data0 = data[0];
+	uchar data1 = data[1];
+	uchar cmd   = data0 & 0xfe;
+	uchar cmdtx = data0 & CMD_MASK;
 
-#if 1
 	usbData[0] = DEV_ID;
-#else
-	if ( data0 == HIDASP_TEST ) { // TEST
-		usbData[0] = DEV_ID;
-	}else
-#endif
 #if	INCLUDE_ISP_CMD
 	if ( data0 == HIDASP_SET_STATUS ) { // PORTへの出力制御
-#if	0	/* コード節約のため、PORTDの処理をカットする */
-		/* MONITOR機能が使える場合には、それで代用できる */
-		PORTD = (PORTD&~3)    | (data1 & 3);
-#endif
 		/* ISP用のピンをHi-Z制御 */
-		/* ISP移行を完全に行うためのコードを、ファーム側で持つ */
-		if(data[2] & 0x10) {// RST解除の場合
-			ispDisconnect();
-		}else{
-			if(data[2] & 0x80) {// RST状態でSCK Hは SCKパルス要求
-				ispSckPulse();
-			} else {
-				ispConnect();
+		/* ISP移行の手順を、ファーム側で持つ */
+		if  (!programmer_mode) {
+			usbData[0] = 0xba;	/* コマンド実行の実行不可をHOSTに知らせる. */
+		} else {
+			if(data[2] & 0x10) {// RST解除の場合
+				ispDisconnect();
+			}else{
+				if(data[2] & 0x80) {// RST状態でSCK Hは SCKパルス要求
+					ispSckPulse();
+				} else {
+					ispConnect();
+				}
 			}
+			usbData[0] = 0xaa;	/* コマンド実行完了をHOSTに知らせる. */
 		}
-#if !INCLUDE_LED_NON
-		// ISP_OUT 3,2,1,0のみをOR出力
-		ISP_OUT |= (data[2]&0xf) ;
-#endif	/* INCLUDE_LED_NON */
-		usbData[0] = 0xaa;	/* コマンド実行完了をHOSTに知らせる. */
 	} else
 #endif	/* INCLUDE_ISP_CMD */
 	if ( cmd == HIDASP_CMD_TX) { // SPI
@@ -505,14 +497,65 @@ GND      [10      11] PD6(NC)
    XTAL:    XTAL1,2 => Crystal 12MHz
    PD2:     Clock Output(12MHz)
    ---------------------------------------
+
+■ FUSE設定
+ヒューズの設定は，外付けの 12MHz のクリスタルに合わせ、以下のように設定します。
+
+Low: 11111111 (0xFF)
+     ||||++++-- CKSEL[3:0] システムクロック選択
+     ||++-- SUT[1:0] 起動時間
+     |+-- CKOUT (0:PD2にシステムクロックを出力)
+     +-- CKDIV8 クロック分周初期値 (1:1/1, 0:1/8)
+
+High:11-11011 (0xDB)
+     |||||||+-- RSTDISBL (RESETピン 1:有効, 0:無効(PA2))
+     ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
+     |||+-- WDTON (WDT 0:常時ON, 1:通常)
+     ||+-- SPIEN (1:ISP禁止, 0:ISP許可) ※Parallel時のみ
+     |+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
+     +-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
+
+Ext: -------1 (0xFF)
+            +-- SPMEN (SPM命令 1:無効, 0:有効)
+
+
 */
 
 int main(void)
 {
-	PORTD |= (1<<PD5);		/* PD5 USB D- pullup */
-	DDRD = ~USBMASK;        /* all outputs except USB data */
+#if STARTUP_DELAY
+	/* Power ON delay (300ms) */
+	for (wait=0; wait<150; wait++) {
+		delay_10us(200);		// 2ms
+	}
+#endif
+
+#if USB_IO_MODE_ENABLE					/* USB-IOでは、初期化時にPORTBを入力モード */
+
+	/* PD5は USB D-, PD2はmodeジャンパ用 pullup */
+	PORTD |= ((1<<PD6)|(1<<PD5)|(1<<PD2)|(1<<PD1)|(1<<PD0));
+	delay_10us(10);						/* 値が安定するまで、100u秒待つ */
+
+	/* all outputs except (USB data, PD2, PD1, PD0) */
+	DDRD = ~(USBMASK | (1<<PD6)| (1<<PD2)|(1<<PD1)|(1<<PD0));
+
+	programmer_mode = PIND & (1<<PD2);
+	if (programmer_mode) {				/* PD2ジャンパ無しの時には、AVRライタ用の設定にする */
+		ISP_OUT = ISP_OUT_DEFAULT;		/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
+		ISP_DDR = ISP_DDR_DEFAULT;		/* PB7-4=in, PB3-0=out */
+
+		TCCR0A =(1<<COM0A0)|(1<<WGM01);	//  COM0A=01 : 比較一致でOC0Aトグル.
+										//  WGM210 = 010 : 比較一致タイマー、カウンタクリア.
+		TCCR0B = (1<<CS00);				//  fclk 1/1 分周.
+										//  TIMER0 の周期を設定する.
+		OCR0A = 5;						//  (12MHz / 2) / (5+1) = 1MHz
+	}
+#else
+	PORTD |= (1<<PD5);					/* PD5は USB D-の pullup */
+	DDRD = ~USBMASK;        			/* all outputs except USB data */
 	ISP_OUT = ISP_OUT_DEFAULT;			/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
-	ISP_DDR = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
+	ISP_DDR = ISP_DDR_DEFAULT;			/* PB7-4=in PB3-0=out */
+#endif
     usbInit();
     sei();
     for(;;){    /* main event loop */

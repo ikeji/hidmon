@@ -5,7 +5,7 @@
  * Tabsize: 4
  * Copyright: (c) 2005 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt) or proprietary (CommercialLicense.txt)
- * This Revision: $Id: usbconfig-prototype.h 600 2008-05-13 10:34:56Z cs $
+ * This Revision: $Id: usbconfig-prototype.h 674 2008-10-21 16:13:07Z cs $
  */
 
 #ifndef __usbconfig_h_included__
@@ -28,6 +28,10 @@ section at the end of this file).
 /* This is the port where the USB bus is connected. When you configure it to
  * "B", the registers PORTB, PINB and DDRB will be used.
  */
+#if F_CPU == 12800000	/* RC OSC mode, (D-) */
+  #define USB_CFG_DMINUS_BIT      3
+  #define USB_CFG_DPLUS_BIT       4
+#else
 #define USB_CFG_DMINUS_BIT      4
 /* This is the bit number in USB_CFG_IOPORT where the USB D- line is connected.
  * This may be any bit in the port.
@@ -41,17 +45,18 @@ section at the end of this file).
  * interrupt, the USB interrupt will also be triggered at Start-Of-Frame
  * markers every millisecond.]
  */
+#endif	/* F_CPU == 12800000 */
+
 #define USB_CFG_CLOCK_KHZ       (F_CPU/1000)
-/* Clock rate of the AVR in MHz. Legal values are 12000, 15000, 16000, 16500
- * and 20000. The 16.5 MHz version of the code requires no crystal, it
- * tolerates +/- 1% deviation from the nominal frequency. All other rates
- * require a precision of 2000 ppm and thus a crystal!
+/* Clock rate of the AVR in MHz. Legal values are 12000, 12800, 15000, 16000,
+ * 16500 and 20000. The 12.8 MHz and 16.5 MHz versions of the code require no
+ * crystal, they tolerate +/- 1% deviation from the nominal frequency. All
+ * other rates require a precision of 2000 ppm and thus a crystal!
  * Default if not specified: 12 MHz
  */
 
 /* ----------------------- Optional Hardware Config ------------------------ */
 
-#if 1
 #define USB_CFG_PULLUP_IOPORTNAME   D
 /* If you connect the 1.5k pullup resistor from D- to a port pin instead of
  * V+, you can connect and disconnect the device from firmware by calling
@@ -63,11 +68,10 @@ section at the end of this file).
  * above) where the 1.5k pullup resistor is connected. See description
  * above for details.
  */
-#endif
 
 /* --------------------------- Functional Range ---------------------------- */
 
-#define USB_CFG_HAVE_INTRIN_ENDPOINT    0
+#define USB_CFG_HAVE_INTRIN_ENDPOINT    1
 /* Define this to 1 if you want to compile a version with two endpoints: The
  * default control endpoint 0 and an interrupt-in endpoint (any other endpoint
  * number).
@@ -94,7 +98,15 @@ section at the end of this file).
  * it is required by the standard. We have made it a config option because it
  * bloats the code considerably.
  */
-#define USB_CFG_INTR_POLL_INTERVAL      10
+#define USB_CFG_SUPPRESS_INTR_CODE      1
+/* Define this to 1 if you want to declare interrupt-in endpoints, but don't
+ * want to send any data over them. If this macro is defined to 1, functions
+ * usbSetInterrupt() and usbSetInterrupt3() are omitted. This is useful if
+ * you need the interrupt-in endpoints in order to comply to an interface
+ * (e.g. HID), but never want to send any data. This option saves a couple
+ * of bytes in flash memory and the transmit buffers in RAM.
+ */
+#define USB_CFG_INTR_POLL_INTERVAL      200
 /* If you compile a version with endpoint 1 (interrupt-in), this is the poll
  * interval. The value is in milliseconds and must not be less than 10 ms for
  * low speed devices.
@@ -103,7 +115,7 @@ section at the end of this file).
 /* Define this to 1 if the device has its own power supply. Set it to 0 if the
  * device is powered from the USB bus.
  */
-#define USB_CFG_MAX_BUS_POWER           20
+#define USB_CFG_MAX_BUS_POWER           100
 /* Set this variable to the maximum USB bus power consumption of your device.
  * The value is in milliamperes. [It will be divided by two since USB
  * communicates power requirements in units of 2 mA.]
@@ -156,6 +168,14 @@ section at the end of this file).
  * counts SOF packets. This feature requires that the hardware interrupt is
  * connected to D- instead of D+.
  */
+#define USB_CFG_CHECK_DATA_TOGGLING     0
+/* define this macro to 1 if you want to filter out duplicate data packets
+ * sent by the host. Duplicates occur only as a consequence of communication
+ * errors, when the host does not receive an ACK. Please note that you need to
+ * implement the filtering yourself in usbFunctionWriteOut() and
+ * usbFunctionWrite(). Use the global usbCurrentDataToken and a static variable
+ * for each control- and out-endpoint to check for duplicate packets.
+ */
 #define USB_CFG_HAVE_MEASURE_FRAME_LENGTH   0
 /* define this macro to 1 if you want the function usbMeasureFrameLength()
  * compiled in. This function can be used to calibrate the AVR's RC oscillator.
@@ -167,8 +187,10 @@ section at the end of this file).
 /* USB vendor ID for the device, low byte first. If you have registered your
  * own Vendor ID, define it here. Otherwise you use one of obdev's free shared
  * VID/PID pairs. Be sure to read USBID-License.txt for rules!
+ * + This template uses obdev's shared VID/PID pair: 0x16c0/0x5dc.
+ * + Use this VID/PID pair ONLY if you understand the implications!
  */
-#ifdef USE_LIBUSB
+#if USE_LIBUSB
 #define  USB_CFG_DEVICE_ID       0xdc, 0x05 /* obdev's shared PID for libusb */
 #else
 #define  USB_CFG_DEVICE_ID       0xdf, 0x05 /* obdev's shared PID for HIDs */
@@ -178,6 +200,8 @@ section at the end of this file).
  * or if you have licensed a PID from somebody else, define it here. Otherwise
  * you use obdev's free shared VID/PID pair. Be sure to read the rules in
  * USBID-License.txt!
+ * + This template uses obdev's shared VID/PID pair: 0x16c0/0x5dc.
+ * + Use this VID/PID pair ONLY if you understand the implications!
  */
 #define USB_CFG_DEVICE_VERSION  0x00, 0x01
 /* Version number of the device: Minor number first, then major number.
@@ -199,8 +223,13 @@ section at the end of this file).
  * the macros. See the file USBID-License.txt before you assign a name if you
  * use a shared VID/PID.
  */
+#if F_CPU == 12800000	/* RC OSC mode, (D-) */
+#define USB_CFG_SERIAL_NUMBER       '0','0','1','0'
+#define USB_CFG_SERIAL_NUMBER_LEN   4
+#else
 #define USB_CFG_SERIAL_NUMBER       '0','0','0','0'
 #define USB_CFG_SERIAL_NUMBER_LEN   4
+#endif
 /* Same as above for the serial number. If you don't want a serial number,
  * undefine the macros.
  * It may be useful to provide the serial number through other means than at
@@ -208,7 +237,7 @@ section at the end of this file).
  * to fine tune control over USB descriptors such as the string descriptor
  * for the serial number.
  */
-#ifdef USE_LIBUSB
+#if USE_LIBUSB
 #define USB_CFG_DEVICE_CLASS        0xff // libusb
 #else
 #define USB_CFG_DEVICE_CLASS        0 // HID
@@ -217,7 +246,7 @@ section at the end of this file).
 /* See USB specification if you want to conform to an existing device class.
  * Class 0xff is "vendor specific".
  */
-#ifdef USE_LIBUSB
+#if USE_LIBUSB
 #define USB_CFG_INTERFACE_CLASS     0 // libusb
 #else
 #define USB_CFG_INTERFACE_CLASS     3 // HID
@@ -229,7 +258,7 @@ section at the end of this file).
  * HID class is 3, no subclass and protocol required (but may be useful!)
  * CDC class is 2, use subclass 2 and protocol 1 for ACM
  */
-#ifdef USE_LIBUSB
+#if USE_LIBUSB
 #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    0	// libusb
 #else
 #if INCLUDE_POLL_CMD
@@ -260,7 +289,9 @@ section at the end of this file).
  * no properties are defined or if they are 0, the default descriptor is used.
  * Possible properties are:
  *   + USB_PROP_IS_DYNAMIC: The data for the descriptor should be fetched
- *     at runtime via usbFunctionDescriptor().
+ *     at runtime via usbFunctionDescriptor(). If the usbMsgPtr mechanism is
+ *     used, the data is in FLASH by default. Add property USB_PROP_IS_RAM if
+ *     you want RAM pointers.
  *   + USB_PROP_IS_RAM: The data returned by usbFunctionDescriptor() or found
  *     in static memory is in RAM, not in flash memory.
  *   + USB_PROP_LENGTH(len): If the data is in static memory (RAM or flash),
@@ -292,6 +323,12 @@ section at the end of this file).
  *   USB_CFG_DESCR_PROPS_HID_REPORT
  *   USB_CFG_DESCR_PROPS_UNKNOWN (for all descriptors not handled by the driver)
  *
+ * Note about string descriptors: String descriptors are not just strings, they
+ * are Unicode strings prefixed with a 2 byte header. Example:
+ * int  serialNumberDescriptor[] = {
+ *     USB_STRING_DESCRIPTOR_HEADER(6),
+ *     'S', 'e', 'r', 'i', 'a', 'l'
+ * };
  */
 
 #define USB_CFG_DESCR_PROPS_DEVICE                  0
@@ -314,11 +351,22 @@ section at the end of this file).
  * interrupt than INT0, you may have to define some of these.
  */
 /* #define USB_INTR_CFG            MCUCR */
-#define USB_INTR_CFG_SET        ((1 << ISC10) | (1 << ISC11))
+/* #define USB_INTR_CFG_SET        ((1 << ISC00) | (1 << ISC01)) */
 /* #define USB_INTR_CFG_CLR        0 */
 /* #define USB_INTR_ENABLE         GIMSK */
-#define USB_INTR_ENABLE_BIT     INT1
+/* #define USB_INTR_ENABLE_BIT     INT0 */
 /* #define USB_INTR_PENDING        GIFR */
+/* #define USB_INTR_PENDING_BIT    INTF0 */
+/* #define USB_INTR_VECTOR         SIG_INTERRUPT0 */
+
+#if F_CPU == 12800000	/* RC OSC mode, (D-) */
+ #define USB_INTR_CFG_SET        ((0 << ISC10) | (1 << ISC11))  /* INT1(Neg Edge only) */
+ #include "osctune.h"
+#else
+ #define USB_INTR_CFG_SET        ((1 << ISC10) | (1 << ISC11))  /* INT1(Pos Edge only) */
+#endif
+
+#define USB_INTR_ENABLE_BIT     INT1
 #define USB_INTR_PENDING_BIT    INTF1
 #define USB_INTR_VECTOR         SIG_INTERRUPT1
 

@@ -17,7 +17,7 @@ PORT = avrdoper
 PROGRAMMER = stk500v2
 AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
 
-DEFINES = -DUSE_LIBUSB
+DEFINES = -DUSE_LIBUSB=1
 CFLAGS = $(DEFINES) -Iusbdrv -I. -DDEBUG_LEVEL=0 -DF_CPU=$(F_CPU)
 
 #OBJECTS = main.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 

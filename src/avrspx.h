@@ -197,7 +197,7 @@ extern const DEVPROP *Device;
 // avrspx.c
 void report_setup(char *msg, long size);
 void report_update(int bytes);
-void report_finish(void);
+void report_finish(int err_count);
 
 // hwctrl.c
 void spi_transmit(BYTE cmd1, BYTE cmd2,BYTE cmd3, BYTE cmd4);

@@ -7,20 +7,36 @@
 # License: GNU GPL v2 (see License.txt) or proprietary (CommercialLicense.txt)
 # This Revision: $Id: Makefile 566 2008-04-26 14:21:47Z cs $
 
+# GNU make only
 #DEVICE = atmega8
 DEVICE = attiny2313
 F_CPU = 12000000
 #F_CPU = 16000000
-FUSE_L  = # see below for fuse values for particular devices
-FUSE_H  = 
-PORT = avrdoper
-PROGRAMMER = stk500v2
-AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
+
+OSC = 16
+ifeq ($(F_CPU),12000000)
+ OSC = 12
+endif
+
+ifeq ($(F_CPU),12800000)
+ OSC = RC
+endif
+
+MAIN = main
+TARGET = $(MAIN)
+
+FUSE_L  = 0xBF
+FUSE_H  = 0xDB
+
+#PORT = avrdoper
+#PROGRAMMER = stk500v2
+#AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
+PROGRAMMER = avrspx
 
 CFLAGS = $(DEFINES) -Iusbdrv -I. -DDEBUG_LEVEL=0 -DF_CPU=$(F_CPU)
 
-#OBJECTS = main.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
-OBJECTS = main.o crt.o delay.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
+#OBJS = $(TARGET).o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
+OBJS = $(TARGET).o crt.o delay.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
 
 COMPILE = avr-gcc -Wall -Os $(CFLAGS) -mmcu=$(DEVICE)
 
@@ -42,7 +58,7 @@ COMPILE = avr-gcc -Wall -Os $(CFLAGS) -mmcu=$(DEVICE)
 #Ext: -------1 (0xFF)
 #            +-- SPMEN (SPM–½—ß 1:–³Œø, 0:—LŒø)
 #
-default: main.hex
+default: $(TARGET)-$(OSC).hex
 
 # symbolic targets:
 help:
@@ -53,7 +69,7 @@ help:
 	@echo "make flash ....... to flash the firmware"
 	@echo "make clean ....... to delete objects and hex file"
 
-hex: main.hex
+hex: $(TARGET)-$(OSC).hex
 program: flash fuse
 
 .c.o:
@@ -66,42 +82,50 @@ program: flash fuse
 # characters are not always preserved on Windows. To ensure WinAVR
 # compatibility define the file type manually.
 
-.c.s:
+.c.S:
 	$(COMPILE) -S $< -o $@
 
 flash:
-	$(AVRDUDE) -U flash:w:main.hex:i
+#	$(AVRDUDE) -U flash:w:$(TARGET).hex:i
+	$(PROGRAMMER) -d1 $(TARGET).hex
 
-usbaspload:
-	$(MAKE) flash PROGRAMMER=usbasp DEVICE=atmega168
+#usbaspload:
+#	$(MAKE) flash PROGRAMMER=usbasp DEVICE=atmega168
 
 fuse:
-	@[ "$(FUSE_H)" != "" -a "$(FUSE_L)" != "" ] || \
-		{ echo "*** Edit Makefile and choose values for FUSE_L and FUSE_H!"; exit 1; }
-	$(AVRDUDE) -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m
+#	@[ "$(FUSE_H)" != "" -a "$(FUSE_L)" != "" ] || \
+#		{ echo "*** Edit Makefile and choose values for FUSE_L and FUSE_H!"; exit 1; }
+#	$(AVRDUDE) -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m
+	$(PROGRAMMER) -d10 -FL$(FUSE_L) -FH$(FUSE_H)
 
 clean:
-	rm -f main.dis main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf *.o usbdrv/*.o main.s usbdrv/oddebug.s usbdrv/usbdrv.s time*.dat
+	rm -f $(TARGET)-$(OSC).hex *.o *.dis *.lst *.cof *.map *.elf time*.dat usbdrv/*.o usbdrv/oddebug.s usbdrv/usbdrv.s
 
 install:
-	cp -p main.hex ../bin/firmware
+	cp -p $(TARGET)-$(OSC).hex ../bin/firmware
 
 # file targets:
-main.elf:	$(OBJECTS)
-	$(COMPILE) -o main.elf $(OBJECTS) -nostdlib
-#	$(COMPILE) -o main.elf $(OBJECTS)
+$(TARGET)-$(OSC).elf:	$(OBJS)
+	$(COMPILE) -o $(TARGET)-$(OSC).elf $(OBJS) -nostdlib
+#	$(COMPILE) -o $(TARGET)-$(OSC).elf $(OBJS)
 
-main.hex:	main.elf
-	rm -f main.hex main.eep.hex
-	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
-	avr-size --mcu=$(DEVICE) main.elf
+$(TARGET)-$(OSC).hex:	$(TARGET)-$(OSC).elf
+	rm -f $(TARGET)-$(OSC).hex $(TARGET)-$(OSC).eep.hex
+	avr-objcopy -j .text -j .data -O ihex $(TARGET)-$(OSC).elf $(TARGET)-$(OSC).hex
+	avr-size --mcu=$(DEVICE) $(TARGET)-$(OSC).elf
 #	sh checksize main.elf 2048 128
 #	checksize main.elf 8192 1024
 # do the checksize script as our last action to allow successful compilation
 # on Windows with WinAVR where the Unix commands will fail.
 
-disasm:	main.elf
-	avr-objdump -d main.elf
+disasm:	$(TARGET)-$(OSC).elf
+	avr-objdump -d $(TARGET)-$(OSC).elf
 
 cpp:
-	$(COMPILE) -E main.c
+	$(COMPILE) -E $(TARGET).c
+
+###
+$(TARGET)-$(OSC).o: $(TARGET).c usbconfig.h hidconfig.h hidcmd.h osctune.h\
+ usbdrv/usbdrv.h usbdrv/usbportability.h
+crt.o:	crt.S
+delay.o:	delay.S

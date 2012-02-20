@@ -443,7 +443,7 @@ int open_ifport (PORTPROP *pc)
 
 #if AVRSPX
 	if (pc->PortClass == TY_HIDASP)	{ //@@+ by k-k
-		if (hidasp_init(pc->SerialNumber) != 0)	{
+		if (hidasp_init(pc->SerialNumber) == HIDASP_MODE_ERROR)	{
 			sprintf(str_info, "HIDaspx(%s) not found.\n", pc->SerialNumber);
 			pc->Info1 = str_info;
 			return 1;
@@ -1321,7 +1321,7 @@ void write_page (
 
 	delay_ms(Device->FlashWait);	/* Wait for page write time */
   }else{
-	int w = Device->FlashWait - 3;	// HID Report‚Ì“]‘—‚ÉÅ’á 3mS Š|‚©‚é.
+	int w = Device->FlashWait - 1;	// HID Report‚Ì“]‘—‚ÉÅ’á 3mS Š|‚©‚é.
 	if( w > 0)
 	delay_ms(w);	/* Wait for page write time */
   }

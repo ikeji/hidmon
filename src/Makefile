@@ -2,15 +2,15 @@
 O = .obj
 PROG = hidspx
 LIB =  libusb/lib/bcc/libusb.lib
-EXE  = $(PROG)-bcc.exe
-SRCS = avrspx.c hidasp.c hwctrl.c rscr.c usbasp.c utils.c wronly.c icon.rc
+EXE  = $(PROG).exe
+SRCS = avrspx.c hidasp.c hidasp_.c hwctrl.c rscr.c usbasp.c utils.c wronly.c
 #WILDARGS = c:\borland\bcc55\lib\wildargs$(O)
 WILDARGS = c:\bcc55\lib\wildargs$(O)
 OBJS = avrspx$(O) hidasp$(O) hwctrl$(O) rscr$(O) usbasp$(O) utils$(O) wronly$(O)
 
 RC = brc32
 CC = bcc32
-CFLAGS = -O2 -I.  -DAVRSPX=1 -Ilibusb/include
+CFLAGS = -O2 -I.  -DHIDASPX=1 -DAVRSPX=1 -Ilibusb/include
 
 LD = bcc32
 #LDFLAGS = -mwindows -s -Wl,--subsystem,console
@@ -53,3 +53,12 @@ $(EXE): $(OBJS) $(RES) $(LIB)
 
 install:
 	install $(EXE) ../bin
+###
+avrspx$(O): avrspx.h usbasp.h hidasp.h
+hidasp$(O): usbhid.h hidasp.h avrspx.h ../firmware/hidcmd.h
+hidasp_$(O): usbhid.h hidasp.h avrspx.h ../firmware/hidcmd.h
+hwctrl$(O): avrspx.h hwctrl.h
+rscr$(O): avrspx.h
+usbasp$(O): ./usb.h avrspx.h usbasp.h
+utils$(O): avrspx.h
+wronly$(O): avrspx.h

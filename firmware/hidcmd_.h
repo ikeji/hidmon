@@ -22,7 +22,6 @@
 
 #define HIDASP_TEST           0x01
 #define HIDASP_SET_STATUS     0x02
-#define HIDASP_GET_CAPS       0x03
 #define HIDASP_CMD_TX         0x10
 #define HIDASP_CMD_TX_1       0x11
 #define HIDASP_SET_PAGE       0x14
@@ -31,21 +30,16 @@
 #define HIDASP_PAGE_TX_START  0x22	//MODE=02  ADDR 初期化.
 #define HIDASP_PAGE_TX_FLUSH  0x24	//MODE=04  転送後 ISP
 //                            0x27 まではPAGE_TXで使用する.
+#define HIDASP_SET_DELAY      0x3c
 
 #define CMD_MASK              0xf8
 #define MODE_MASK             0x07
 
-#define HIDASP_BOOT_EXIT	  0x36	//bootloadを終了し、アプリケーションを起動する.
-#define HIDASP_BOOT_RWW	      0x38	//アプリケーション領域のコード読み出しを許可する.
-#define HIDASP_JMP	          0x3a	//指定番地のプログラム実行.
-#define HIDASP_SET_DELAY      0x3c	//SPI書き込み遅延時間の設定.
-#define HIDASP_POKE           0x3e	//メモリー書き込み.
-#define HIDASP_PEEK           0x3f	//メモリー読み出し.
+#define HIDASP_POKE         	62
+#define HIDASP_PEEK         	63
 
 #define	DEV_ID_FUSION			0x55
 #define	DEV_ID_STD				0x5a
-#define	DEV_ID_MEGA88			0x88
-#define	DEV_ID_MEGA88_USERMODE	0x89
 
 /*
  * ドキュメント

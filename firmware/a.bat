@@ -1,1 +1,1 @@
-cd ..\hidspx-src
+cd ..\src
