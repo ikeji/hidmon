@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 4月19日（最新更新）
+                                                2009年 4月20日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1152,4 +1152,8 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
         3. ボタンの大きさを均等化（イメージ貼り付けにより、大きさを画一化）
         4. 一時ファイルが消えない場合があったのを修正
         5. Command Executeのコマンド補完を実現
+
+■2009-04-20
+	hidspx-GUI.exe (ver 0.4.8)
+        1. Command Executeにて、user bookmarkを指定時の時間待ちを追加（約3秒間）
 
