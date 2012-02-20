@@ -128,7 +128,7 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "tiny13",      T13,   {0x1E, 0x90, 0x07},   1024,  32,   64,  4,  6,  5, 0xFF, 0xFC, 0x3F, 5, 1, {0x7F, 0x1F},      {1, 0x01, 0x08}, 74, "t13"},
 	{ "tiny15",      T15,   {0x1E, 0x90, 0x06},   1024,   0,   64,  2,  6, 11, 0xFF, 0xF9, 0x06, 3, 1, {0xD3},            {0, 0x10, 0x00}, 44, "t15"},
 	{ "tiny22",      T22,   {0x1E, 0x91, 0x06},   2048,   0,  128,  0, 11, 11, 0xFF, 0xF9, 0x06, 1, 0, {0x01},            {0, 0x00, 0x00}, 25, "2343"},
-	{ "tiny2313",    T2313, {0x1E, 0x91, 0x0A},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 0x01, 6, 2, {0xFF, 0xDF, 0x01},{1, 0x01, 0x80}, 75, "t2313"},/* DWEN */
+	{ "tiny2313",    T2313, {0x1E, 0x91, 0x0A},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 0x03, 6, 2, {0xFF, 0xDF, 0x01},{1, 0x01, 0x80}, 75, "t2313"},/* DWEN */
 	{ "tiny24",      T24,   {0x1E, 0x91, 0x0B},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},139, "t24"},  /* DWEN */
 	{ "tiny25",      T25,   {0x1E, 0x91, 0x08},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},100, "t25"},  /* DWEN */
 	{ "tiny26",      T26,   {0x1E, 0x91, 0x09},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 0x3F, 5, 4, {0xFF, 0x17}      ,{1, 0x10, 0x00}, 60, "t26"},
@@ -2845,8 +2845,8 @@ int write_fuse ()
 		if (CmdWrite.Verify != 2)
 			vfuse = get_fuse_lock_byte(F_LOCK, fuse) & Device->LockMask;
 
-		if (vfuse != fuse)
-			fprintf(stderr, "Lock bits programm error. (%02X -> %02X)\n", fuse, vfuse);
+		if (vfuse != (fuse & Device->LockMask))
+			fprintf(stderr, "Lock bits programm error. (%02X -> %02X).\n", fuse, vfuse);
 		else
 			fprintf(stderr, "Lock bits are programmed (0x%02X).\n", fuse);
 #else
