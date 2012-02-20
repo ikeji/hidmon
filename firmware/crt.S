@@ -37,18 +37,17 @@
 // *******************************************************
 // 		attiny2313専用	int0のみ使用.
 // *******************************************************
-//#define	VECSIZE			16	//ベクタを省略しないときは38.
-#define	VECSIZE			6	//ベクタを省略しないときは38.
+#define	VECSIZE			6	// reset,int0,int1 の３個のみ.
 
 // *******************************************************
 // 		.dataセクションにstaticデータをコピーする.
 // *******************************************************
 #define	DO_COPY_DATA	1	// .dataサイズが0のときは0に.
+
 // *******************************************************
 // 		.bss セクションをゼロクリアする.
 // *******************************************************
 #define	DO_CLEAR_BSS	1	// .bssサイズが 0のときは0に.
-
 
 
 #include "macros.inc"
@@ -98,18 +97,6 @@ __vectors:
 
 	   This must be in a different section, otherwise the assembler
 	   will resolve "rjmp" offsets and there will be no relocs.  */
-
-#if	0
-	.text
-	.global	__bad_interrupt
-	.func	__bad_interrupt
-__bad_interrupt:
-	.weak	__vector_default
-	.set	__vector_default, __vectors
-	XJMP	__vector_default
-	.endfunc
-#endif
-
 
 	.section .init0,"ax",@progbits
 	.weak	__init

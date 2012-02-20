@@ -10,6 +10,7 @@
 #DEVICE = atmega8
 DEVICE = attiny2313
 F_CPU = 12000000
+#F_CPU = 16000000
 FUSE_L  = # see below for fuse values for particular devices
 FUSE_H  = 
 PORT = avrdoper
@@ -98,7 +99,7 @@ fuse:
 	$(AVRDUDE) -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m
 
 clean:
-	rm -f main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf *.o usbdrv/*.o main.s usbdrv/oddebug.s usbdrv/usbdrv.s
+	rm -f main.dis main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf *.o usbdrv/*.o main.s usbdrv/oddebug.s usbdrv/usbdrv.s
 
 # file targets:
 main.elf:	$(OBJECTS)

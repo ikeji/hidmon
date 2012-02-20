@@ -62,12 +62,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "avrspx.h"
 #if AVRSPX
+#include <conio.h>
 #include <windows.h>
+#include "usbasp.h"
 #include "hidasp.h"
 #endif
-#include "avrspx.h"
-#include "usbasp.h"
 
 
 /*-----------------------------------------------------------------------
@@ -402,15 +403,15 @@ void output_usage (bool detail)
 
 /* Output the device information */
 
-void output_deviceinfo ()
+void output_deviceinfo (void)
 {
 	printf("Device Signature  = %02X-%02x-%02X\n",
 			Device->Sign[0], Device->Sign[1], Device->Sign[2]);
-	printf("Flash Memory Size = %d bytes\n", Device->FlashSize);
+	printf("Flash Memory Size = %d bytes\n", (int)Device->FlashSize);
 	if(Device->FlashPage)
 		printf("Flash Memory Page = %d bytes x %d pages\n",
-				Device->FlashPage, Device->FlashSize / Device->FlashPage);
-	printf("EEPROM Size       = %d bytes\n", Device->EepromSize);
+				(int)Device->FlashPage, (int)(Device->FlashSize / Device->FlashPage));
+	printf("EEPROM Size       = %d bytes\n", (int)Device->EepromSize);
 }
 
 
@@ -1553,10 +1554,13 @@ int erase_device ()
 	int rc;
 
 
-	if(rc = init_devices()) return rc;
+	rc = init_devices();
+	if(rc != 0) return rc;
+
 	if(Device->ID == N0000) return RC_DEV;		/* Abort if unknown device */
 
-	if(rc = erase_memory()) return rc;
+	rc = erase_memory();
+	if(rc != 0) return rc;
 	MESS("Erased.\n");
 
 	return 0;
@@ -1600,7 +1604,8 @@ int read_device (char cmd)
 	int rc;
 
 
-	if(rc = init_devices()) return rc;
+	rc = init_devices();
+	if(rc != 0) return rc;
 	if(Device->ID <= L0000) return RC_DEV;		/* Abort if unknown device or locked device */
 
 #if AVRSPX
@@ -1684,7 +1689,8 @@ int write_flash ()
 	int rc, n;
 
 
-	if(rc = init_devices()) return rc;
+	rc = init_devices();
+	if(rc != 0) return rc;
 	if(Device->ID <= L0000) return RC_DEV;	/* Abort if unknown device or locked device */
 
 #if AVRSPX
@@ -1707,7 +1713,8 @@ int write_flash ()
 #else
 		MESS("Erasing...");						/* Erase device before programming */
 #endif
-		if(rc = erase_memory()) return rc;
+		rc = erase_memory();
+		if(rc != 0) return rc;
 
 		if(CmdWrite.CopyCal && Device->Cals) {	/* -c : Copy calibration bytes */
 			read_fuse();
@@ -1735,7 +1742,7 @@ int write_flash ()
 				for(adr = 0; adr < CmdWrite.CodeSize; adr++) {
 					if(write_byte(FLASH, adr, CodeBuff[adr])) {
 						report_finish();
-						fprintf(stderr, "Time out at %04X\n", adr);
+						fprintf(stderr, "Time out at %04X\n", (int)adr);
 						return RC_FAIL;
 					}
 					report_update(1);
@@ -1780,7 +1787,8 @@ int write_flash ()
 				hidasp_page_read(-1, rd, PIPE_WINDOW);
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
-						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n", adr+n, CodeBuff[adr+n], rd[n]);
+						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n",
+							(int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
 						return RC_FAIL;
 					}
 				}
@@ -1791,14 +1799,15 @@ int write_flash ()
 				for(n = 0; n < PIPE_WINDOW; n++) {
 					if(rd[n] != CodeBuff[adr+n]) {
 						report_finish();
-						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n", adr+n, CodeBuff[adr+n], rd[n]);
+						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n",
+							(int)(adr+n), (int)CodeBuff[adr+n], (int)rd[n]);
 						return RC_FAIL;
 					}
 				}
 				report_update(PIPE_WINDOW);
 			}
 		}
-		report_finish(adr);
+		report_finish();
 #else
 		MESS("Verifying...");
 
@@ -1841,7 +1850,8 @@ int write_eeprom ()
 	int rc;
 
 
-	if(rc = init_devices()) return rc;
+	rc = init_devices();
+	if(rc != 0) return rc;
 	if(Device->ID <= L0000) return RC_DEV;	/* Abort if unknown device or locked device */
 
 #if AVRSPX
@@ -1869,7 +1879,7 @@ int write_eeprom ()
 		} else {
 			for(adr = 0; adr < CmdWrite.DataSize; adr++) {	/* Write EEPROM without erase */
 				if(write_byte(EEPROM, adr, DataBuff[adr])) {
-					fprintf(stderr, "Time out at %04X\n", adr);
+					fprintf(stderr, "Time out at %04X\n", (int)adr);
 					return RC_FAIL;
 				}
 				report_update(1);
@@ -1905,7 +1915,8 @@ int write_eeprom ()
 				read_multi(EEPROM, adr, ws, rd);
 				for(n = 0; n < ws; n++) {
 					if(rd[n] != DataBuff[adr+n]) {
-						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n", adr+n, DataBuff[adr+n], rd[n]);
+						fprintf(stderr, "\nFailed at %04X:%02X-%02X\n",
+							(int)(adr+n), (int)DataBuff[adr+n], (int)rd[n]);
 						return RC_FAIL;
 					}
 				}
@@ -1946,7 +1957,8 @@ int write_fuse ()
 #endif
 
 
-	if(rc = init_devices()) return rc;
+	rc = init_devices();
+	if(rc != 0) return rc;
 	if(Device->ID <= L0000) return RC_DEV;		/* Abort if unknown device or locked device */
 
 	if(CmdFuse.Cmd.Flag.Low && (Device->FuseType > 0)) {
@@ -2108,7 +2120,8 @@ int main (int argc, char **argv)
 #if AVRSPX
 	atexit(do_exit);
 
-	if(rc = load_commands(argc, argv)) {
+	rc = load_commands(argc, argv);
+	if(rc != 0) {
 		if(rc == RC_SYNTAX) output_usage(true);
 		terminate(rc);
 		return rc;
@@ -2176,13 +2189,15 @@ int main (int argc, char **argv)
 
 	/* Write into device if any file is loaded */
 	if(CmdWrite.CodeSize) {
-		if(rc = write_flash()) {
+		rc = write_flash();
+		if(rc != 0) {
 			terminate(rc);
 			return rc;
 		}
 	}
 	if(CmdWrite.DataSize) {
-		if(rc = write_eeprom()) {
+		rc = write_eeprom();
+		if(rc != 0) {
 			terminate(rc);
 			return rc;
 		}
@@ -2190,7 +2205,8 @@ int main (int argc, char **argv)
 
 	/* Write fuse,lock if -F{L|H|X}, -L are specified */
 	if(CmdFuse.Cmd.Flags) {
-		if(rc = write_fuse()) {
+		rc = write_fuse();
+		if(rc != 0) {
 			terminate(rc);
 			return rc;
 		}

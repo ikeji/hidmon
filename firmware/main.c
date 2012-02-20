@@ -10,23 +10,35 @@
 #include <util/delay.h>
 
 #include "usbdrv.h"
+#include "hidcmd.h"
+
+/* ------------------------------------------------------------------------- */
+//	コンフィギュレーションスイッチ:
+#define	INCLUDE_FUSION		1	// 融合命令を実装.
+#define	INCLUDE_MONITOR_CMD 1	// 62:POKE(),63:PEEK()を実装する.
+#define	INCLUDE_LED_CMD 	0	// 02:SET_STATUS()を実装する.
+//	↑ LED_CMDをONにしない場合はMONITOR_CMDでPin制御する必要があります.
+//	   その場合ライターソフトが自動判別してMONITOR_CMDを発行します.
+
+//	↑ メモリー容量の関係で、３つ全部Onにすることはできません.
+//
+//	FUSIONをOffにした場合は、メモリーに余裕が出来るので追加機能の作成に便利.
+//	FUSIONをOffにしても、ライターソフトが自動判別して旧版互換で動作します.
 
 /* ------------------------------------------------------------------------- */
 
-#define	INCLUDE_MONITOR_CMD 0	// 62:POKE(),63:PEEK()を実装する.
-#define	INCLUDE_LED_CMD 	1	// 02:LEDコマンドを実装する.
-#define	SPEED_OPT		 	1	// 処理速度の最適化
 
-/* ------------------------------------------------------------------------- */
+//	REPORT_ID.
+#define ID1    1
+#define ID2    2
+#define ID3    3
 
-#define ID4    4
-#define	SIZE4 32
-#define ID5    5
-#define	SIZE5 40
-#define ID6    6
-#define	SIZE6 48
+//	REPORT_COUNT+2の値.
+#define	LENGTH1  8
+#define	LENGTH2 32
+#define	LENGTH3 40
 
-PROGMEM char usbHidReportDescriptor[69] = {
+PROGMEM char usbHidReportDescriptor[42] = {
     0x06, 0x00, 0xff,              // USAGE_PAGE (Generic Desktop)
     0x09, 0x01,                    // USAGE (Vendor Usage 1)
     0xa1, 0x01,                    // COLLECTION (Application)
@@ -40,27 +52,12 @@ PROGMEM char usbHidReportDescriptor[69] = {
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
     0x85, 0x02,                    //   REPORT_ID (2)
-    0x95, 0x0e,                    //   REPORT_COUNT (14)
-    0x09, 0x00,                    //   USAGE (Undefined)
-    0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
-
-    0x85, 0x03,                    //   REPORT_ID (3)
-    0x95, 0x16,                    //   REPORT_COUNT (22)
-    0x09, 0x00,                    //   USAGE (Undefined)
-    0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
-
-    0x85, 0x04,                    //   REPORT_ID (4)
     0x95, 0x1e,                    //   REPORT_COUNT (30)
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
-    0x85, 0x05,                    //   REPORT_ID (5)
+    0x85, 0x03,                    //   REPORT_ID (3)
     0x95, 0x26,                    //   REPORT_COUNT (38)
-    0x09, 0x00,                    //   USAGE (Undefined)
-    0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
-
-    0x85, 0x06,                    //   REPORT_ID (6)
-    0x95, 0x2e,                    //   REPORT_COUNT (46)
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
@@ -68,9 +65,11 @@ PROGMEM char usbHidReportDescriptor[69] = {
 };
 /* Note: REPORT_COUNT does not include report-ID byte */
 
-
-static uchar hidStatus;			   // HID Report ID
-//static uchar requestType;
+#if	INCLUDE_FUSION
+#define	DEV_ID				0x55	// FUSIONありのファーム.
+#else
+#define	DEV_ID				0x5a	// FUSIONなしのファーム.
+#endif
 
 //
 //	受信バッファ.
@@ -109,15 +108,18 @@ static void cmd_poke(MonCommand_t *cmd)
 		*p = cmd->memdata[0];
 	}
 }
+
 static void cmd_peek(MonCommand_t *cmd)
 {
 	uchar i;
-	uchar *p=cmd->addr;
-	for(i=0;i<(cmd->count);i++) {
-		cmd->memdata[i]=*p++;
+	uchar cnt=cmd->count;
+	uchar *p =cmd->addr;
+	for(i=0;i<cnt;i++) {
+		usbData[i]=*p++;
 	}
 }
 #endif
+
 
 
 // 最適化用
@@ -125,66 +127,62 @@ static void cmd_peek(MonCommand_t *cmd)
 #define lbyte(a) (*((uchar*)&(a)))
 inline static uint8_t byte(uint8_t t) {return t;}
 
-static void delay(uchar d) {
-	do {	// 4clock loop = 0.33usec * N
-		asm("nop");
-		asm("nop");
-	} while(d--);
-}
+/* ------------------------------------------------------------------------- */
+/* -----------------------------  USI Transfer  ---------------------------- */
+/* ------------------------------------------------------------------------- */
+
 static uint8_t wait=60; // 160
 
-#if SPEED_OPT
-/* written by iruka */
-static uint8_t usi_trans(uint8_t data)
-{
-	uchar CR0, CR1;
-
-	USIDR = data;
-	USISR = (1 << USIOIF);
-
-	if (wait == 0) {
-		CR0 = (1 << USIWM0) | (1 << USICS1) | (1 << USITC);
-		USICR = CR0;
-	 	CR1 = (1 << USIWM0) | (1 << USICS1) | (1 << USITC) | (1 << USICLK);
-									USICR = CR1; asm("nop");
-		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
-		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
-		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
-		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
-		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
-		USICR = CR0; asm("nop");	USICR = CR1; asm("nop");
-		USICR = CR0; asm("nop");	USICR = CR1;
-    } else {
-		do {
-			if (wait != 1) {
-			    delay(wait);
-			}
-		    USICR = (1<<USIWM0) | (1<<USICS1) | (1<<USICLK) | (1<<USITC);
-		} while (!(USISR & (1 << USIOIF)));
-	}
-	return USIDR;
-}
-#else
+//
+//	wait:
+//		0 =  2clk    3 MHz
+//		1 =  4clk  1.5 MHz
+//		2 =  9clk  666 kHz
+//		3 = 21clk  285 kHz
+//		4 = 33clk  181 kHz
+//	   10 =129clk   46 kHz
+//	   20 =249clk   23 kHz
+//	   50 =609clk  9.8 kHz
+//
+//		2以上は 9 + (12 * wait) clk
+//
 static uint8_t usi_trans(uint8_t data){
 	USIDR=data;
 	USISR=(1<<USIOIF);
-	do{
-		if(wait == 0) {
-#if 0	// この命令は無くとも 12MHzで動作することを確認
-			asm("nop");
-#endif
-		}
-		else {
-			delay(wait);
-		}
-		USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
-	} while(!(USISR&(1<<USIOIF)));
+	if(wait==0) {
+		uchar CR0=(1<<USIWM0)|(1<<USICS1)|(1<<USITC);
+		USICR=CR0;
+		uchar CR1=(1<<USIWM0)|(1<<USICS1)|(1<<USITC)|(1<<USICLK);
+								USICR=CR1;	asm("nop");
+		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
+		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
+		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
+		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
+		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
+		USICR=CR0;	asm("nop");	USICR=CR1;	asm("nop");
+		USICR=CR0;	asm("nop");	USICR=CR1;
+	}else if(wait==1) {
+		do{
+			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
+		} while(!(USISR&(1<<USIOIF)));
+	}else{
+		uchar d=wait;		// 12clk * (wait-2)
+		do {
+			while(d != 2) {		// 1 loop = 12clk
+				asm("rjmp .+0");
+				asm("rjmp .+0");
+				asm("rjmp .+0");
+				asm("rjmp .+0");
+				d--;
+			}
+			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
+		} while(!(USISR&(1<<USIOIF)));
+	}
 	return USIDR;
 }
-#endif
 
 static inline void isp_command(uint8_t *data){
-	int i;
+	uchar i;
 	for (i=0;i<4;i++) {
 		usbData[i]=usi_trans(data[i]);
 	}
@@ -199,41 +197,75 @@ static inline void isp_command(uint8_t *data){
 //	送信バッファと受信バッファが共通なので、
 //	書き潰したあとのデータを使わないように注意.
 
-#define HIDASP_TEST 1
-#define HIDASP_SET_STATUS 2
-#define HIDASP_CMD_TX 16
-#define HIDASP_SET_PAGE 20
-#define HIDASP_PAGE_TX 22
-#define HIDASP_SET_DELAY 60
-#define HIDASP_POKE 62
-#define HIDASP_PEEK 63
-
-void hidasp_main(uchar *data)
+void hidasp_main()	//uchar *data)
 {
-	static uchar page_mode;
+	// 本来なら引数.
+	uchar *data = report.buf;	//こうすると縮む.
+
+	static uchar    page_mode;
 	static uint16_t page_addr;
 	uchar i;
 	uint8_t data0 = data[0];
 	uint8_t data1 = data[1];
 	uint8_t cmd   = data0 & 0xfe;
+	uint8_t cmdtx = data0 & CMD_MASK;
 
-	if ( data[0] == HIDASP_TEST ) { // TEST
-		usbData[0] = data1;
-	}
+#if 1
+	usbData[0] = DEV_ID;
+#else
+	if ( data0 == HIDASP_TEST ) { // TEST
+		usbData[0] = DEV_ID;
+	}else
+#endif
 #if	INCLUDE_LED_CMD
-	else if ( data0 == HIDASP_SET_STATUS ) { // SET_LED
+	if ( data0 == HIDASP_SET_STATUS ) { // SET_LED
 		PORTD = (PORTD&~3)    | (data1 & 3);
 //		PORTB = (PORTB&~0x10) | (data[2]&0x1F);
 		// RESETピンを保持、それ以外をOR出力
 		PORTB = (PORTB&~0x1F) | (data[2]&0x1f) ;
-	}
+		usbData[0] = 0xaa;
+	} else
 #endif
-	else if ( cmd == HIDASP_CMD_TX) { // SPI
+	if ( cmd == HIDASP_CMD_TX) { // SPI
 		isp_command(data+1);
 	} else if ( data0 == HIDASP_SET_PAGE ) { // Page set
 		page_mode = data1;
 		page_addr = 0;
-	} else if ( cmd == HIDASP_PAGE_TX ) { // Page buf
+	}
+#if	INCLUDE_FUSION
+	else if (cmdtx == HIDASP_PAGE_TX ) { // Page buf
+		//
+		//	page_write開始時にpage_addrをdata[1]で初期化.
+		//
+		if(data0 & (HIDASP_PAGE_TX_START & MODE_MASK)) {
+			page_mode = 0x40;
+			page_addr = 0;
+		}
+		data+=2;
+		//
+		//	page_write (またはpage_read) の実行.
+		//
+		for(i=0;i<data1;i++) {
+			usi_trans(page_mode);
+			usi_trans(hbyte(page_addr));
+			usi_trans(lbyte(page_addr));
+			usbData[i]=usi_trans(*data++);
+			if (page_mode & 0x88) { // EEPROM or FlashH
+				page_addr++;
+				page_mode&=~0x08;
+			} else {
+				page_mode|=0x08;
+			}
+		}
+		//
+		//	isp_command(Flash書き込み)の実行.
+		//
+		if(data0 & (HIDASP_PAGE_TX_FLUSH & MODE_MASK)) {
+			isp_command(data);
+		}
+	}
+#else
+	else if ( cmd == HIDASP_PAGE_TX ) { // Page buf
 		for(i=0;i<data1;i++) {
 			usi_trans(page_mode);
 			usi_trans(hbyte(page_addr));
@@ -246,7 +278,9 @@ void hidasp_main(uchar *data)
 				page_mode|=0x08;
 			}
 		}
-	} else if ( data0 == HIDASP_SET_DELAY ) { // Set wait
+	}
+#endif
+	else if ( data0 == HIDASP_SET_DELAY ) { // Set wait
 		wait=data1;
 	}
 #if	INCLUDE_MONITOR_CMD
@@ -256,14 +290,6 @@ void hidasp_main(uchar *data)
 		cmd_peek((MonCommand_t *)data);
 	}
 #endif
-
-#if 0	// 使うのはコントロール転送のみ
-	if (data[0]&1) {
-		usbSetInterrupt(usbData, 8);
-	}
-#endif
-
-//	return 8;
 }
 
 
@@ -274,21 +300,29 @@ void hidasp_main(uchar *data)
 // デフォルト以外の usb setup コマンドパケットをここで解釈する.
 uchar usbFunctionSetup(uchar data[8])
 {
-	usbRequest_t    *rq = (void *)data;
-	uchar           rqType = rq->bmRequestType & USBRQ_TYPE_MASK;
+	usbRequest_t	*rq = (void *)data;
+	uchar			rqType = rq->bmRequestType & USBRQ_TYPE_MASK;
+	uchar			bRequest = rq->bRequest;
     if(rqType == USBRQ_TYPE_CLASS){    /* class request type */
-        if(	rq->bRequest == USBRQ_HID_GET_REPORT ) {
-        		report.id[0] = ID5;             /* report ID */
-        		usbMsgPtr = report.id;
-        		return SIZE5;
+        if(	bRequest == USBRQ_HID_GET_REPORT ) {
+#if	1
+			report.id[0] = rq->wValue.bytes[0];    /* store report ID */
+			usbMsgPtr = report.id;
+			return rq->wLength.word;
+#else
+			report.id[0] = ID3;    /* store report ID */
+			usbMsgPtr = report.id;
+			return LENGTH3;
+#endif
 		}
-        if(	rq->bRequest == USBRQ_HID_SET_REPORT ) {
-            hidStatus = rq->wValue.bytes[0];    /* store report ID */
+        if(	bRequest == USBRQ_HID_SET_REPORT ) {
 		    currentPosition = 0;                // initialize position index
         	bytesRemaining = rq->wLength.word;  // store the amount of data requested
+#if	0
         	if(	bytesRemaining > sizeof(report)) { // limit to buffer size
             	bytesRemaining = sizeof(report);
 			}
+#endif
           	return 0xff;						// tell driver to use usbFunctionWrite()
         }
     }
@@ -307,13 +341,11 @@ uchar usbFunctionWrite(uchar *data, uchar len)
 	}
     bytesRemaining -= len;
     for(i = 0; i < len; i++) {
-        report.id[currentPosition++] = data[i];
+        report.id[currentPosition++] = *data++;
 	}
 	// 全部受け取ったら、バッファ内容を実行.
     if( bytesRemaining == 0 ) {
-		if( hidStatus > 0 ) {
-			hidasp_main(report.buf);
-		}
+		hidasp_main();		//(report.buf);
 	    return 1;	// return 1 if we have all data
 	}
 	return 0;		// continue data.
@@ -321,54 +353,48 @@ uchar usbFunctionWrite(uchar *data, uchar len)
 
 /*
        ATtiny2313
-       ___    ___
-RESET [1  |__| 20]Vcc
-      [2       19]PB7(SCK)
-      [3       18]PB6(MISO)
-XTAL2 [4       17]PB5(MOSI)
-XTAL1 [5       16]PB4(RST)
-      [6       15]
-PD3   [7       14]
-PD4   [8       13]
-      [9       12]
-GND   [10      11]
-       ~~~~~~~~~~
+         ___    ___
+RESET   [1  |__| 20] Vcc
+PD0(NC) [2       19] PB7(SCK)
+PD1(NC) [3       18] PB6(MISO)
+XTAL2   [4       17] PB5(MOSI)
+XTAL1   [5       16] PB4(RST)
+PD2(12M)[6       15] PB3(PWR LED)
+PD3     [7       14] PB2(ACC LED)
+PD4     [8       13] PB1(NC)
+PD5(NC) [9       12] PB0(NC)
+GND     [10      11] PD6(NC)
+        ~~~~~~~~~~~
 
    ---------------------------------------
    SPI:     PB7-4 ===> [Target AVR Device]
    USB:     PD4   ===> USB D-
             PD3   ===> USB D+
    XTAL:    XTAL1,2 => Crystal 12MHz
+   PD2:     Clock Output(12MHz)
    ---------------------------------------
 */
 
 int main(void)
 {
-
-/* Port Direction設定は、以下より3択 */
 #if	1
 //	USB D+ D- の配線が瓶詰堂さんの新しい回路図用 HIDsphとも互換なのでこれを推奨.
-    DDRD = ~USBMASK;   /* all outputs except USB data */
+	DDRD = ~USBMASK;   /* all outputs except USB data */
 	PORTB = (1<<4)|(1<<3);	/* RESET=High, PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
-    DDRB = ~(1<<5);    /* all outputs except USI input data */
+	DDRB = ~(1<<5);    /* all outputs except USI input data */
 	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
+#else
+	//	未使用pinを入力設定にしておく.
+	DDRD = 0; 	// Ｄ＋、Ｄ－を含め、PORTDをすべて入力モードにする。
+	PORTB = (1<<4)|(1<<3);	/* RESET=High, PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
+
+	// PORTB[3,2,1,0]を入力モードにする.
+	DDRB = 0xd0;	// 1101_0000 input = USI input data , PB3,2,1,0
+	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
+
+	// ToDo:未接続pinにプルアップ設定が必要.
 #endif
 
-#if	0
-//	USBの配線が D+ = PD2, D- = PD3 (AVRUSBのサンプル回路図)の場合.
-//	PORTD = 0x00;
-    DDRD = ~USBMASK;   /* all outputs except USB data */
-//	PORTB = 0x08;      /* no pullups on USB pins */ // LED off
-    DDRB = ~(1<<5);    /* all outputs except USI input data */
-#endif
-
-#if	0
-//	USB D+ D- の配線が瓶詰堂さん旧オリジナル2007-3.
-	DDRD = ~(1 << 2);
-	DDRB = ~(USBMASK|(1<<5));    /* all outputs except USB data */
-#endif
-
-	hidStatus = -1;
     usbInit();
     sei();
     for(;;){    /* main event loop */

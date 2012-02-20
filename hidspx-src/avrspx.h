@@ -176,14 +176,14 @@ enum _portclass {	/* Port class */
 /* Prototypes for hardware control functions */
 
 int open_ifport (PORTPROP *);
-void close_ifport ();
-void spi_reset ();
-void spi_clk ();
+void close_ifport (void);
+void spi_reset (void);
+void spi_clk (void);
 void spi_xmit (BYTE);
 BYTE spi_rcvr (BYTE);
 void spi_delayedget (BYTE *, DWORD);
 void delay_ms (WORD);
-int spi_flush ();
+int spi_flush (void);
 FILE *open_cfgfile(char *);
 void read_multi (BYTE, DWORD, DWORD, BYTE*);
 void write_page (DWORD, const BYTE*);
@@ -193,6 +193,9 @@ extern const DEVPROP *Device;
 //----------------------------------------------------------------------------
 // by t.k
 // avrspx.c
+void report_setup(char *msg, long size);
+void report_update(int bytes);
+void report_finish(void);
 
 // hwctrl.c
 void spi_transmit(BYTE cmd1, BYTE cmd2,BYTE cmd3, BYTE cmd4);

@@ -1,1 +1,1 @@
-avrspx main.hex
+avrspx -d1 main.hex

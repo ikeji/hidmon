@@ -8,7 +8,7 @@ EXE  = $(PROG).exe
 
 RC = windres
 CC = gcc
-CFLAGS = -O2 -I.  -DAVRSPX=1 -Ilibusb/include
+CFLAGS = -O2 -I. -Wall -DAVRSPX=1 -Ilibusb/include
 
 LD = gcc
 LDFLAGS = -mwindows -s -Wl,--subsystem,console

@@ -1,24 +1,35 @@
 /* hidasp.c
+ * original: binzume.net
+ * modify: senshu , iruka
+ * 2008-09-22 : for HIDaspx.
  */
 
-#define DEBUG 		   0
-#define PKTDUMP		   0		// HID Reportパケットをダンプする.
-#define PRODUCT_DUMP   0		// 製造者,製品名を表示.
-#define	TRANSFER_BENCH 0		// 転送速度ベンチ.
+#define DEBUG 		   	0		// for DEBUG
+
+#define DEBUG_PKTDUMP  	0		// HID Reportパケットをダンプする.
+#define DUMP_PRODUCT   	0		// 製造者,製品名を表示.
+
+#define CHECK_COUNT		2		// 4: Connect時の Ping test の回数.
 
 #include <windows.h>
 #include <stdio.h>
 #include "usbhid.h"
 #include "hidasp.h"
+#include "avrspx.h"
+
+#include "../firmware/hidcmd.h"
+
 
 #pragma comment(lib, "setupapi.lib")
 
 //  obdev
-#define MY_VID 0x16c0			/* 5824 in dec, stands for VOTI */
-#define MY_PID 0x05dc			/* 1500 in dec, obdev's free PID */
+#define MY_VID 0x16c0				/* 5824 in dec, stands for VOTI */
+#define MY_PID 0x05dc				/* 1500 in dec, obdev's free PID */
 
 #define	MY_Manufacturer	"YCIT"
 #define	MY_Product		"HIDaspx"
+//	MY_Manufacturer,MY_Product のdefine を外すと、VID,PIDのみの照合になる.
+//	どちらかをはずすと、その照合を省略するようになる.
 
 
 // HID API (from w2k DDK)
@@ -28,8 +39,6 @@ _HidD_GetPreparsedData HidD_GetPreparsedData;
 _HidD_FreePreparsedData HidD_FreePreparsedData;
 _HidP_GetCaps HidP_GetCaps;
 _HidP_GetValueCaps HidP_GetValueCaps;
-
-//
 _HidD_GetFeature HidD_GetFeature;
 _HidD_SetFeature HidD_SetFeature;
 _HidD_GetManufacturerString HidD_GetManufacturerString;
@@ -39,27 +48,220 @@ HINSTANCE hHID_DLL = NULL;		// hid.dll handle
 HANDLE hHID = NULL;				// USB-IO dev handle
 HIDP_CAPS Caps;
 
+static	int dev_id      = 0;	// ターゲットID: 0x55 もしくは 0x5a だけを許容.
+static	int have_ledcmd = 0;	// LED制御の有無.
 
-//  HID Report のパケットはサイズ毎に6種類用意されている.
+//----------------------------------------------------------------------------
+//--------------------------    Tables    ------------------------------------
+//----------------------------------------------------------------------------
+//  HID Report のパケットはサイズ毎に ５種類用意されている.
 #define	REPORT_ID1			1	// 8  REPORT_COUNT(6)
-#define	REPORT_ID2			2	// 16 REPORT_COUNT(14)
-#define	REPORT_ID3			3	// 24 REPORT_COUNT(22)
-#define	REPORT_ID4			4	// 32 REPORT_COUNT(30)
-#define	REPORT_ID5			5	// 40 REPORT_COUNT(38)
-#define	REPORT_ID6			6	// 48 REPORT_COUNT(46)
+#define	REPORT_ID2			2	// 32 REPORT_COUNT(30)
+#define	REPORT_ID3			3	// 40 REPORT_COUNT(38)
+
+#define	REPORT_LENGTH1		7	// 8  REPORT_COUNT(6)
+#define	REPORT_LENGTH2		31	// 32 REPORT_COUNT(30)
+#define	REPORT_LENGTH3		39	// 40 REPORT_COUNT(38)
+
+#define	PAGE_WRITE_LENGTH	32	// Page Writeでは32byte単位の転送を心掛ける.
+								// Length5より7バイト少ない値である必要がある.
+
+//	最大の長さをもつ HID ReportID,Length
+#define	REPORT_IDMAX		REPORT_ID3
+#define	REPORT_LENGTHMAX	REPORT_LENGTH3
+
+
+#if	DEBUG_PKTDUMP
+static	void memdump(char *msg, char *buf, int len);
+#endif
+/*
+ * wrapper for HidD_GetFeature / HidD_SetFeature.
+ */
+//----------------------------------------------------------------------------
+/*
+ *	HIDデバイスから HID Report を取得する.
+ *	受け取ったバッファは先頭の１バイトに必ずReportIDが入っている.
+ *
+ *	id と Length の組はデバイス側で定義されたものでなければならない.
+ *
+ *	戻り値はHidD_GetFeatureの戻り値( 0 = 失敗 )
+ *
+ */
+static int hidRead(HANDLE h, char *buf, int Length, int id)
+{
+	int rc;
+	buf[0] = id;
+	rc = HidD_GetFeature(h, buf, Length);
+#if	DEBUG_PKTDUMP
+	memdump("RD", buf, Length);
+#endif
+	return rc;
+}
+
+/*
+ *	HIDデバイスに HID Report を送信するする.
+ *	送信バッファの先頭の１バイトにReportID を入れる処理は
+ *	この関数内で行うので、先頭１バイトを予約しておくこと.
+ *
+ *	id と Length の組はデバイス側で定義されたものでなければならない.
+ *
+ *	戻り値はHidD_SetFeatureの戻り値( 0 = 失敗 )
+ *
+ */
+static int hidWrite(HANDLE h, char *buf, int Length, int id)
+{
+	int rc;
+	buf[0] = id;
+	rc = HidD_SetFeature(h, buf, Length);
+#if	DEBUG_PKTDUMP
+	memdump("WR", buf, Length);
+#endif
+	return rc;
+}
+
+/*
+ *	hidWrite()を使用して、デバイス側に buf[] データを len バイト送る.
+ *	長さを自動判別して、ReportIDも自動選択する.
+ *
+ *	戻り値はHidD_SetFeatureの戻り値( 0 = 失敗 )
+ *
+ */
+int	hidWriteBuffer(char *buf, int len)
+{
+	int report_id = 0;
+	int length    = 0;
+
+	if (len <= REPORT_LENGTH1) {
+		length= REPORT_LENGTH1;report_id = REPORT_ID1;
+	} else if (len <= REPORT_LENGTH2) {
+		length= REPORT_LENGTH2;report_id = REPORT_ID2;
+	} else if (len <= REPORT_LENGTH3) {
+		length= REPORT_LENGTH3;report_id = REPORT_ID3;
+	}
+
+	if( report_id == 0) {
+		// 適切な長さが選択できなかった.
+		fprintf(stderr, "Error at hidWriteBuffer. len=%d\n",len);
+		exit(1);
+		return 0;
+	}
+
+	return hidWrite(hHID, buf, length, report_id);
+}
+
+/*
+ *	hidRead()を使用して、デバイス側から buf[] データを len バイト取得する.
+ *	長さを自動判別して、ReportIDも自動選択する.
+ *
+ *	戻り値はHidD_GetFeatureの戻り値( 0 = 失敗 )
+ *
+ */
+int	hidReadBuffer(char *buf, int len)
+{
+	int report_id = 0;
+	int length    = 0;
+
+	if (len <= REPORT_LENGTH1) {
+		length= REPORT_LENGTH1;report_id = REPORT_ID1;
+	} else if (len <= REPORT_LENGTH2) {
+		length= REPORT_LENGTH2;report_id = REPORT_ID2;
+	} else if (len <= REPORT_LENGTH3) {
+		length= REPORT_LENGTH3;report_id = REPORT_ID3;
+	}
+
+	if( report_id == 0) {
+		// 適切な長さが選択できなかった.
+		fprintf(stderr, "Error at hidWriteBuffer. len=%d\n",len);
+		exit(1);
+		return 0;
+	}
+
+	return hidRead(hHID, buf, length, report_id);
+}
+/*
+ *	hidWrite()を使用して、デバイス側に４バイトの情報を送る.
+ *	４バイトの内訳は cmd , arg1 , arg2 , arg 3 である.
+ *  ReportIDはID1を使用する.
+ *
+ *	戻り値はHidD_SetFeatureの戻り値( 0 = 失敗 )
+ *
+ */
+int hidCommand(int cmd,int arg1,int arg2,int arg3)
+{
+	unsigned char buf[128];
+
+	memset(buf , 0, sizeof(buf) );
+
+	buf[1] = cmd;
+	buf[2] = arg1;
+	buf[3] = arg2;
+	buf[4] = arg3;
+
+	return hidWrite(hHID, buf, REPORT_LENGTH1, REPORT_ID1);
+}
 
 //
-// Report_IDから、サイズを得るためのテーブル.
-//                          ID    1  2  3  4  5  6
-static char report_size_tab[7] = { 0, 7, 15, 23, 31, 39, 47 };
+//	mask　が   0 の場合は、 addr に data0 を１バイト書き込み.
+//	mask　が 非0 の場合は、 addr に data0 と mask の論理積を書き込む.
+//		但し、その場合は mask bitが 0 になっている部分に影響を与えないようにする.
+//
+//	例:	PORTB の 8bit に dataを書き込む.
+//		hidPokeMem( PORTB , data , 0 );
+//	例:	PORTB の bit2 だけを on
+//		hidPokeMem( PORTB , 1<<2 , 1<<2 );
+//	例:	PORTB の bit2 だけを off
+//		hidPokeMem( PORTB ,    0 , 1<<2 );
+//
+int hidPokeMem(int addr,int data0,int mask)
+{
+	unsigned char buf[128];
+	memset(buf , 0, sizeof(buf) );
 
-//  デフォルトのパケットサイズは、39 (ReportID=5) を使用する.
-#define	REPORT_ID		REPORT_ID5	// 省略値.
-#define	REPORT_LENGTH_OVERRIDE	39	// REPORT_COUNT+1の値.
+	buf[1] = HIDASP_POKE;
+	buf[2] = 0;
+	buf[3] = addr;
+	buf[4] =(addr>>8);
+	if( mask ) {
+		buf[5] = data0 & mask;
+		buf[6] = ~mask;
+	}else{
+		buf[5] = data0;
+		buf[6] = 0;
+	}
+	return hidWrite(hHID, buf, REPORT_LENGTH1, REPORT_ID1);
+}
 
-static int hidWrite(HANDLE hHID, char *buf, int Length, ULONG * sz,
-					int id);
-static int hidRead(HANDLE hHID, char *buf, int Length, ULONG * sz, int id);
+int hidPeekMem(int addr)
+{
+	unsigned char buf[128];
+	memset(buf , 0, sizeof(buf) );
+
+	buf[1] = HIDASP_PEEK;
+	buf[2] = 1;
+	buf[3] = addr;
+	buf[4] =(addr>>8);
+
+	hidWrite(hHID, buf, REPORT_LENGTH1, REPORT_ID1);
+	hidReadBuffer( buf, REPORT_LENGTH1 );
+	return buf[1];
+}
+
+#define	PORTB			0x38	// PB4=RST PB3=LED
+#define	PORTB_WR_MASK	0x1f	// 制御可能bit = 0001_1111
+
+/*
+ *	LEDの制御.
+#define HIDASP_RST_H_GREEN	0x18	// RST解除,LED OFF
+#define HIDASP_RST_L_BOTH	0x00	// RST実行,LED ON
+ */
+static void hidSetStatus(int ledstat)
+{
+	if( have_ledcmd ) {
+		hidCommand(HIDASP_SET_STATUS,0,ledstat,0);	// cmd,portd(&0000_0011),portb(&0001_1111),0
+	}else{
+		hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////
 //             hid.dll をロード
@@ -154,6 +356,10 @@ static void GetDevCaps()
 #endif
 }
 
+//----------------------------------------------------------------------------
+/*
+ * 	unicode を ASCIIに変換.
+ */
 static char *uni_to_string(char *t, unsigned short *u)
 {
 	char *buf = t;
@@ -172,12 +378,12 @@ static char *uni_to_string(char *t, unsigned short *u)
 	return buf;
 }
 
-//
-//  名前チェック : 成功=1  失敗=0 読み取り不能=(-1)
-//
+//----------------------------------------------------------------------------
+/*  Manufacturer & Product name check.
+ *  名前チェック : 成功=1  失敗=0 読み取り不能=(-1)
+ */
 static int check_product_string(HANDLE handle)
 {
-	int len1, len2;
 	unsigned short unicode[512];
 	char string1[256];
 	char string2[256];
@@ -192,7 +398,7 @@ static int check_product_string(HANDLE handle)
 	}
 	uni_to_string(string2, unicode);
 
-#if	PRODUCT_DUMP
+#if	DUMP_PRODUCT
 	fprintf(stderr, "iManufacturer:%s\n", string1);
 	fprintf(stderr, "iProduct:%s\n", string2);
 #endif
@@ -278,6 +484,8 @@ static int OpenTheHid()
 	return f;
 }
 
+#if	DEBUG_PKTDUMP
+//----------------------------------------------------------------------------
 //  メモリーダンプ.
 void memdump(char *msg, char *buf, int len)
 {
@@ -285,29 +493,20 @@ void memdump(char *msg, char *buf, int len)
 	fprintf(stderr, "%s", msg);
 	for (j = 0; j < len; j++) {
 		fprintf(stderr, " %02x", buf[j] & 0xff);
-		if (j == 31)
+		if((j & 0x1f)== 31)
 			fprintf(stderr, "\n +");
 	}
 	fprintf(stderr, "\n");
 }
-
-//  先頭24バイトまでのダンプ.
-void pktdump(char *msg, char *buf, int id)
-{
-	int len = report_size_tab[id & 7];
-	memdump(msg, buf, len);
-}
-
-#if	TRANSFER_BENCH				// 転送速度ベンチ.
-#define CHECK_COUNT 1000
-#else
-#define CHECK_COUNT 4
 #endif
 
+
+//----------------------------------------------------------------------------
+//  初期化.
+//----------------------------------------------------------------------------
 int hidasp_init(char *string)
 {
-	ULONG sz;
-	char wr_data[128], rd_data[128];
+	unsigned char rd_data[128];
 	int i, r;
 
 	LoadHidDLL();
@@ -325,84 +524,61 @@ int hidasp_init(char *string)
 	fprintf(stderr, "HIDASP Connection check!\n");
 #endif
 
-	wr_data[0] = 0;
-	wr_data[1] = HIDASP_TEST;	// Connection test
-	wr_data[2] = 0;
-	wr_data[3] = 0;
-
 	for (i = 0; i < CHECK_COUNT; i++) {
-		int j;
-		wr_data[2] = i;
-		for (j = 3; j < 31; j++) {
-			wr_data[j] = i;
-		}
+		hidCommand(HIDASP_TEST,(i),0,0);	// Connection test
+		r = hidRead(hHID, rd_data ,REPORT_LENGTH1, REPORT_ID1);
 #if DEBUG
-		fprintf(stderr, "HIDasp write %2d.\n", i);
-#endif
-		r = hidWrite(hHID, wr_data, Caps.OutputReportByteLength, &sz, 0);
-#if DEBUG
-//      memdump("wr",wr_data,32);
-#endif
-//      Sleep(10);  /* wait */
-
-		memset(rd_data, 0, 32);
-		r = hidRead(hHID, rd_data, Caps.InputReportByteLength, &sz, 0);
-#if DEBUG
-//      memdump("rd",rd_data,32);
-#endif
-#if DEBUG
-		fprintf(stderr, "HIDasp read  %2d. %d\n", i, rd_data[1]);
+		fprintf(stderr, "HIDasp Ping(%2d) = %d\n", i, rd_data[1]);
 #endif
 		if (r == 0) {
 			fprintf(stderr, "ERR. fail to Read().\n");
 			return 1;
 		}
-#if 0
-		if (rd_data[1] == i) {
-			continue;
+		dev_id = rd_data[1];
+		if((dev_id != DEV_ID_FUSION)&&(dev_id != DEV_ID_STD)) {
+			fprintf(stderr, "ERR. fail to ping test. (id = %x)\n",dev_id);
+			return 1;
 		}
-#else							/* !!! */
-		if (rd_data[1] == i) {
-			 Sleep(10);  /* wait */
-		} else {
-			return 0;
+		if (rd_data[2] != i) {
+			fprintf(stderr, "ERR. fail to ping test. %d != %d\n", rd_data[2] , i);
+			return 1;
 		}
+	}
+	hidCommand(HIDASP_SET_STATUS,0,HIDASP_RST_H_GREEN,0);	// RESET HIGH
+	r = hidRead(hHID, rd_data ,REPORT_LENGTH1, REPORT_ID1);
+	if( rd_data[0] == 0xaa ) {
+		have_ledcmd = 1;	// LED制御OK.
+#if DEBUG
+		fprintf(stderr, "LED OK.\n");
+#endif
+	}else{
+#if DEBUG
+		fprintf(stderr, "Don't have LED COMMAND.\n");
 #endif
 	}
+
 #if DEBUG
 	fprintf(stderr, "OK.\n");
 #endif
 	return 0;
 }
 
+//----------------------------------------------------------------------------
+//  プログラム許可.
+//----------------------------------------------------------------------------
 int hidasp_program_enable(int delay)
 {
 	unsigned char buf[128];
 	unsigned char res[4];
-	ULONG sz;
 	int i;
 
 	// エラー時にはリトライするように修正 by senshu(2008-9-16)
 	for (i = 0; i < 3; i++) {
 		Sleep(2);
-		buf[0] = 0;
-		buf[1] = HIDASP_SET_STATUS;	// LED CONT
-		buf[2] = 0;					// PORTD
-		buf[3] = HIDASP_RST_H_GREEN;	// RESET HIGH
-		hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, 0);
-		Sleep(100);				// 10 => 100
-
-		buf[0] = 0;
-		buf[1] = HIDASP_SET_STATUS;	// LED CONT
-		buf[2] = 0;					// PORTD
-		buf[3] = HIDASP_RST_L_BOTH;	// RESET LOW
-		hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, 0);
-
-		buf[0] = 0;
-		buf[1] = HIDASP_SET_DELAY;	// SET_DELAY
-		buf[2] = delay;			// delay value
-		buf[3] = 0;
-		hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, 0);
+		hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
+		Sleep(10);				// 10 => 100
+		hidSetStatus(HIDASP_RST_L_BOTH);		// RESET LOW
+		hidCommand(HIDASP_SET_DELAY,delay,0,0);					// SET_DELAY
 		Sleep(30);				// 30
 
 		buf[0] = 0xAC;
@@ -427,10 +603,14 @@ int hidasp_program_enable(int delay)
 }
 
 
+#define HIDASP_NOP 			  0	//これは ISPのコマンドと思われる?
+
+//----------------------------------------------------------------------------
+//  終了.
+//----------------------------------------------------------------------------
 void hidasp_close()
 {
 	if (hHID) {
-		ULONG sz;
 		unsigned char buf[128];
 
 		buf[0] = 0x00;
@@ -438,12 +618,7 @@ void hidasp_close()
 		buf[2] = 0x00;
 		buf[3] = 0x00;
 		hidasp_cmd(buf, NULL);	// AVOID BUG!
-
-		buf[0] = 0;
-		buf[1] = HIDASP_SET_STATUS;
-		buf[2] = 0;
-		buf[3] = HIDASP_RST_H_GREEN;			// RESET HI
-		hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, 0);
+		hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
 		CloseHandle(hHID);
 	}
 	if (hHID_DLL) {
@@ -453,135 +628,169 @@ void hidasp_close()
 	hHID_DLL = NULL;
 }
 
+//----------------------------------------------------------------------------
+//  ＩＳＰコマンド発行.
+//----------------------------------------------------------------------------
 int hidasp_cmd(const unsigned char cmd[4], unsigned char res[4])
 {
-	ULONG sz = 0;
 	char buf[128];
 	int r;
 
-	buf[0] = 0;
+	memset(buf , 0, sizeof(buf) );
 	if (res != NULL) {
 		buf[1] = HIDASP_CMD_TX_1;
 	} else {
 		buf[1] = HIDASP_CMD_TX;
 	}
-
-#if 0
-	Sleep(2);
-	if (cmd[0] == 0x38 && cmd[2] == 0) {	// BUG!
-		buf[8] = 0;
-		buf[9] = 123;			// dummy
-		hidWrite(hHID, buf + 8, Caps.OutputReportByteLength, &sz, 0);
-		Sleep(2);
-	}
-#endif
-//  Sleep(2);   // !!!
 	memcpy(buf + 2, cmd, 4);
-	r = hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, REPORT_ID1);
+
+	r = hidWrite(hHID, buf, REPORT_LENGTH1 , REPORT_ID1);
 #if DEBUG
-	fprintf(stderr, "hidasp_cmd %02X, cmd: %02X %02X %02X %02X ", buf[1],
-			cmd[0], cmd[1], cmd[2], cmd[3]);
+	fprintf(stderr, "hidasp_cmd %02X, cmd: %02X %02X %02X %02X ",
+		buf[1], cmd[0], cmd[1], cmd[2], cmd[3]);
 #endif
 
 	if (res != NULL) {
-		r = hidRead(hHID, buf, Caps.InputReportByteLength, &sz, 0);
+		r = hidRead(hHID, buf, REPORT_LENGTH1 , REPORT_ID1);
 		memcpy(res, buf + 1, 4);
 #if DEBUG
-		fprintf(stderr, " --> res: %02X %02X %02X %02X\n", res[0], res[1],
-				res[2], res[3]);
+		fprintf(stderr, " --> res: %02X %02X %02X %02X\n",
+				res[0], res[1], res[2], res[3]);
 #endif
 	}
 
 	return 1;
 }
 
-int hidasp_page_write(long addr, const unsigned char *wd, int pagesize)
+
+static	void hid_transmit(BYTE cmd1, BYTE cmd2, BYTE cmd3, BYTE cmd4)
+{
+	unsigned char cmd[4];
+
+	cmd[0] = cmd1;
+	cmd[1] = cmd2;
+	cmd[2] = cmd3;
+	cmd[3] = cmd4;
+	hidasp_cmd(cmd, NULL);
+}
+
+//----------------------------------------------------------------------------
+//  フュージョンサポートのページライト.
+//----------------------------------------------------------------------------
+int hidasp_page_write_fast(long addr, const unsigned char *wd, int pagesize)
 {
 	int n, l;
-	ULONG sz = 0;
 	char buf[128];
+	int cmd = HIDASP_PAGE_TX_START;
 
-	// set page
-	buf[0] = 0x00;
-	buf[1] = HIDASP_SET_PAGE;	// Set Page mode
-	buf[2] = 0x40;				// Flash
-	buf[3] = 0x00;
-	buf[4] = (char) (addr & 0xFF);
-	hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, REPORT_ID1);
+	memset(buf , 0, sizeof(buf) );
 
 	// Load the page data into page buffer
-	n = 0;
+	n = 0;	// n はPageBufferへの書き込み基点offset.
 	while (n < pagesize) {
-		l = Caps.OutputReportByteLength - 3;	// MAX
-		if (pagesize - n < l)
+		l = PAGE_WRITE_LENGTH;		// 32バイトが最大データ長.
+		if (pagesize - n < l) {		// 残量が32バイト未満のときは len を残量に置き換える.
 			l = pagesize - n;
-		buf[0] = 0x00;
-		buf[1] = HIDASP_PAGE_TX;	// PageBuf
-		buf[2] = l;				// Len
-		memcpy(buf + 3, wd + n, l);
-#if DEBUG
-		Sleep(2);
-#endif
-		{
-			int report_id = REPORT_ID1;
-			if (l < 7) {
-				report_id = REPORT_ID1;
-			} else if (l < 15) {
-				report_id = REPORT_ID2;
-			} else if (l < 23) {
-				report_id = REPORT_ID3;
-			} else if (l < 31) {
-				report_id = REPORT_ID4;
-			} else if (l < 37) {
-				report_id = REPORT_ID5;
-			} else {
-				report_id = REPORT_ID6;
-			}
-			hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz,
-					 report_id);
 		}
+		buf[1] = cmd;				// HIDASP_PAGE_TX_* コマンド.
+		buf[2] = l;					// l       書き込みデータ列の長さ.
+		memcpy(buf + 3, wd + n, l);	// data[l] 書き込みデータ列.
 
-#if DEBUG
-		fprintf(stderr, "  p: %02x %02x %02x %02x\n",
-				buf[1] & 0xff, buf[2] & 0xff, buf[3] & 0xff,
-				buf[4] & 0xff);
-#endif
+		if((pagesize - n) == l) {
+			buf[1] |= HIDASP_PAGE_TX_FLUSH;		//最終page_writeではisp_commandを付加する.
+			// ISP コマンド列.
+			buf[3 + l + 0] = C_WR_PAGE;
+			buf[3 + l + 1] = (BYTE)(addr >> 9);
+			buf[3 + l + 2] = (BYTE)(addr >> 1);
+			buf[3 + l + 3] = 0;
+		}
+		hidWriteBuffer(buf, REPORT_LENGTHMAX);
+
 		n += l;
+		cmd = HIDASP_PAGE_TX;		// cmd をノーマルのpage_writeに戻す.
 	}
+
 
 	return 0;
 }
 
+//----------------------------------------------------------------------------
+//  ページライト.
+//----------------------------------------------------------------------------
+int hidasp_page_write(long addr, const unsigned char *wd, int pagesize,int flashsize)
+{
+	int n, l;
+	char buf[128];
+
+	if(	(dev_id == DEV_ID_FUSION) && (flashsize <= (128*1024)) ) {
+//		((addr & 0xFF) == 0 	) ) {
+		// addres_set , page_write , isp_command が融合された高速版を実行.
+		return hidasp_page_write_fast(addr,wd,pagesize);
+	}
+#if	0
+	fprintf(stderr,"dev_id=%x flashsize=%x addr=%x\n",
+		dev_id,flashsize,(int)addr
+	);
+#endif
+	// set page
+	hidCommand(HIDASP_SET_PAGE,0x40,0,(addr & 0xFF));	// Set Page mode , FlashWrite
+
+	// Load the page data into page buffer
+	n = 0;	// n はPageBufferへの書き込み基点offset.
+	while (n < pagesize) {
+		l = PAGE_WRITE_LENGTH;	// MAX
+		if (pagesize - n < l) {
+			l = pagesize - n;
+		}
+		buf[0] = 0x00;
+		buf[1] = HIDASP_PAGE_TX;	// PageBuf
+		buf[2] = l;				// Len
+		memcpy(buf + 3, wd + n, l);
+		hidWriteBuffer(buf,  3 + l);
+
+#if DEBUG
+		fprintf(stderr, "  p: %02x %02x %02x %02x\n",
+				buf[1] & 0xff, buf[2] & 0xff, buf[3] & 0xff, buf[4] & 0xff);
+#endif
+		n += l;
+	}
+
+	/* Load extended address if needed */
+	if(flashsize > (128*1024)) {
+		hid_transmit(C_LD_ADRX,0,(BYTE)(addr >> 17),0);
+	}
+
+	/* Start page programming */
+	hid_transmit(C_WR_PAGE,(BYTE)(addr >> 9),(BYTE)(addr >> 1),0);
+
+	return 0;
+}
+
+//----------------------------------------------------------------------------
+//  ページリード.
+//----------------------------------------------------------------------------
 int hidasp_page_read(long addr, unsigned char *wd, int pagesize)
 {
 	int n, l;
-	ULONG sz = 0;
 	char buf[128];
 
 	// set page
-	buf[0] = 0x00;
-	buf[1] = HIDASP_SET_PAGE;	// Set Page mode
-	buf[2] = 0x20;				// FlashRead
-	buf[3] = 0x00;
-	if (addr >= 0)
-		hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, 0);
+	if (addr >= 0) {
+		hidCommand(HIDASP_SET_PAGE,0x20,0,0);	// Set Page mode , FlashRead
+	}
 
 	// Load the page data into page buffer
-	n = 0;
+	n = 0;	// n は読み込み基点offset.
 	while (n < pagesize) {
-		l = Caps.InputReportByteLength - 1;	// MAX
-		if (pagesize - n < l)
+		l = REPORT_LENGTHMAX - 1;	// MAX
+		if (pagesize - n < l) {
 			l = pagesize - n;
-		buf[0] = 0x00;
-		buf[1] = HIDASP_PAGE_RD;	// PageRead
-		buf[2] = l;				// Len
+		}
+		hidCommand(HIDASP_PAGE_RD,l,0,0);	// PageRead , length
+
 		memset(buf + 3, 0, l);
-#if DEBUG
-		Sleep(2);
-#endif
-		hidWrite(hHID, buf, Caps.OutputReportByteLength, &sz, REPORT_ID1);
-		hidRead(hHID, buf, Caps.InputReportByteLength, &sz, 0);
-		memcpy(wd + n, buf + 1, l);
+		hidRead(hHID, buf, REPORT_LENGTHMAX, REPORT_IDMAX);
+		memcpy(wd + n, buf + 1, l);			// Copy result.
 
 #if 1
 		report_update(l);
@@ -593,43 +802,11 @@ int hidasp_page_read(long addr, unsigned char *wd, int pagesize)
 
 #if DEBUG
 		fprintf(stderr, "  p: %02x %02x %02x %02x\n",
-				buf[1] & 0xff, buf[2] & 0xff, buf[3] & 0xff,
-				buf[4] & 0xff);
+				buf[1] & 0xff, buf[2] & 0xff, buf[3] & 0xff, buf[4] & 0xff);
 #endif
 		n += l;
 	}
 
 	return 0;
 }
-
-static int hidRead(HANDLE h, char *buf, int Length, ULONG * sz, int id)
-{
-	int rc;
-	if (id == 0) {
-		id = REPORT_ID;
-	}
-	buf[0] = id;
-	Length = report_size_tab[id];
-	rc = HidD_GetFeature(h, buf, Length);
-#if	PKTDUMP
-//  fprintf(stderr, "  HidD_GetFeature(%x,%x,%x)=%d\n", h,buf,Length,rc);
-	pktdump("RD", buf, id);
-#endif
-	return rc;
-}
-
-static int hidWrite(HANDLE h, char *buf, int Length, ULONG * sz, int id)
-{
-	int rc;
-	if (id == 0) {
-		id = REPORT_ID;
-	}
-	buf[0] = id;
-	Length = report_size_tab[id];
-	rc = HidD_SetFeature(h, buf, Length);
-#if	PKTDUMP
-//  fprintf(stderr, "  HidD_SetFeature(%x,%x,%x)=%d\n", h,buf,Length,rc);
-	pktdump("WR", buf, id);
-#endif
-	return rc;
-}
+//----------------------------------------------------------------------------

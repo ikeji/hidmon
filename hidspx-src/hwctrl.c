@@ -8,7 +8,10 @@
 #include <windows.h>
 #include "avrspx.h"
 #include "hwctrl.h"
+#if AVRSPX
+#include "usbasp.h"
 #include "hidasp.h"
+#endif
 
 #define COM_DAT	((WORD)(PortBase + C_DAT))
 #define COM_IMR	((WORD)(PortBase + C_IMR))
@@ -82,7 +85,8 @@ int init_driver ()
 	char filepath[_MAX_PATH], *cp;
 	BOOL res;
 
-
+	hsc = hsv = NULL;
+	res = 0;
 	while (1) {
 		ls++;
 
@@ -456,7 +460,7 @@ int open_ifport (PORTPROP *pc)
 		}
 #if AVRSPX
 		if (SetCommState(hComm, &dcb)==0) {
-			sprintf(str_info, "%s (%dbps) parameter error. \n", sComm, dcb.BaudRate);
+			sprintf(str_info, "%s (%dbps) parameter error. \n", sComm, (int)dcb.BaudRate);
 			pc->Info1 = str_info;
 			return 1;
 		}
@@ -486,7 +490,7 @@ int open_ifport (PORTPROP *pc)
 		dcb.fRtsControl = RTS_CONTROL_HANDSHAKE;
 #if AVRSPX
 		if (SetCommState(hComm, &dcb)==0) {
-			sprintf(str_info, "%s (%dbps) parameter error. \n", sComm, dcb.BaudRate);
+			sprintf(str_info, "%s (%dbps) parameter error. \n", sComm, (int)dcb.BaudRate);
 			pc->Info1 = str_info;
 			return 1;
 		}
@@ -525,7 +529,7 @@ int open_ifport (PORTPROP *pc)
 		if (BridgeRev < 4) {
 			sprintf(str_info, "*** Use SPI bridge R4+ for fast operation ***\n");
 		} else {
-			sprintf(str_info, "SPI bridge on the %s (baud=%d).\n", sComm, dcb.BaudRate);
+			sprintf(str_info, "SPI bridge on the %s (baud=%d).\n", sComm, (int)dcb.BaudRate);
 		}
 		pc->Info1 = str_info;
 #endif
@@ -636,7 +640,7 @@ int open_ifport (PORTPROP *pc)
 		dcb.fRtsControl  = RTS_CONTROL_DISABLE;
 #if AVRSPX
 		if (SetCommState(hComm, &dcb)==0) {
-			sprintf(str_info, "%s (%dbps) parameter error. \n", sComm, dcb.BaudRate);
+			sprintf(str_info, "%s (%dbps) parameter error. \n", sComm, (int)dcb.BaudRate);
 			pc->Info1 = str_info;
 			return 1;
 		}
@@ -1161,7 +1165,7 @@ void read_multi (
 	BYTE *buff		/* Read buffer */
 ) {
 	BYTE cmd, spicmd[5];
-	DWORD n, devadr;
+	DWORD n, devadr=0;
 
 	if (src == FLASH
 		&& Device->FlashSize > (128*1024)
@@ -1252,8 +1256,8 @@ void write_page (
 	if(d == 0xFF) return;
 
 	/* Load the page data into page buffer */
-	if (PortType = TY_HIDASP) {
-		hidasp_page_write(adr, wd, Device->FlashPage);
+	if (PortType == TY_HIDASP) {
+		hidasp_page_write(adr, wd, Device->FlashPage, Device->FlashSize);
 	} else if (PortType == TY_BRIDGE && BridgeRev >= 4) {
 		spicmd[0] = FLAG;
 		spicmd[1] = SPI_LDPAGE;
@@ -1279,6 +1283,7 @@ void write_page (
 		}
 	}
 
+  if (PortType != TY_HIDASP) {
 	/* Load extended address if needed */
 	if(Device->FlashSize > (128*1024)) {
 #if AVRSPX
@@ -1310,6 +1315,12 @@ void write_page (
 #endif
 
 	delay_ms(Device->FlashWait);	/* Wait for page write time */
+  }else{
+	int w = Device->FlashWait - 3;	// HID Report‚Ì“]‘—‚ÉÅ’á 3mS Š|‚©‚é.
+	if( w > 0)
+	delay_ms(w);	/* Wait for page write time */
+  }
+
 }
 
 
