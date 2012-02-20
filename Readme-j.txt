@@ -1,4 +1,4 @@
-                                                             2008年10月12日
+                                                             2008年10月14日
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -161,30 +161,35 @@ AVR USBに準じてGPL2とします．
 				   text    data     bss     dec     hex filename
 				   1966       4      85    2055     807 main.elf
 				- USBのProductID 0x5dc (libusb device) との競合を避ける為、
-				 0x5df(HID devide)に変更
+				  0x5df(HID devide)に変更
 				- firmwareの変更 （今のところサポートしているAVRデバイスでは）
-				 page_addr は 256 以下なので、uint16 から uint8 に降格。
+				  page_addr は 256 以下なので、uint16 から uint8 に降格。
 
 2008-10-06 ...	- irukaさんの10-05までの修正分を反映（ほぼ同じ内容です）
 				- -d2以上の値を指定した時の不具合は、senshuの修正ミスでした。
 				 （irukaさん、大変お手数をお掛けしました）
 				- ATtiny2313の認識が不十分だった件に関しては、このミスに起因して
 				 シーケンスが見直され？、より適切なものになっています
+				- firmwareの変更  page_addr を uint16 に戻す。
 
 2008-10-10 ...	- irukaさんの10-09までの修正分を反映（ほぼ同じ内容です）
-				- 2008.10.9a delay_10us()関数がコンパイル環境によっては最適化されて
-				             消えていたのを修正. 
-				- 2008.10.9a '-d2'以上の遅延クロック数が1clk間違っていたを修正.
-				- 2008.10.9 12MHzターゲットに '-d0'が使えるようにしました(SCLK=2MHz)
-				- 2008.10.9 ispConnect/ispDisconnectを入れてみました.
-				- 2008.10.9 高速化: flow-controlを入れてみました.
+				- 2008.10.9a delay_10us関数がコンパイル環境によっては最適化されて
+				             消えていたのを修正. （アセンブﾘ言語でリライト）
+				- 2008.10.9a '-d2'以上の遅延クロック数を適正化
+				- 2008.10.9 高速化: flow-controlを導入
+				- 2008.10.9 12MHzターゲットに '-d0'が使えるように変更(SCLK=2MHz)
+				- 2008.10.9 ispConnect/ispDisconnectを導入
 
-2008-10-12 ...	- kugaさんのAT90Sシリーズ用のISP移行処理を取り込みました
+2008-10-12 ...	- kugaさんのAT90Sシリーズ用のISP移行処理を追加（90Sシリーズをサポート）
 				- ATtiny2313 のFUSEビットSTUビットの値によって、認識に失敗するのを修正
 				  （hidspx内のhwctrl.c spi_reset関数にdelay_ms(10)を追加しました）
 				- FUSE verifyエラー時の表示を適正化
 				- FUSE 書き換え関数の適正化（重要！）
-				- firmware main.c「USICR=0;		/* SCKをポートに戻しておく */」を無効化
+
+2008-10-14 ...	- firmware main.c「USICR=0;		/* SCKをポートに戻しておく */」を有効化
+				-- USIの初期化をmain関数から、usi_trans関数に移動(SCK発生時の互換性向上)
+				- usbHidReportDescriptorの大きさを9バイト縮小(現在 2038バイト)
+				- ソース中のコメントを修正（不整合部分を修正）
 
 # TAB size = 8で編集しています。
 

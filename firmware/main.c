@@ -50,7 +50,7 @@
 #define	LENGTH3 40
 #define	LENGTH4  6
 
-PROGMEM char usbHidReportDescriptor[51] = {
+PROGMEM char usbHidReportDescriptor[] = {
     0x06, 0x00, 0xff,              // USAGE_PAGE (Generic Desktop)
     0x09, 0x01,                    // USAGE (Vendor Usage 1)
     0xa1, 0x01,                    // COLLECTION (Application)
@@ -73,10 +73,12 @@ PROGMEM char usbHidReportDescriptor[51] = {
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
+#if 0	// code削減のため
     0x85, 0x04,                    //   REPORT_ID (4)
     0x95, 0x04,                    //   REPORT_COUNT (4)
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
+#endif
 
     0xc0                           // END_COLLECTION
 };
@@ -185,9 +187,12 @@ void delay_7clk(void);
 //	   20 =249clk   23 kHz
 //	   50 =609clk  9.8 kHz
 //
-//		2以上は 9 + (12 * wait) clk （CALL-RETを採用した場合 9 + (13 * wait) clk）
+//		2以上は 9 + (12 * wait) clk （CALL-RETを採用した場合も同様）
 //
 static uint8_t usi_trans(uint8_t data){
+#if 1
+	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
+#endif
 	USIDR=data;
 	USISR=(1<<USIOIF);
 	if(wait==0) {
@@ -224,7 +229,7 @@ static uint8_t usi_trans(uint8_t data){
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
 	}
-#if 0
+#if 1
 	USICR=0;		/* SCKをポートに戻しておく */
 #endif
 	return USIDR;
@@ -511,8 +516,9 @@ int main(void)
 	DDRD = ~USBMASK;        /* all outputs except USB data */
 	PORTB = (1<<3);			/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
 	DDRB = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
+#if 0	// usi_trans関数に移動
 	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
-
+#endif
     usbInit();
     sei();
     for(;;){    /* main event loop */

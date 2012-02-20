@@ -989,12 +989,12 @@ int enter_ispmode ()
 #if AVRSPX
 	if (CtrlPort.PortClass == TY_HIDASP) // ### k-k
 	{
-		if (hidasp_program_enable(CtrlPort.Delay) != 0)
-		{
+		if (hidasp_program_enable(CtrlPort.Delay) != 0) {
 			MESS("Device connection failed.(PE)\n");
 			return 1;
+		} else {
+			return 0;
 		}
-		return 0;
 	} else if (CtrlPort.PortClass == TY_USBASP) {	//@@@ by t.k
 		if (usbasp_program_enable() != 0) {
 			MESS("Device connection failed.\n");
