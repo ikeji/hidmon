@@ -47,7 +47,7 @@ IF NOT EXIST %TARGET% (
   mkdir %TARGET%
 )
 echo ==== [COPY to %TARGET%] ====
-echo hidspx.exe, hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe
+echo hidspx.exe, hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe, hidspx-GUI.exe
 echo firmware\genserial.awk , firmware\main-12.hex , firmware\firmprog.bat
 echo ..\HIDaspx.pdf ..\Readme-j.txt ..\avrx-tool.txt
 %COPY% hidspx.exe %TARGET% > NUL
@@ -61,6 +61,7 @@ IF EXIST %TARGET%\hidspx.ini (
 %COPY% fuse.txt %TARGET% > NUL
 %COPY% usbtool.exe %TARGET% > NUL
 %COPY% hidmon.exe %TARGET% > NUL
+%COPY% hidspx-GUI.exe %TARGET% > NUL
 %COPY% firmware\genserial.awk %TARGET% > NUL
 %COPY% firmware\main-12.hex %TARGET% > NUL
 %COPY% firmware\firmprog.bat %TARGET% > NUL

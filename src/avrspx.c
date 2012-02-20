@@ -724,9 +724,11 @@ void output_fuse (int mode)
 		open_device_url((int)Device->DocNumber);
 		return;
 	}
-	if( !(mode==RD_DEV_OPT_i || mode==RD_DEV_OPT_I) && Device->FuseType == 0) {
-		MESS("Fuse bits are not accessible.\n");
-		return;
+	if (mode!=RD_DEV_OPT_l) {
+		if( !(mode==RD_DEV_OPT_i || mode==RD_DEV_OPT_I) && Device->FuseType == 0) {
+			MESS("Fuse bits are not accessible.\n");
+			return;
+		}
 	}
 #else
 	if(Device->FuseType == 0) {
@@ -767,27 +769,30 @@ void output_fuse (int mode)
 	} else if (mode==RD_DEV_OPT_l) {
 		char lbuf[4], hbuf[4], xbuf[4], lmask[4], hmask[4], xmask[4];
 
-		sprintf(lbuf,  "%02X", FuseBuff[0]);
-		sprintf(lmask, "%02X", Device->FuseMask[0]);
+		if (Device->FuseType != 0) {
+			sprintf(lbuf,  "%02X", FuseBuff[0]);
+			sprintf(lmask, "%02X", Device->FuseMask[0]);
 
-		if (Device->FuseType >= 5) {
-			sprintf(hbuf,  "%02X", FuseBuff[1]);
-			sprintf(hmask, "%02X", Device->FuseMask[1]);
+			if (Device->FuseType >= 5) {
+				sprintf(hbuf,  "%02X", FuseBuff[1]);
+				sprintf(hmask, "%02X", Device->FuseMask[1]);
+			} else {
+				strcpy(hbuf,  "--");
+				strcpy(hmask, "--");
+			}
+
+			if (Device->FuseType >= 6) {
+				sprintf(xbuf,  "%02X", FuseBuff[2]);
+				sprintf(xmask, "%02X", Device->FuseMask[2]);
+			} else {
+				strcpy(xbuf,  "--");
+				strcpy(xmask, "--");
+			}
+			printf("AT%s %s:%s %s:%s %s:%s %02X\n", Device->Name,
+					lbuf, lmask, hbuf, hmask, xbuf, xmask, get_fuse_lock_byte(F_LOCK, 0));
 		} else {
-			strcpy(hbuf,  "--");
-			strcpy(hmask, "--");
+			printf("AT%s --:-- --:-- --:-- --\n", Device->Name);
 		}
-
-		if (Device->FuseType >= 6) {
-			sprintf(xbuf,  "%02X", FuseBuff[2]);
-			sprintf(xmask, "%02X", Device->FuseMask[2]);
-		} else {
-			strcpy(xbuf,  "--");
-			strcpy(xmask, "--");
-		}
-
-		printf("AT%s %s:%s %s:%s %s:%s %02X\n", Device->Name,
-				lbuf, lmask, hbuf, hmask, xbuf, xmask, get_fuse_lock_byte(F_LOCK, 0));
 
 		return;
 
