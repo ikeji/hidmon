@@ -1,120 +1,79 @@
-                                                             2008年9月29日
+This is the README file for HIDaspx.
 
-        USB接続で、ドライバインストール不要なAVRライタ（HIDaspx）
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+HIDaspx is a USB in-circuit programmer for Atmel AVR controllers. 
+It simply consists of an ATtiny2313 and a couple of passive components.
+The programmer uses a firmware-only USB driver, no special USB controller 
+is needed.
 
-■ はじめに
-
-HIDasp(x)とは、ドライバのインストールが不要のUSB接続方式のAVRライタです。
-
-瓶詰堂さんの作成された HIDasp を元に、iruka さんと senshu が共同で改良を行
-ないました。一定の成果が得られましたので、2008年9月22日より公開を開始します。
-
-■ 同梱のファイルについて
-
-このアーカイブは、HIDasp 高速化対応版であり、瓶詰堂さんの公開しているものと
-は内容が異なります。現時点では、firmware, hidspx コマンド共に互換性はありま
-せんので区別して扱ってください。
-
-また、2 つの exe ファイル（hidspx.exe, hidspx-bcc.exe）の機能は同じです。
-hidspx.exe を利用して、動作に異常を見つけた時には、hidspx-bcc.exe を使って
-みてください。全角文字を含むフォルダでの作業時に効果的な場合があります。
-（コマンド名は任意に改名できますが、混乱しない名前をつけてください。）
-
-また、hidspx のコマンド名を使っていますが、これはavrspx の別名です。
-この名称にしているのは HIDasp に対応することを示すためです。hidspx という名
-前であっても avrspx の機能は全て利用可能です。しかし、機能追加作業により、
-avrspx の機能に意図しない副作用が生じる可能性もあります。そのため、十分な動
-作検証を終えるまでは、avrspx の名称をつけずに公開することにしました。ご了承
-ください。
+Features:
+- Works under platforms. Windows 2000/XP/Vista are tested.
+- No special controllers or smd components are needed.
+- Programming speed is up to 4kBytes/sec (Write Only).
+- SCK option to support targets with low clock speed (< 1.5MHz).
 
 
-.\
-├─bin
-	libusb0.dll
-	hidspx.exe		… MinGWでコンパイルしたもの
-	hidspx-bcc.exe		… Borland C++ ver 5.5.1でコンパイルしたもの
-	main.hex		… HIDaspのファームウェア
-	hidspx.ini		… hidspxの初期化ファイル
-	fuse.txt		… FUSE情報を詳細に表示する為のテキストファイル
-	fuse_en.txt
-	fuse_j.txt
-├─firmware			… HIDaspのファームウェアソース
-├─hidspx-src			… hidspxのソース(MinGW, Borland C++兼用)
-│  └─libusb
-│      ├─bin
-│      ├─examples
-│      ├─include
-│      └─lib
-│          ├─bcc
-│          ├─dynamic
-│          ├─gcc
-│          ├─msvc
-│          └─msvc_x64
-└─pict			… 回路図と実装例
+LICENSE
 
-■ 準備
+HIDaspx is distributed under the terms and conditions of the GNU GPL
+version 2 (see "firmware/usbdrv/License.txt" for details).
 
-bin/main.hex を Tiny2313 に書き込んでください．ヒューズの設定は，外付けの 
-12MHz のクリスタルに合わせ、以下のように設定します。
-
-Low: 10001111
-     ||||++++-- CKSEL[3:0] システムクロック選択
-     ||++-- SUT[1:0] 起動時間
-     |+-- CKOUT (0:PD2にシステムクロックを出力)
-     +-- CKDIV8 クロック分周初期値 (1:1/1, 0:1/8)
-
-High:11-11011
-     |||||||+-- RSTDISBL (RESETピン 1:有効, 0:無効(PA2))
-     ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
-     |||+-- WDTON (WDT 0:常時ON, 1:通常)
-     ||+-- SPIEN (1:ISP禁止, 0:ISP許可) ※Parallel時のみ
-     |+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
-     +-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
-
-Ext: -------1
-            +-- SPMEN (SPM命令 1:無効, 0:有効)
+HIDaspx is built with AVR USB driver by OBJECTIVE DEVELOPMENT GmbH. 
+See "firmware/usbdrv/" for further information.
 
 
-■ 使い方
+LIMITATIONS
 
-hidspx に「-ph」指定で HIDasp が利用できます。hidspx.ini に -pu を書いてお
-けば、この指定は省略できます。
+Hardware:
+This package includes a circuit diagram. 
+This circuit can be used for programming 5V or 3.3V target systems. 
 
-> hidspx -ph test.hex
+Firmware:
+The firmware dosn't support USB Suspend Mode. 
 
--d でディレイを指定でき、数値は時間に比例します。1MHz の RC 発振モードでは
--d4 以上を指定してください。なお、この値は、高速に動作する AVR マイコンでは
-小さな値を指定でき、それに伴い、R/W の速度が向上します。
+USE PRECOMPILED VERSION
 
-irukaさんによる計測結果を示します。（最新の版では、これよりも性能が向上して
-いることがあります）
+Firmware:
+Flash "bin/firmware/HIDaspx.atmega48.xxxx-xx-xx.hex" or
+"bin/firmware/main.hex" to the used controller with a working programmer 
+(e.g. with avrdude, uisp, ...). 
+HIDaspx firmware update function.
+You have to change the fuse bits for external crystal (see "make fuses").
 
-	コマンド	評価内容		改良前	高速化後
--------------------------------------------------------------------------
-hidspx -d0 -rp >XX.hex	8kB Read		8.39秒	2.22秒(3,690B/秒)
-hidspx -d0 test.hex	8kB Write/Verify	10.94秒	4.86秒(1.64kB/秒)
-hidspx -d1 -rp >XX.hex	8kB Read		8.40秒	3.12秒(2,625B/秒)
-hidspx -d1 test.hex	8kB Write/Verify	10.96秒	7.06秒(1.13kB/秒)
-hidspx -d4 -rp >XX.hex	8kB Read		8.39秒	4.63秒(1,770B/秒)
-hidspx -d4 test.hex	8kB Write/Verify	13.26秒	9.98秒(821B/秒)
--------------------------------------------------------------------------
+Windows:
+Start Windows and connect HIDaspx to the system. 
+Now you can run avrdude. Examples:
+1. Enter target AVR chip connected to the programmer:
+   hidspx -r <Enter>
+2. Write main.hex to the flash of an ATmega8:
+   hidspx main.hex
 
-詳細な使い方は、avrspxの解説ページをご覧ください。
+BUILDING AND INSTALLING FROM SOURCE CODE
 
-■ ライセンス（瓶詰堂さんに同じ）
-AVR USBに準じてGPL2とします．
+Firmware:
+To compile the firmware
+1. install the GNU toolchain for AVR microcontrollers (avr-gcc, avr-libc),
+2. change directory to firmware/
+3. run "make main.hex"
+4. flash "main.hex" to the ATtiny2313. 
 
-■ History
-2008-09-22 ... senshuとirukaさんが改造を実施	高速化対応実施
+FILES IN THE DISTRIBUTION
 
-2008-09-24 ... senshu  firmware -d0オプションの最適化
-               エラーメッセージ出力の修正（改行してから表示）
+Readme.txt ...................... The file you are currently reading
+firmware ........................ Source code of the controller firmware
+firmware/usbdrv ................. AVR USB driver by Objective Development
+firmware/usbdrv/License.txt ..... Public license for AVR USB driver and HIDaspx
+circuit ......................... Circuit diagram in jpg and png format
+hidspx-src ...................... hidspx source code
+bin ............................. Precompiled tool (hidspx.exe)
+bin/firmware .................... Precompiled firmware
 
-2008-09-28 ... hidspxのコンパイルオプションに-Wallを追加し、警告メッセージに
-               対する修正を実施(senshu)
-               firmware -d0オプションをUSBasp互換性を高めた(iruka)
-               MOSI, SCK の競合を回避（Hi-Z化する）
 
-# TAB size = 8で編集しています。
+MORE INFORMATION
 
+For more information on HIDaspx and it's components please visit the
+following URLs:
+
+HIDaspx ........................ http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDasp
+Firmware-only AVR USB driver ... http://www.obdev.at/products/avrusb/
+
+2008-09-29 Hiroyuki Senshu <senshu(at)astro.yamagata-cit.ac.jp>

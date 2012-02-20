@@ -99,25 +99,29 @@ typedef struct {
 	uchar memdata[16];	// 読み込みデータ. もしくは書き込みデータ[0] マスク[1]
 } MonCommand_t;
 
-static void cmd_poke(MonCommand_t *cmd)
+static void cmd_peek_poke(MonCommand_t *cmd,uchar data0)
 {
-	uchar *p=cmd->addr;
-	if(cmd->memdata[1]) {	//マスク付の書き込み.
-		*p = (*p & cmd->memdata[1]) | cmd->memdata[0];
-	}else{			//べた書き込み.
-		*p = cmd->memdata[0];
+	uchar *p =cmd->addr;
+	if(data0 == HIDASP_PEEK) {
+//	if(cmd->hidasp_cmd == HIDASP_PEEK) {
+		//メモリー連続読み出し.
+		uchar cnt=cmd->count;
+		uchar i;
+		for(i=0;i<cnt;i++) {
+			usbData[i]= *p++;
+		}
+	}else{
+		//メモリー書き込み.(１バイト)
+		uchar data=cmd->memdata[0];
+		uchar mask=cmd->memdata[1];
+		if(mask) {	//マスク付の書き込み.
+			*p = (*p & mask) | data;
+		}else{			//べた書き込み.
+			*p = data;
+		}
 	}
 }
 
-static void cmd_peek(MonCommand_t *cmd)
-{
-	uchar i;
-	uchar cnt=cmd->count;
-	uchar *p =cmd->addr;
-	for(i=0;i<cnt;i++) {
-		usbData[i]=*p++;
-	}
-}
 #endif
 
 
@@ -241,7 +245,6 @@ void hidasp_main()	//uchar *data)
 			page_mode = 0x40;
 			page_addr = 0;
 		}
-		data+=2;
 		//
 		//	page_write (またはpage_read) の実行.
 		//
@@ -249,7 +252,7 @@ void hidasp_main()	//uchar *data)
 			usi_trans(page_mode);
 			usi_trans(hbyte(page_addr));
 			usi_trans(lbyte(page_addr));
-			usbData[i]=usi_trans(*data++);
+			usbData[i]=usi_trans(data[i+2]);
 			if (page_mode & 0x88) { // EEPROM or FlashH
 				page_addr++;
 				page_mode&=~0x08;
@@ -261,7 +264,7 @@ void hidasp_main()	//uchar *data)
 		//	isp_command(Flash書き込み)の実行.
 		//
 		if(data0 & (HIDASP_PAGE_TX_FLUSH & MODE_MASK)) {
-			isp_command(data);
+			isp_command(data+i+2);
 		}
 	}
 #else
@@ -284,10 +287,8 @@ void hidasp_main()	//uchar *data)
 		wait=data1;
 	}
 #if	INCLUDE_MONITOR_CMD
-	else if ( data0 == HIDASP_POKE ) {
-		cmd_poke((MonCommand_t *)data);
-	} else if ( data0 == HIDASP_PEEK ) {
-		cmd_peek((MonCommand_t *)data);
+	else if ( cmd == HIDASP_POKE ) {
+		cmd_peek_poke((MonCommand_t *)data,data0);
 	}
 #endif
 }
@@ -305,15 +306,9 @@ uchar usbFunctionSetup(uchar data[8])
 	uchar			bRequest = rq->bRequest;
     if(rqType == USBRQ_TYPE_CLASS){    /* class request type */
         if(	bRequest == USBRQ_HID_GET_REPORT ) {
-#if	1
 			report.id[0] = rq->wValue.bytes[0];    /* store report ID */
 			usbMsgPtr = report.id;
 			return rq->wLength.word;
-#else
-			report.id[0] = ID3;    /* store report ID */
-			usbMsgPtr = report.id;
-			return LENGTH3;
-#endif
 		}
         if(	bRequest == USBRQ_HID_SET_REPORT ) {
 		    currentPosition = 0;                // initialize position index
