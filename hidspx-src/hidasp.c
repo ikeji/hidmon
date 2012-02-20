@@ -602,9 +602,6 @@ int hidasp_page_read(long addr, unsigned char *wd, int pagesize)
 	return 0;
 }
 
-
-
-
 static int hidRead(HANDLE h, char *buf, int Length, ULONG * sz, int id)
 {
 	int rc;

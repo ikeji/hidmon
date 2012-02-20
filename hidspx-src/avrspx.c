@@ -2047,6 +2047,9 @@ void terminate (int rc)
 {
 #if AVRSPX
 	f_terminate = true;
+#if DEBUG
+	printf("Pause = %d, rc = %d\n", Pause, rc);
+#endif
 #endif
 
 	close_ifport();
@@ -2062,11 +2065,13 @@ void terminate (int rc)
 	} else if((Pause == 1)) {
 		MESS("\nType Enter to exit...");
 		getchar();
-	} else if(Pause >= 2 && rc != 0) {
+	} else if(Pause >= 2) {
 		int i;
 		i = Pause;
 		do {
+#if DEBUG
 			fprintf(stderr, "Pause = %3d\r", i);
+#endif
 			Sleep(1000);
 			if (kbhit()) {
 				getchar();
@@ -2098,7 +2103,7 @@ void do_exit(void)
 
 int main (int argc, char **argv)
 {
-	int rc;
+	int rc = 0;
 
 #if AVRSPX
 	atexit(do_exit);
