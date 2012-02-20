@@ -378,7 +378,6 @@ Device: ATmega88
 Device: ATmega88P
 Device: ATmega168
 Device: ATmega168P
-Device: ATmega328P
 Mode: ISP/Parallel
 Low: 76543210
      ||||++++-- CKSEL[3:0] Clock source selection
@@ -397,6 +396,27 @@ High:76543210
 Ext: -----210
           ||+-- BOOTRST *Refer to data sheet
           ++-- BOOTSZ[1:0] *Refer to data sheet
+
+;-----------------------------------------------------------------------------;
+Device: ATmega328P
+Mode: ISP/Parallel
+Low: 76543210
+     ||||++++-- CKSEL[3:0] Clock source selection
+     ||++-- SUT[1:0] Startup time
+     |+-- CKOUT (0:Output system clock on the CLKO pin)
+     +-- CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     |||||||+-- BOOTRST (1:Normal, 0:BootLoader)
+     |||||++-- BOOTSZ[1:0] (11:256W, 10:512, 01:1024, 00:2048)
+     ||||+-- EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     |||+-- WDTON (1:WDT normal, 0:WDT always on)
+     ||+-- SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     |+-- DWEN (On-Chip debugging via RESET pin 1:Disable, 0:Enable)
+     +-- RSTDISBL (RESET pin 1:Enable, 0:Disable(PC6))
+
+Ext: -----210
+          +++-- BODLEVEL[2:0] (111:Disabled, 110:1.8V, 101:2.7V, 100:4.3V)
 
 ;-----------------------------------------------------------------------------;
 Device: ATmega325/9

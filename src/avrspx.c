@@ -3191,11 +3191,24 @@ int main (int argc, char **argv)
 			output_usage(false);
 		}
 		if (f_show_spec) {
-			extern char *progpathname;
-			char * p;
+			extern char *progpathname, progpath[];
+			char * p, ini_file_path[MAX_PATH];
+			FILE *fp;
 
-			fprintf(stderr, "prog path name [%s]\n", progpathname);
-			fprintf(stderr, "ini file name  [%s]\n", INIFILE);
+			if (strchr(progpathname, ':') != NULL) {
+				fprintf(stderr, "program  '%s'\n", progpathname);
+			} else {
+				fprintf(stderr, "program  '%s%s'\n", progpath, progpathname);
+			}
+
+			sprintf(ini_file_path, "%s%s", progpath, INIFILE);
+			fp = fopen(ini_file_path, "rt");
+			if (fp != NULL) {
+				fclose(fp);
+				fprintf(stderr, "ini file '%s'\n", ini_file_path);
+			} else {
+				fprintf(stderr, "ini file '%s' doesn't exist.\n", ini_file_path);
+			}
 
 			init_devices ();
 
@@ -3203,7 +3216,7 @@ int main (int argc, char **argv)
 				case TY_LPT:		p = "LPT"; break;
 				case TY_COMM:		p = "COMM"; break;
 				case TY_VCOM:		p = "VCOM"; break;
-				case TY_BRIDGE:		p = "COM-SPI breadge"; break;
+				case TY_BRIDGE:		p = "COM-SPI bridge"; break;
 				case TY_AVRSP:		p = "COM(AVRSP)"; break;
 				case TY_STK200:		p = "LPT(STK200)"; break;
 				case TY_XILINX:		p = "LPT(XILINX)"; break;

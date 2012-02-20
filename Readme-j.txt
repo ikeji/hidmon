@@ -1400,11 +1400,23 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 prog path name [hidspx-gcc]
 ini file name  [hidspx-gcc.ini]
 No SPI bridge on the \\.\COM1.
-Type = COM-SPI breadge, Delay = 4
+Type = COM-SPI bridge, Delay = 4
 
 >hidspx-gcc --show-spec -ph …（HIDaspxにATTiny2313を接続して実行）
 prog path name [hidspx-gcc]
 ini file name  [hidspx-gcc.ini]
 Detected device is ATtiny2313.
 Type = HIDaspx, Delay = 4
+
+
+■2009-11-16
+	(1) FUSE.txtのATmega328P用の記述を修正しました。
+
+	(2) HIDaspxに対するhidpsx.ini が無い時の初期値(-dNの値)を
+	    適正に処理しました。
+
+	(3) Norman Malware Cleaner(Version 1.5.0.5)にて、usbtool.exe
+	    が、以下のようにMalwareと誤認識される不具合を修正しました。
+		C:\bin\usbtool.exe (Infected with W32/Zlob.gen134)
+	    … upxによる圧縮を中止することで対応しました。
 

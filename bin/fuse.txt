@@ -378,7 +378,6 @@ Device: ATmega88
 Device: ATmega88P
 Device: ATmega168
 Device: ATmega168P
-Device: ATmega328P
 Mode: ISP/Parallel
 Low: 76543210
      ||||++++-- CKSEL[3:0] システムクロック選択
@@ -395,8 +394,29 @@ High:76543210
      +-- RSTDISBL (RESETピン 1:有効, 0:無効(PC6))
 
 Ext: -----210
-          ||+-- BOOTRST ※データシート参照
-          ++-- BOOTSZ[1:0] ※データシート参照
+          ||+-- BOOTRST (1:Normal, 0:BootLoader)
+          ++-- BOOTSZ[1:0] (11:128W, 10:256, 01:512, 00:1024)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega328P
+Mode: ISP/Parallel
+Low: 76543210
+     ||||++++-- CKSEL[3:0] システムクロック選択
+     ||++-- SUT[1:0] 起動時間
+     |+-- CKOUT (0:PB0にシステムクロックを出力)
+     +-- CKDIV8 クロック分周初期値 (1:1/1, 0:1/8)
+
+High:76543210
+     |||||||+-- BOOTRST (1:Normal, 0:BootLoader)
+     |||||++-- BOOTSZ[1:0] (11:256W, 10:512, 01:1024, 00:2048)
+     ||||+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
+     |||+-- WDTON (1:WDT通常動作, 0:WDT常時ON)
+     ||+-- SPIEN (1:ISP禁止, 0:ISP許可) ※Parallel時のみ
+     |+-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
+     +-- RSTDISBL (RESETピン 1:有効, 0:無効(PC6))
+
+Ext: -----210
+          +++-- BODLEVEL[2:0] (111:無, 110:1.8V, 101:2.7V, 100:4.3V)
 
 ;-----------------------------------------------------------------------------;
 Device: ATmega325/9

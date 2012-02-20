@@ -6,14 +6,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
 #include <windows.h>
 #include "avrspx.h"
 
 //----------------------------------------------------------------------------
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 char *progpathname;
-char progpath[512];
-char progname[64];
-char inifilename[512];
+char progpath[PATH_MAX];
+char progname[FILENAME_MAX];
+char inifilename[FILENAME_MAX];
 
 //----------------------------------------------------------------------------
 bool is_binary_str(const char *s)
@@ -41,8 +46,13 @@ int setup_commands_ex(int argc, char **argv)
 {
 	char *s;
 
+#if 1
+	GetModuleFileName( NULL, progpath, MAX_PATH );
+	progpathname = *argv;
+#else
 	progpathname = *argv;
 	strcpy(progpath, progpathname);
+#endif
 	s = progpath + strlen(progpath);
 	while (--s >= progpath && (*s != ':' && *s != '\\'))
 		;
