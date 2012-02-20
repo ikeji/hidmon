@@ -184,7 +184,7 @@ AVR USBに準じてGPL2とします．
 				  （hidspx内のhwctrl.c spi_reset関数にdelay_ms(10)を追加しました）
 				- FUSE verifyエラー時の表示を適正化
 				- FUSE 書き換え関数の適正化（重要！）
-				- firmwareに「USICR=0;		/* SCKをポートに戻しておく */」を有効化
+				- firmware main.c「USICR=0;		/* SCKをポートに戻しておく */」を無効化
 
 # TAB size = 8で編集しています。
 

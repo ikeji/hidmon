@@ -224,7 +224,7 @@ static uint8_t usi_trans(uint8_t data){
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
 	}
-#if 1
+#if 0
 	USICR=0;		/* SCK‚ğƒ|[ƒg‚É–ß‚µ‚Ä‚¨‚­ */
 #endif
 	return USIDR;
