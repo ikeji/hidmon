@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 4月15日（最新更新）
+                                                2009年 4月19日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1138,3 +1138,18 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 	5. ボタンをスリム化し、ログ表示エリヤを拡大（全体の大きさは同じです）
 	6. FuseCalcの新版対応のExtFuse表示を追加
 	7. エラーの検出を強化(-rp, -re にて例外処理を追加)
+
+■2009-04-19
+        setup.batの内容を修正（hidspx_tips.pdfファイルもコピーする）
+        hidspx.ini user_bookmarkのリンク切れを修正
+
+	hidspx.exe, hidspx-gcc.exe
+	* FuseやLock bit書き込み時、実際に書き込んだ値を表示する
+
+	hidspx-GUI.exe (ver 0.4.7)
+        1. FuseのRead時は、-rfコマンドも合わせて実行
+        2. Fuse Calcは、hidspx 内部のコマンドを呼び出す（mega644p対策）
+        3. ボタンの大きさを均等化（イメージ貼り付けにより、大きさを画一化）
+        4. 一時ファイルが消えない場合があったのを修正
+        5. Command Executeのコマンド補完を実現
+

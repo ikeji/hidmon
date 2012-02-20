@@ -2706,7 +2706,7 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Low byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
-			MESS("Fuse Low byte was programmed.\n");
+			fprintf(stderr, "Fuse Low byte was programmed (0x%02X).\n", fuse);
 #else
 		write_fuselock(F_LOW, (BYTE)(CmdFuse.Data[0] | ~Device->FuseMask[0]));
 		MESS("Fuse Low byte was programmed.\n");
@@ -2727,7 +2727,7 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse High byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
-			MESS("Fuse High byte was programmed.\n");
+			fprintf(stderr, "Fuse High byte was programmed (0x%02X).\n", fuse);
 #else
 		write_fuselock(F_HIGH, (BYTE)(CmdFuse.Data[1] | ~Device->FuseMask[1]));
 		MESS("Fuse High byte was programmed.\n");
@@ -2748,7 +2748,7 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Extend byte was programm error. (%02X -> %02X)\n",fuse,vfuse);
 		else
-			MESS("Fuse Extend byte was programmed.\n");
+			fprintf(stderr, "Fuse Extend byte was programmed (0x%02X).\n",fuse);
 #else
 		write_fuselock(F_EXTEND, (BYTE)(CmdFuse.Data[2] | ~Device->FuseMask[2]));
 		MESS("Fuse Extend byte was programmed.\n");
@@ -2771,7 +2771,7 @@ int write_fuse ()
 		if (vfuse != fuse)
 			fprintf(stderr, "Lock bits programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
-			MESS("Lock bits are programmed.\n");
+			fprintf(stderr, "Lock bits are programmed (0x%02X).\n", fuse);
 #else
 		write_fuselock(F_LOCK, (BYTE)(CmdFuse.Data[3] ? CmdFuse.Data[3] : Device->LockData));
 		MESS("Lock bits are programmed.\n");
@@ -2890,7 +2890,11 @@ int main (int argc, char **argv)
 	rc = load_commands(argc, argv);
 	if(rc != 0) {
 		if(rc == RC_SYNTAX) {
+#if 0
 			output_usage(true);
+#else
+			fprintf(stderr, "%s: Option errror, Please add '--show-options' .\n", progname);
+#endif
 		}
 		terminate(rc);
 		return rc;
