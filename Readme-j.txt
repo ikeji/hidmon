@@ -936,3 +936,5 @@ EEPROM Size       = 128 bytes
  Detected device is ATtiny2313.
  Invalid Device tiny26 != tiny2313
 
+  「Makefile.gcc」の修正
+	hidspx-gcc.exe にアイコン情報が欠けていたのを修正

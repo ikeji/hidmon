@@ -2,7 +2,7 @@
 
 O = .o
 SRCS = avrspx.c hidasp.c hwctrl.c rscr.c usbasp.c utils.c wronly.c
-OBJS = avrspx$(O) hidasp$(O) hwctrl$(O) rscr$(O) usbasp$(O) utils$(O) wronly$(O)
+OBJS = avrspx$(O) hidasp$(O) hwctrl$(O) rscr$(O) usbasp$(O) utils$(O) wronly$(O) icon$(O)
 PROG = hidspx-gcc
 LIB =  libusb/lib/gcc/libusb.a
 #RES  = $(PROG).coff
