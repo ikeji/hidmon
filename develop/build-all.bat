@@ -1,5 +1,6 @@
 @echo off
 REM Written by senshu (2008/11/04)
+REM Modified by senshu (2010/02/01)
 pushd ..
 echo ======= hidspx.exe build =======
 cd src
@@ -15,30 +16,37 @@ make -f Makefile.gcc clean
 cd ..
 echo ======= firmware build =======
 cd firmware
+
+rm -fv *.hex
 REM make default (HIDaspx)
 make clean
 make
 make install
+make clean
 
-REM make default (HIDaspx)
-REM make -f Makefile.pro clean
-REM make -f Makefile.pro
+REM make default (HIDaspx) for PRO version
+make -f Makefile.pro clean
+make -f Makefile.pro
 REM make -f Makefile.pro install
+make -f Makefile.pro clean
+
+REM make HIDaspx (RC mode , MONITOR only)
+REM make MAIN=main-small F_CPU=12800000 clean
+REM make MAIN=main-small F_CPU=12800000 
+REM make MAIN=main-small F_CPU=12800000  install
+REM make MAIN=main-small F_CPU=12800000 clean
 
 REM make HIDaspx (MONITOR only)
-make MAIN=main-small F_CPU=12800000 clean
-make MAIN=main-small F_CPU=12800000 
-make MAIN=main-small F_CPU=12800000  install
-
-REM make HIDaspx (MONITOR only)
-make MAIN=main-small clean
-make MAIN=main-small
-make MAIN=main-small install
+REM make MAIN=main-small clean
+REM make MAIN=main-small
+REM make MAIN=main-small install
+REM make MAIN=main-small clean
 
 REM make for libusb
 make -f Makefile.unix clean
 make -f Makefile.unix
 make -f Makefile.unix install
+make -f Makefile.unix clean
 cd ..
 echo ======= All update. =======
 popd

@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2010年 1月26日（最新更新）
+                                                2010年 2月 1日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -77,8 +77,6 @@ http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx00
 │------------------------ (GPL2 *2) -----ここから-----------
 │			… main-12.hex（HIDaspx用, Windows/Mac/Linux兼用）
 │			… main_libusb.hex（libusbを使い場合、MacOS, Linux専用）
-│			… main-small.hex(USB-IO専用のファームウェア)
-│			… main-RC.hex (RC発振モードのUSB-IO専用のファームウェア、実験レベル)
 ｜　　　　　　　　　　　… genserial.awk（シリアル情報生成ツール）
 ｜　　　　　　　　　　　… firmprog.bat main12.hexを書き込むためのBATファイル
 ｜　　　　　　　　　　　… prog-rc.bat  main-RC.hexを書き込むためのBATファイル
@@ -1425,7 +1423,7 @@ Type = HIDaspx, Delay = 4
 	(1) HIDaspx用のファームを avr-gcc vewr 3.4.6 で作り直しました。
 
 ■2010-01-26
-	(1) HIDaspx用の商用バージョンに対応しました。
+	(1) HIDaspx用の商用ファームウェアに対応しました。
 	    -php を指定することで商用版のHIDaspxファームを操作できます。
 	    （機能は、無償版と全く同様です。）
 
@@ -1442,3 +1440,16 @@ Type = HIDaspx, Delay = 4
 	(3) ノートン2010による誤検出対策
 	  この版の実行ファイルは、upxによる圧縮を行わずに提供します。
 
+
+■2010-01-27
+	(1) hidmon.dllを商用ファームウェアに対応しました。
+
+  無償版 … UsbInit("*"), UsbInit("0123")のようなシリアル番号指定も可能
+  商用版 … UsbInit("#"), UsbInit("#0123")のようなシリアル番号指定も可能
+
+  どちらも、数字を省略すると、"0000"を指定したと見なします。
+
+■2010-02-01
+	(1) 実験レベルのファームウェアの添付を停止し、build-all.batの
+	    内容を修正し、不要なオブジェクトの生成を修正しました。
+	(2) 同梱のPDFファイルを最新に差し替えました。

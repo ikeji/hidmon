@@ -99,7 +99,7 @@ fuse:
 	$(PROGRAMMER) -d10 -FL$(FUSE_L) -FH$(FUSE_H)
 
 clean:
-	rm -f $(TARGET)-$(OSC)-pro.hex *.o *.dis *.lst *.cof *.map *.elf time*.dat usbdrv/*.o usbdrv/oddebug.s usbdrv/usbdrv.s
+	rm -f *.o *.dis *.lst *.cof *.map *.elf time*.dat usbdrv/*.o usbdrv/oddebug.s usbdrv/usbdrv.s
 
 install:
 	cp -p $(TARGET)-$(OSC)-pro.hex ../bin/firmware
