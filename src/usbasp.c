@@ -5,7 +5,7 @@
  * 2006-05-20 mega128x/mega256x
  * 2006-08-26 bug fix. for non-paged avr
  * 2006-08-27 some modify
- * 2006-08-30 libusb-win32-0.1.10.1 の不具合に対処 (とりあえずgccのみ) 
+ * 2006-08-30 libusb-win32-0.1.10.1 の不具合に対処 (とりあえずgccのみ)
  *            ライブラリをlibusb-win32-0.1.12.0 に変更
  * 2006-08-30 USBバスからのusbaspの検索の高速化
  *            libusbのバージョン表示を追加
@@ -98,8 +98,8 @@ int usbasp_open(char *SerialNumber)
 
     /*
      * libusb-win32-0.1.10.1 で usb_find_busses() を実行したときに
-     * "found N busses"がstdoutに出力されるため一時的にstdoutをnulに切換 
-     * libusb-win32-0.1.10.2/ libusb-win32-0.1.12.0で修正されている 
+     * "found N busses"がstdoutに出力されるため一時的にstdoutをnulに切換
+     * libusb-win32-0.1.10.2/ libusb-win32-0.1.12.0で修正されている
 	 * とりあえずgccのみ (bcc/bcb6/vc8では正常に動作しない)
 	 */
 #ifdef __GNUC__
@@ -109,7 +109,7 @@ int usbasp_open(char *SerialNumber)
 #endif
 	usb_init();
 
-	usb_find_busses();                      // この中で不要な printf がある 
+	usb_find_busses();                      // この中で不要な printf がある
 	usb_find_devices();
 
 #ifdef __GNUC__
@@ -174,7 +174,7 @@ int usbasp_disconnect(void)
 /*
  *   fck  < 12MHz : Low period>2CPU clock cycle  High period>2CPU clock cycle
  *   fck >= 12MHz : Low period>3CPU clock cycle  High period>3CPU clock cycle
- * 
+ *
  *  -d option
  *       USBaspx SCK clock            cycle      TARGET
  *    0 :   0 :   3.0MHz  fosc/4     0.33us  >  12.0MHz
@@ -286,7 +286,7 @@ int usbasp_paged_load_sub(int function, int address,
 		cmd[0] = address & 0xFF;
 		cmd[1] = address >> 8;
 		cmd[2] = 0x5A;				//@@ magic no by t.k
-		cmd[3] = flags;				//@@ 
+		cmd[3] = flags;				//@@
 
 		n = usbasp_transmit(1, function, cmd, buffer, blocksize);
 
@@ -309,10 +309,10 @@ int usbasp_paged_load_sub(int function, int address,
 }
 
 int usbasp_paged_load(
- char dst, 
+ char dst,
  void *buf,
- int page_size, 
- int n_bytes, 
+ int page_size,
+ int n_bytes,
  bool ext)
 {
 	int address = 0;
@@ -512,7 +512,7 @@ int usbasp_paged_write_sub(
 }
 
 int usbasp_paged_write(
- char dst, 
+ char dst,
  void *buf,
  int page_size,
  int n_bytes,
@@ -765,11 +765,11 @@ int usbasp_list(void)
 	if (version) {
 		printf("libusb-win32 : \n");
 		printf("  DLL(libusb0.dll)    version: %d.%d.%d.%d\n",
-			version->dll.major, version->dll.minor, 
+			version->dll.major, version->dll.minor,
 			version->dll.micro, version->dll.nano);
 
 		printf("  Driver(libusb0.sys) version: %d.%d.%d.%d\n\n",
-			version->driver.major, version->driver.minor, 
+			version->driver.major, version->driver.minor,
 			version->driver.micro, version->driver.nano);
 
 		if (version->dll.major != version->driver.major
@@ -833,6 +833,7 @@ int usbasp_write_serial(char *SerialNumber, char *NewSerialNumber)
     int ret;
 
 	if (usbasp_open(SerialNumber) != 0) {
+    	fprintf(stderr, "USBasp serial number set [%s] to [%s].\n", SerialNumber, NewSerialNumber);
 		return RC_FAIL;
 	}
 

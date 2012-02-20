@@ -42,11 +42,14 @@ typedef unsigned long	DWORD;
 
 /* Program error codes */
 
-#define	RC_FAIL		1
-#define	RC_FILE		2
-#define	RC_INIT		3
-#define RC_DEV		4
-#define	RC_SYNTAX	5
+enum {
+	RC_FAIL = 1,
+	RC_FILE,
+	RC_INIT,
+	RC_DEV,
+	RC_SYNTAX,
+	RC_OPT_ERR,
+};
 
 
 /* Buffer size for flash/eeprom */

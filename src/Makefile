@@ -10,7 +10,8 @@ OBJS = avrspx$(O) hidasp$(O) hwctrl$(O) rscr$(O) usbasp$(O) utils$(O) wronly$(O)
 
 RC = brc32
 CC = bcc32
-CFLAGS = -O2 -I. -DUSER_BOOKMARKS -DHIDASPX=1 -DAVRSPX=1 -Ilibusb/include
+CFLAGS = -O2 -I. -DUSER_BOOKMARKS=1 -DTIME_DISPLAY=1 -DHIDASPX=1 -DAVRSPX=1 -Ilibusb/include
+#CFLAGS = -O2 -I. -DHIDASPX=1 -DAVRSPX=1 -Ilibusb/include
 
 LD = bcc32
 #LDFLAGS = -mwindows -s -Wl,--subsystem,console

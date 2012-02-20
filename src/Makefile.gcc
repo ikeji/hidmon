@@ -10,7 +10,7 @@ EXE  = $(PROG).exe
 
 RC = windres
 CC = gcc
-CFLAGS = -O2 -I. -Wall -DUSER_BOOKMARKS -DHIDASPX=1 -DAVRSPX=1 -Ilibusb/include
+CFLAGS = -O2 -I. -Wall -DUSER_BOOKMARKS -DTIME_DISPLAY=1 -DHIDASPX=1 -DAVRSPX=1 -Ilibusb/include
 
 LD = gcc
 LDFLAGS = -mwindows -s -Wl,--subsystem,console

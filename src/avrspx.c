@@ -60,6 +60,9 @@
 /*---------------------------------------------------------------------------*/
 /* b10.12 2008-12-10 senshuがHIDaspxへの対応を追加、avrsp R0.44の変更を反映  */
 /*---------------------------------------------------------------------------*/
+/* TAB-SIZE = 4 */
+
+#define VERSION "b11.1"
 
 #include <stdio.h>
 #include <string.h>
@@ -68,6 +71,7 @@
 #include "avrspx.h"
 #if AVRSPX
 #include <conio.h>
+#include <time.h>	/* clock() ... TIME_DISPLAY */
 #include <io.h>
 #include <windows.h>
 #include "usbasp.h"
@@ -79,7 +83,7 @@ int hidmon_mode = 0;	/* for hidasp.c */
 /*-----------------------------------------------------------------------
   Device properties
 -----------------------------------------------------------------------*/
-#if 0
+#if 0	/* avrspx.h */
 typedef struct _DEVPROP {
 	char	*Name;			/* Name:		Device name */
 	char	ID;				/* ID:			Device ID */
@@ -142,7 +146,7 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "mega161",     M161,  {0x1E, 0x94, 0x01},  16384, 128,  512,  0, 20,  5, 0xFF, 0xFC, 4, 0, {0x7F},             41, "m161"},
 	{ "mega162",     M162,  {0x1E, 0x94, 0x04},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x1E}, 67, "m162"},
 	{ "mega163",     M163,  {0x1E, 0x94, 0x02},  16384, 128,  512,  0, 18,  5, 0xFF, 0xFC, 5, 1, {0xEF, 0x07},       38, "m163"},
-	{ "mega164P",    M164P, {0x1E, 0x94, 0x0A},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 99, "m164P"},
+	{ "mega164P",    M164P, {0x1E, 0x94, 0x0A},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 99, "m164p"},
 	{ "mega165",     M165,  {0x1E, 0x94, 0x07},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0E}, 79, "m165"},
 	{ "mega168",     M168,  {0x1E, 0x94, 0x06},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78, "m168"},
 	{ "mega168P",    M168P, {0x1E, 0x94, 0x0B},  16384, 128,  512,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 78, "m168"},
@@ -158,7 +162,7 @@ const DEVPROP DevLst[] =	/* Device property list */
 /**/{ "mega324PA",   M324PA,{0x1E, 0x95, 0x11},  32768, 128, 1024,  4,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},104, "m324PA"},
 	{ "mega603",     M603,  {0x1E, 0x96, 0x01},  65536, 256, 2048,  0, 60, 11, 0xFF, 0xF9, 2, 0, {0x0B},              0, "m603"},
 	{ "mega644",     M644,  {0x1E, 0x96, 0x09},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106, "m644"},
-	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106, "m644"},
+	{ "mega644P",    M644P, {0x1E, 0x96, 0x0A},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},106, "m644p"},
 	{ "mega645/9",   M645,  {0x1E, 0x96, 0x03},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 87, "m645"},
 	{ "mega6450/90", M6450, {0x1E, 0x96, 0x04},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 88, "m6450"},
 	{ "mega64",      M64,   {0x1E, 0x96, 0x02},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03}, 58, "m64"},
@@ -167,14 +171,14 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "mega128",     M128,  {0x1E, 0x97, 0x02}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0x03}, 54, "m128"},
 	{ "mega1280",    M1280, {0x1E, 0x97, 0x03}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 92, "m1280"},
 	{ "mega1281",    M1281, {0x1E, 0x97, 0x04}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 93, "m1281"},
-/**/{ "mega1284P",   M1284P,{0x1E, 0x97, 0x05}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},  0, "m1284P"},
+/**/{ "mega1284P",   M1284P,{0x1E, 0x97, 0x05}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07},  0, "m1284p"},
 	{ "mega2560",    M2560, {0x1E, 0x98, 0x01}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 95, "m2560"},
 	{ "mega2561",    M2561, {0x1E, 0x98, 0x02}, 262144, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x07}, 94, "m2561"},
 //------- PWM, CAN
 	{ "90PWM2/3",    PWM2,  {0x1E, 0x93, 0x81},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7}, 97, "pwm2"},
 /**/{ "90PWM216/316",PWM216,{0x1E, 0x94, 0x83},  16384, 128,  512,  4,  6, 11, 0xFF, 0xFC, 6, 4, {0xFF, 0xDF, 0xF7},  0, "pwm3"},
-	{ "90CAN32",     CAN32, {0x1E, 0x95, 0x81},  32768, 256, 1024,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c128"},
-	{ "90CAN64",     CAN64, {0x1E, 0x96, 0x81},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c128"},
+	{ "90CAN32",     CAN32, {0x1E, 0x95, 0x81},  32768, 256, 1024,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c32"},
+	{ "90CAN64",     CAN64, {0x1E, 0x96, 0x81},  65536, 256, 2048,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c64"},
 	{ "90CAN128",    CAN128,{0x1E, 0x97, 0x81}, 131072, 256, 4096,  8,  6, 11, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x0F}, 82, "c128"},
 //------- Misc
 	{ "Locked",      L0000, {0x00, 0x01, 0x02} },	/* Locked Device */
@@ -197,8 +201,8 @@ BYTE FuseBuff[3];				/* Fuse bytes read buffer */
 BYTE SignBuff[4];				/* Device signature read buffer */
 
 /*---------- Command Parameters ------------*/
-
-char Command[2];				/* -r -e -z Read/Erase/Test command (1st,2nd char) */
+#define MAX_CMD_SIZE 3			/* @@@ by senshu */
+char Command[MAX_CMD_SIZE];		/* -r -e -z Read/Erase/Test command (1st,2nd char) */
 
 struct {						/* Code/Data write command (hex file) */
 	DWORD CodeSize;				/* Loaded program code size (.hex) */
@@ -225,20 +229,13 @@ int Pause;						/* -w Pause before exiting program */
 char ForcedName[20];			/* -t Forced device type (compared to Device->Name)*/
 
 #define OPT_MAX 20
-#define BOOKMARK_MAX 100
 #define LINE_SIZE 512
 
 #if AVRSPX
-/* for USBasp */
-bool f_usblist;
-bool f_detail_help;
 
-#if 1	/* @@@ by senshu */
-bool f_open_device_url;
-bool f_open_atmel_url;
-#endif
+#if USER_BOOKMARKS
+#define BOOKMARK_MAX 100
 
-#ifdef USER_BOOKMARKS
 struct url_list {
 	char *key;
 	char *url;
@@ -246,18 +243,66 @@ struct url_list {
 } user_bookmarks[BOOKMARK_MAX+1];
 #endif
 
+bool f_usbasp_list;			/* for USBasp */
+bool f_aspxlist;			/* for HIDaspx */
+bool f_portlist;			/* COM ports */
+bool f_detail_help;
+bool f_open_device_url;		/* @@@ by senshu */
+bool f_open_atmel_url;		/* @@@ by senshu */
+bool f_list_device;			/* @@@ by senshu */
+bool f_list_adapter;		/* @@@ by senshu */
+bool f_list_bookmark;		/* @@@ by senshu */
+bool f_version;				/* @@@ by senshu */
+bool f_report_mode;		/* 0 = original, 1 = avrdude like */
 
-char usb_serial[8];				// USBasp, HIDaspx
-char new_serial[8];
-char DeviceName[20];			// -d check device type (compared to Device->Name)
-bool f_portlist;
-char *msg_pause_on_start = "";	/* --pause-on-start=msg */
-char *msg_pause_on_exit = "";	/* --pause-on-exit=msg */
+char *out_filename = NULL;	/* @@@ by senshu */
+FILE *redirect_fp;
+
+char *msg_pause_on_start;	/* --pause-on-start=msg */
+char *msg_pause_on_exit;	/* --pause-on-exit=msg */
+char *new_serial;			// USBaspx
+
+char usb_serial[8];			// Serial number of USBasp and HIDaspx device
+char DeviceName[20];		// -d check device type (compared to Device->Name)
+
+enum {
+	OPT_bool,
+	OPT_web,
+	OPT_str
+};
+
+struct opt_list {
+	char *option;
+	char *long_option;
+	bool type;
+	void *opt;
+	char *help;
+} long_opts[] = {
+	{"    ",	"pause-on-start",	OPT_str,  &msg_pause_on_start,	"Pause on Port Open"},
+	{"    ",	"pause-on-exit",	OPT_str,  &msg_pause_on_exit,	"Pause on exit"},
+	{"    ",	"set-serial",		OPT_str,  &new_serial,			"Set USBaspx serial number"},
+	{"-!  ",	"list-bookmark",	OPT_bool, &f_list_bookmark,				"List user Bookmarks"},
+	{"-p? ", 	"list-port",		OPT_bool, &f_portlist,					"List COM Port"},
+	{"-pu?",	"list-usbasp",		OPT_bool, &f_usbasp_list,				"List USBasp  Programmer"},
+	{"-ph?",	"list-hidaspx",		OPT_bool, &f_aspxlist,					"List HIDaspx Programmer"},
+	{"    ",	"list-adapter",		OPT_bool, &f_list_adapter,				"List Support Adapters"},
+	{"    ",	"list-device",		OPT_bool, &f_list_device,				"List Support AVR Devices"},
+	{"    ",	"new-mode",			OPT_bool, &f_report_mode,				"New progress mode"},
+	{"    ",	"avr-devices",	 	OPT_web,  &f_open_device_url,			"AVR Devices list"	},
+	{"    ",	"atmel-avr",	 	OPT_web,  &f_open_atmel_url,			"Atmel (AVR 8-Bit RISC)"},
+	{"    ",	"version",			OPT_bool, &f_version,					NULL},
+	{"-?  ",	"help",				OPT_bool, &f_detail_help,				NULL},
+	{NULL, NULL, 0, 0, NULL}
+};
+
+BYTE get_fuse_lock_byte (char dst, BYTE val);
+
 
 /* porgress report by senshu */
 static long total_bytes = 0L;
 static long total_size = 0L;
 static long total_size_kb = 0L;
+static double step_size = 0.0;
 
 char report_msg[128];
 
@@ -265,13 +310,23 @@ char report_msg[128];
 enum {
 	RD_DEV_OPT_f=0,	/* original fuse list */
 	RD_DEV_OPT_F,	/* Extented fuse list */
+	RD_DEV_OPT_l,	/* Read Fuse list */
 	RD_DEV_OPT_i,	/* Web fuse list */
 	RD_DEV_OPT_d	/* Web document view */
 };
 
 #define MAX_BYTES	8192
 
+#define MAX_NUMBERS 50		/* #を出力する数 */
 int error_found_count;		/* verify error found */
+
+static int num_cnt;
+static int num_save;
+
+#if TIME_DISPLAY
+static long total_rw_size = 0L;
+static int start_time, job_start_time;
+#endif
 
 void report_setup(char *msg, long size)
 {
@@ -279,40 +334,91 @@ void report_setup(char *msg, long size)
 	total_size = size;
 	total_size_kb = (size+1023)/1024;
 
-	strcpy(report_msg, msg);
-	if (total_size <= MAX_BYTES) {
-		strcat(report_msg, " %4d/%4d B\r");
+	if (size != 0) {
+		step_size = (double)size / (double)MAX_NUMBERS;
 	} else {
-		strcat(report_msg, " %4d/%4d KB\r");
+		step_size = 0.02;
+	}
+
+#if TIME_DISPLAY
+	total_rw_size += size;
+#endif
+
+	strcpy(report_msg, msg);
+
+	if (f_report_mode) {
+		MESS(msg);
+		MESS(" [");
+		num_cnt = 0;
+		num_save = 0;
+#if TIME_DISPLAY
+		start_time = clock();
+#endif
+		return;
+	} else {
+		if (total_size <= MAX_BYTES) {
+			strcat(report_msg, " %4d/%4d B\r");
+		} else {
+			strcat(report_msg, " %4d/%4d KB\r");
+		}
 	}
 }
 
 void report_update(int bytes)
 {
-	if (error_found_count)
+	if (error_found_count) {
 		return;
-	if (report_msg) {
+	}
+
+	if (f_report_mode) {
+		int i;
 		total_bytes += bytes;
-		if (total_size <= MAX_BYTES) {
-			fprintf(stderr, report_msg, total_bytes, total_size);
-		} else {
-			fprintf(stderr, report_msg, total_bytes/1024, total_size_kb);
+		if (total_bytes <= total_size) {
+			num_cnt = (int)((double)total_bytes/ step_size+0.5);
+
+			if (num_cnt <= MAX_NUMBERS) {
+				i = num_cnt - num_save;
+				while (i--) MESS("#");
+				num_save = num_cnt;
+			}
+		}
+	} else {
+		if (report_msg) {
+			total_bytes += bytes;
+			if (total_size <= MAX_BYTES) {
+				fprintf(stderr, report_msg, total_bytes, total_size);
+			} else {
+				fprintf(stderr, report_msg, total_bytes/1024, total_size_kb);
+			}
 		}
 	}
 }
 
 void report_finish(int count)
 {
-	int last;
-	if (report_msg[0]) {
-		if (total_size <= MAX_BYTES) {
-			fprintf(stderr, report_msg, total_size, total_size);
-			fprintf(stderr, "\n");
-		} else {
-			last = strlen(report_msg);
-			report_msg[last-1] = '\0';
-			strcat(report_msg, "  (%dbytes)\n");
-			fprintf(stderr, report_msg, total_size_kb, total_size_kb, total_bytes);
+	if (f_report_mode) {
+		int i;
+		if (num_cnt <= MAX_NUMBERS) {
+			i = MAX_NUMBERS - num_cnt;
+			while (i--) MESS("#");
+		}
+#if TIME_DISPLAY
+		fprintf(stderr, "] %ld, %6.2lfs\n", total_size, (double)(clock() - start_time) / CLOCKS_PER_SEC);
+#else
+		fprintf(stderr, "] %ld\n", total_size);
+#endif
+	} else {
+		int last;
+		if (report_msg[0]) {
+			if (total_size <= MAX_BYTES) {
+				fprintf(stderr, report_msg, total_size, total_size);
+				fprintf(stderr, "\n");
+			} else {
+				last = strlen(report_msg);
+				report_msg[last-1] = '\0';
+				strcat(report_msg, "  (%dbytes)\n");
+				fprintf(stderr, report_msg, total_size_kb, total_size_kb, total_bytes);
+			}
 		}
 	}
 	if (count != 0) {
@@ -352,6 +458,36 @@ PORTPROP CtrlPort = {	TY_COMM, 1,	115200, /* -p .PortClass .PortNum .Baud */
 
 int detail_help = 0;
 
+void show_version(int flag)
+{
+#if defined(__GNUC__) && defined(__WIN32__)
+		printf("%s (%s) by t.k & senshu, GCC-MinGW %s, %s\n",  progname, VERSION, __VERSION__,  __DATE__);
+#elif defined(__WIN32__)
+		printf("%s (%s) by t.k & senshu, Borland C++ 5.5.1, %s\n",  progname, VERSION, __DATE__ );
+#elif defined(__WIN32__)
+		printf("%s (%s) by t.k & senshu for Windows, %s\n",  progname, VERSION, __DATE__ );
+#endif
+	if (flag)
+		printf("----\n");
+}
+
+#if USER_BOOKMARKS
+void show_bookmarks()
+{
+	int i, j;
+	/* show user bookmarks */
+	i = j =0;
+	while (user_bookmarks[i].key) {
+		if (j==0) {
+			MESS_OUT("\n" "  === user bookmarks ===\n");
+			j++;
+		}
+		printf("  --%-10s = [%s]\n", user_bookmarks[i].key, user_bookmarks[i].url);
+		i++;
+	}
+}
+#endif
+
 void output_usage (bool detail)
 {
 	int n;
@@ -360,26 +496,20 @@ void output_usage (bool detail)
 		"AVRSP - AVR Serial Programming tool R0.44 (C)ChaN, 2008  http://elm-chan.org/\n",
 		"Write code and/or data  : <hex file> [<hex file>] ...\n",
 		"Verify code and/or data : -v <hex file> [<hex file>] ...\n",
-		"Read code, data or fuse : -r{p|e|f|F|i|d}\n",
+		"Read code, data or fuse : -r{p|e|f|F|l} [-oOUT_HEXFILE]\n",
         "@  -rp                      Read Program(flash) memory\n",
         "@  -re                      Read Eeprom\n",
         "@  -rf                      Read Fuse (use fuse.txt)\n",
         "@  -rF                      Read Fuse list (HEX style)\n",
-        "@  -ri                      Read Fuse Information (By Web browser)\n",
-        "@  -rd                      Read chip Datasheet (By Web browser)\n",
+        "@  -rl                      Read Fuse and lock bits\n",
+		"Get AVR Infomation(Web) : -r{i|d}\n",
+        "@  -ri                      Read Fuse Information\n",
+        "@  -rd                      Read chip Datasheet\n",
 		"Write fuse byte         : -f{l|h|x}<bin>\n",
 		"Lock device             : -l[<bin>]\n",
 		"Copy calibration bytes  : -c\n",
 		"Erase device            : -e\n",
-		"Control port [-pb1]     : -p{c|l|v|b|u|f}<n>[:<baud>]\n",
-        "@  -pc<n>                   Direct COM Port Access (giveio.sys)\n",
-        "@  -pl<n>                   Direct LPT Port Access (giveio.sys)\n",
-        "@  -pv<n>                   COM Port access (Win32API)\n",
-        "@  -pb<n>                   SPI-Bridge (COM Port)\n",
-        "@  -pu[:XXXX]               USBasp/USBaspx\n",
-        "@  -ph                      HIDaspx\n",
-        "@  -pf<n>                   COM Port Access (chicken & egg)\n",
-        "@  -p?                      Dump COM Port List.\n",
+		"Control port [-pb1]     : -p{c|l|v|b|u|h|f}<n>[:<baud>]\n",
 		"SPI control delay [-d3] : -d<n>\n",
 		"Help (Detail)           : -? or -h or --help\n",
 
@@ -389,11 +519,6 @@ void output_usage (bool detail)
 		"@  -t<device>               Force device type\n",
 		"@  -w<num>                  Pause before exit\n",
 		"@  -z                       1KHz pulse on SCK\n",
-		"@  --pause-on-start=msg       Pause on Port Open\n",
-		"@  --pause-on-exit=msg        Pause on exit\n",
-		"@  --list-port or -p?       List COM Port\n",
-		"@  --list-usbasp or -pu?    List USBasp devices\n",
-		"@  --set-serial=XXXXXX      Set USBasp serial number\n",
 
 		"@\n",
 		"@Supported Device:\n",
@@ -408,27 +533,12 @@ void output_usage (bool detail)
 		"Supported Adapter:\n",
 		"AVRSP adapter (COM -pc<n>|-pv<n> / LPT -pl<n>), SPI Bridge (COM -pb<n>[:BAUD]),\n"
 		"STK200 ISP dongle, Xilinx JTAG, Lattice isp, Altera ByteBlasterMV (LPT -pl<n>)\n",
-		"USBasp(x) (USB -pu[:XXXX]), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
-		"HIDaspx   (USB -ph[:XXXX])\n",
-
-		"@\n",
-		"@  ========= Open URL by Web browser =========\n",
-		"@  --avr-devices            AVR Devices list\n",
-		"@  --atmel-avr              Atmel (AVR 8-Bit RISC)\n",
+		"USBasp(x) (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
+		"HIDaspx   (USB -ph<:XXXX>)\n",
 		NULL
 	};
 
-
-#if defined(__GNUC__) && defined(__WIN32__)
-		printf("%s (b10.12) by t.k & senshu, GCC-MinGW %s, %s\n",  progname, __VERSION__,  __DATE__);
-		printf("----\n");
-#elif defined(__WIN32__)
-		printf("%s (b10.12) by t.k & senshu, Borland C++ 5.5.1, %s\n",  progname, __DATE__ );
-		printf("----\n");
-#elif defined(__WIN32__)
-		printf("%s (b10.12) by t.k & senshu for Windows, %s\n",  progname, __DATE__ );
-		printf("----\n");
-#endif
+	show_version(1);		/* @@@ by senshu */
 	for(n = 0; MesUsage[n] != NULL; n++) {
 		const char *s = MesUsage[n];
 
@@ -444,24 +554,45 @@ void output_usage (bool detail)
 			}
 		}
 	}
-#ifdef USER_BOOKMARKS
 	if (detail) {
 		int i, j;
 
+		/* show long options @@@ by senshu */
 		i = j =0;
-		while (user_bookmarks[i].key) {
+		while (long_opts[i].option) {
 			if (j==0) {
-				MESS_OUT(
-					"\n"
-					"  === user bookmarks ===\n"
-				);
+				MESS_OUT("\n" "  === long options ===\n");
 				j++;
 			}
-			printf("  --%-10s = [%s]\n", user_bookmarks[i].key, user_bookmarks[i].url);
+			if (long_opts[i].help && (long_opts[i].type == OPT_str)) {
+				printf("  --%-14s %-s    %s\n",
+					long_opts[i].long_option, long_opts[i].option, long_opts[i].help);
+			}
+			i++;
+		}
+
+		i = 0;
+		while (long_opts[i].option) {
+			if (long_opts[i].help && (long_opts[i].type == OPT_bool)) {
+				printf("  --%-14s %-s    %s\n",
+					long_opts[i].long_option, long_opts[i].option, long_opts[i].help);
+			}
+			i++;
+		}
+
+		/* show Web browser options */
+		i = j =0;
+		while (long_opts[i].option) {
+			if (j==0) {
+				MESS_OUT("\n" "  === Open URL by Web browser ===\n");
+				j++;
+			}
+			if (long_opts[i].help && long_opts[i].type == OPT_web) {
+				printf("  --%-14s %s\n", long_opts[i].long_option, long_opts[i].help);
+			}
 			i++;
 		}
 	}
-#endif
 #else
 	static const char *const MesUsage[] = {
 		"AVRSP - AVR Serial Programming tool R0.43b (C)ChaN, 2008  http://elm-chan.org/\n\n",
@@ -516,7 +647,6 @@ void put_fuseval (BYTE val, BYTE mask, const char *head, FILE *fp)
 {
 	int	n;
 	char Line[100];
-
 
 	fputs(head, stdout);
 	for(n = 1; n <= 8; n++) {
@@ -613,16 +743,43 @@ void output_fuse (int mode)
  PORT = avrdoper
  PROGRAMMER = stk500v2
  avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE) \
- -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m -U efuse:w:$(FUSE_X):m
+ -u -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m -U efuse:w:$(FUSE_X):m
  */
 		printf("### avrdude command line example ###\n");
 		printf("avrdude -c avrdoper -P stk500v2  -p %s -U flash:w:main.hex:i \\\n", Device->part_id);
-		printf(" -U lfuse:w:0x%02x:m", FuseBuff[0]);
+		printf(" -u -U lfuse:w:0x%02x:m", FuseBuff[0]);
 		if(Device->FuseType >= 5)
 			printf(" -U hfuse:w:0x%02x:m", FuseBuff[1]);
 		if(Device->FuseType >= 6)
 			printf(" -U efuse:w:0x%02x:m", FuseBuff[2]);
 		printf("\n");
+
+		return;
+
+	} else if (mode==RD_DEV_OPT_l) {
+		char lbuf[4], hbuf[4], xbuf[4], lmask[4], hmask[4], xmask[4];
+
+		sprintf(lbuf,  "%02X", FuseBuff[0]);
+		sprintf(lmask, "%02X", Device->FuseMask[0]);
+
+		if (Device->FuseType >= 5) {
+			sprintf(hbuf,  "%02X", FuseBuff[1]);
+			sprintf(hmask, "%02X", Device->FuseMask[1]);
+		} else {
+			strcpy(hbuf,  "--");
+			strcpy(hmask, "--");
+		}
+
+		if (Device->FuseType >= 6) {
+			sprintf(xbuf,  "%02X", FuseBuff[2]);
+			sprintf(xmask, "%02X", Device->FuseMask[2]);
+		} else {
+			strcpy(xbuf,  "--");
+			strcpy(xmask, "--");
+		}
+
+		printf("at%s %s:%s %s:%s %s:%s %02X\n", Device->Name,
+				lbuf, lmask, hbuf, hmask, xbuf, xmask, get_fuse_lock_byte(F_LOCK, 0));
 
 		return;
 
@@ -913,7 +1070,7 @@ int load_commands (int argc, char **argv)
 	DWORD ln;
 #if AVRSPX
 	char *s;
-#ifdef USER_BOOKMARKS
+#if USER_BOOKMARKS
 	int url_index = 0;
 #endif
 
@@ -934,7 +1091,7 @@ int load_commands (int argc, char **argv)
 			if(*cp <= ' ') break;
 #if AVRSPX
 			if(*cp == ';' || *cp == '#') {
-#ifdef USER_BOOKMARKS
+#if USER_BOOKMARKS
 				if (strncmp(cp, ";#", 2)==0 && (url_index < BOOKMARK_MAX)) {
 					char key[128], url[LINE_SIZE];
 					if (sscanf(cp+2, "%s %s", key, url) == 2) {
@@ -953,7 +1110,7 @@ int load_commands (int argc, char **argv)
 			cmdlst[cmd++] = cp; cp += strlen(cp) + 1;
 #endif
 		}
-#ifdef USER_BOOKMARKS
+#if USER_BOOKMARKS
 		user_bookmarks[url_index].key = NULL;
 		user_bookmarks[url_index].url = NULL;
 #endif
@@ -961,14 +1118,21 @@ int load_commands (int argc, char **argv)
 	}
 
 	/* Get command line parameters */
-	while(--argc && (cmd < (sizeof(cmdlst) / sizeof(cmdlst[0]) - 1)))
+	while(--argc && (cmd < (sizeof(cmdlst) / sizeof(cmdlst[0]) - 1))) {
 		cmdlst[cmd++] = *++argv;
+	}
 	cmdlst[cmd] = NULL;
 
 	/* Analyze command line parameters... */
 	for(cmd = 0; cmdlst[cmd] != NULL; cmd++) {
 		cp = cmdlst[cmd];
-
+#if 0
+		if (cp) {
+			printf("%d: %p[%s]\n", cmd, cp, cp);
+		} else {
+			printf("%d: %p\n", cmd, cp);
+		}
+#endif
 		if(*cp == '-') {	/* Command switches... */
 			cp++;
 			switch (tolower(*cp++)) {
@@ -991,8 +1155,9 @@ int load_commands (int argc, char **argv)
 
 				case 'r' :	/* -r{p|e|f} */
 					Command[0] = 'r';
-#if AVRSPX	/* -rF オプションを追加, @@@ by senshu*/
-					if (*cp == 'f' || *cp == 'F') {
+#if AVRSPX	/* -rF, -rL オプション @@@ by senshu*/
+					if (*cp == 'F' || *cp=='L') {
+						/* 大文字・小文字を区別するコマンド */
 						Command[1] = *cp++;
 					} else {
 						Command[1] = tolower(*cp++);
@@ -1060,7 +1225,7 @@ int load_commands (int argc, char **argv)
 								if (s) {
 									if (*s == ':') s++;
 									if (*cp == '?') {
-									    f_usblist = true;
+									    f_aspxlist = true;
 									    ++cp;
 									} else if (isdigit(*s)) {
 										if (s) {
@@ -1109,13 +1274,15 @@ int load_commands (int argc, char **argv)
 								CtrlPort.SerialNumber = NULL;
 							}
 							if (*cp == '?') {
-							    f_usblist = true;
+							    f_usbasp_list = true;
 							    ++cp;
                             }
 							break;
+
 						case 'f' :
 							CtrlPort.PortClass = TY_RSCR;	//@@@ by t.k
 							break;
+
 						case '?' :
 							f_portlist = true;
 							break;
@@ -1168,40 +1335,60 @@ int load_commands (int argc, char **argv)
                     cp += strlen(cp);
 					break;
 
-                case '-':   /* --xxx */
-                    if (strncmp(cp, "pause-on-start", 14) == 0) {
-						cp += 14;
-						if (*cp == '=')
-							msg_pause_on_start = cp + 1;
-						else
-							msg_pause_on_start = "";
-					} else if (strncmp(cp, "pause-on-exit", 13) == 0) {
-						cp += 13;
-						if (*cp == '=')
-							msg_pause_on_exit = cp + 1;
-						else
-							msg_pause_on_exit = "";
-					} else if (strncmp(cp, "list-port", 9) == 0) {
-						f_portlist = true;
-					} else if (strncmp(cp, "set-serial", 10) == 0) {
-                        s = strchr(cp, '=');
-                        if (s)
-                            strncpy(new_serial, s+1, sizeof(new_serial));
+				case 'o' : /* @@@ by senshu */
+                    out_filename = cp;
+                    cp += strlen(cp);
+					break;
 
-                    } else if (strcmp(cp, "list-usbasp") == 0) {
-					    f_usblist = true;
+                case '-':   /* Parse long options --xxx */
+                    {	/* @@ by senshu */
+						int i = 0;
 
-                    } else if (strcmp(cp, "avr-devices") == 0) {
-					    f_open_device_url = true;
+						while (long_opts[i].option) {
+							int len;
 
-                    } else if (strcmp(cp, "atmel-avr") == 0) {
-					    f_open_atmel_url = true;
+							len = strlen(long_opts[i].long_option);
 
-                    } else if (strcmp(cp, "help") == 0) {
-					    f_detail_help = true;
+							if (strncmp(cp, long_opts[i].long_option, len) == 0) {
+
+								switch (long_opts[i].type) {
+								case OPT_bool:
+								case OPT_web:
+									if (cp[len] != '-') {
+										*(bool *)long_opts[i].opt = 1;
+									} else {
+										*(bool *)long_opts[i].opt = 0;
+									}
+									break;
+
+								case OPT_str:
+									{
+										if (cp[len] == '=' && cp[len+1]) {
+											*(char **)long_opts[i].opt = cp+len+1;
+										}
+									}
+									break;
+
+								default:	/* 上記以外は無視する */
+									break;
+								}
+
+#if 0
+								printf("%s=[%s]\n", cp, *(char **)long_opts[i].opt);
+#endif
+								break;
+							}
+							i++;
+						}
+#if 0	/* for bookmarks */
+						if (long_opts[i].option == NULL) {
+							fprintf(stderr, "%s: '%s' : Unknown option.\n", progname, cp);
+							return RC_OPT_ERR;	/* long option error */
+						}
+#endif
 
                     }
-#ifdef USER_BOOKMARKS
+#if USER_BOOKMARKS
 					{
 						int i = 0;
 						while (user_bookmarks[i].key) {
@@ -1214,6 +1401,11 @@ int load_commands (int argc, char **argv)
 #endif
                     cp += strlen(cp);
                     break;
+
+				case '!' :
+					f_list_bookmark = true;			/* @@@ by senshu */
+                    cp += strlen(cp);
+					break;
 
                 case '?':  /* thru down */
                 case 'h':
@@ -1637,7 +1829,7 @@ void write_fuselock (
 
 #if AVRSPX
 /* Verify Fuse or Lock byte */
-BYTE verify_fuselock (char dst,		/* which fuse to be written */
+BYTE get_fuse_lock_byte (char dst,		/* which fuse to be written */
 					 BYTE val)		/* fuse value */
 {
 	BYTE fuse;
@@ -1761,13 +1953,6 @@ int init_devices ()
 		if(CtrlPort.Info2)
 			MESS(CtrlPort.Info2);
 		if(res) return RC_INIT;				/* return if failed open_ifport() */
-#if AVRSPX
-		if (msg_pause_on_start && *msg_pause_on_start) {
-			MESS("\r");
-			MESS(msg_pause_on_start);
-			getchar();
-		}
-#endif
 
 		if(enter_ispmode()) return RC_DEV;
 
@@ -1901,7 +2086,7 @@ int read_device (char cmd)
 	switch (cmd) {
 		case 'p' :	/* -rp : read program memory */
 #if AVRSPX
-			report_setup("Read    Flash:", Device->FlashSize);
+			report_setup("RD  Flash", Device->FlashSize);
 			if (CtrlPort.PortClass == TY_USBASP) {
 				usbasp_paged_load(FLASH, CodeBuff, Device->FlashPage,
 							 Device->FlashSize, Device->FlashSize > (128*1024));
@@ -1925,7 +2110,7 @@ int read_device (char cmd)
 
 		case 'e' :	/* -re : read eeprom */
 #if AVRSPX
-			report_setup("Read   EEPROM:", Device->EepromSize);
+			report_setup("RD EEPROM", Device->EepromSize);
 			if (CtrlPort.PortClass == TY_USBASP) {
 				usbasp_paged_load(EEPROM, DataBuff, Device->EepromPage,
 								 Device->EepromSize, false);
@@ -1956,6 +2141,11 @@ int read_device (char cmd)
 		case 'F' :	/* -rF : read fuses @@@ by senshu */
 			read_fuse();
 			output_fuse(RD_DEV_OPT_F);
+			break;
+
+		case 'l' :	/* -rl : read fuse list @@@ by senshu */
+			read_fuse();
+			output_fuse(RD_DEV_OPT_l);
 			break;
 
 		case 'i' :	/* -ri : read fuses @@@ by senshu */
@@ -2022,7 +2212,7 @@ int write_flash ()
 		}
 
 #if AVRSPX
-		report_setup("Write   Flash:", CmdWrite.CodeSize);
+		report_setup("WR  Flash", CmdWrite.CodeSize);
 		if (CtrlPort.PortClass == TY_USBASP) {
 			rc = usbasp_paged_write(FLASH, CodeBuff, Device->FlashPage,
 							CmdWrite.CodeSize, Device->FlashSize > (128*1024));
@@ -2069,7 +2259,7 @@ int write_flash ()
 
 	if(CmdWrite.Verify != 2) {	/* -v- : Skip verifying process when programming only mode */
 #if AVRSPX
-		report_setup("Verify  Flash:", CmdWrite.CodeSize);
+		report_setup("VF  Flash", CmdWrite.CodeSize);
 
 		error_found_count = 0;
 		if (CtrlPort.PortClass == TY_USBASP) {
@@ -2175,7 +2365,7 @@ int write_eeprom ()
 
 	if(CmdWrite.Verify != 1) {	/* -v : Skip programming process when verify mode */
 #if AVRSPX
-		report_setup("Write  EEPROM:", CmdWrite.DataSize);
+		report_setup("WR EEPROM", CmdWrite.DataSize);
 		if (CtrlPort.PortClass == TY_USBASP) {		/* Write EEPROM in page mode */
 			rc = usbasp_paged_write(EEPROM, DataBuff, Device->EepromPage, CmdWrite.DataSize, false);
 			if (rc != CmdWrite.DataSize) {
@@ -2207,7 +2397,7 @@ int write_eeprom ()
 
 	if(CmdWrite.Verify != 2) {	/* -v- : Skip verifying process when programming only mode */
 #if AVRSPX
-		report_setup("Verify EEPROM:", CmdWrite.DataSize);
+		report_setup("VF EEPROM", CmdWrite.DataSize);
 		error_found_count = 0;
 		if (CtrlPort.PortClass == TY_USBASP) {		/* Read eeprom in page mode */
 			rc = usbasp_paged_verify(EEPROM, DataBuff, Device->EepromPage ,
@@ -2281,7 +2471,7 @@ int write_fuse ()
 
 		/* -v- : Skip verifying process when programming only mode */
 		if (CmdWrite.Verify != 2)
-			vfuse = verify_fuselock(F_LOW, fuse) & Device->FuseMask[0];
+			vfuse = get_fuse_lock_byte(F_LOW, fuse) & Device->FuseMask[0];
 
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Low byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
@@ -2303,7 +2493,7 @@ int write_fuse ()
 
 		/* -v- : Skip verifying process when programming only mode */
 		if (CmdWrite.Verify != 2)
-			vfuse = verify_fuselock(F_HIGH, fuse) & Device->FuseMask[1];
+			vfuse = get_fuse_lock_byte(F_HIGH, fuse) & Device->FuseMask[1];
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse High byte was programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
@@ -2324,7 +2514,7 @@ int write_fuse ()
 
 		/* -v- : Skip verifying process when programming only mode */
 		if (CmdWrite.Verify != 2)
-			vfuse = verify_fuselock(F_EXTEND, fuse) & Device->FuseMask[2];
+			vfuse = get_fuse_lock_byte(F_EXTEND, fuse) & Device->FuseMask[2];
 		if (vfuse != fuse)
 			fprintf(stderr, "Fuse Extend byte was programm error. (%02X -> %02X)\n",fuse,vfuse);
 		else
@@ -2346,7 +2536,8 @@ int write_fuse ()
 
 		/* -v- : Skip verifying process when programming only mode */
 		if (CmdWrite.Verify != 2)
-			vfuse = verify_fuselock(F_LOCK, fuse);
+			vfuse = get_fuse_lock_byte(F_LOCK, fuse);
+
 		if (vfuse != fuse)
 			fprintf(stderr, "Lock bits programm error. (%02X -> %02X)\n", fuse, vfuse);
 		else
@@ -2371,6 +2562,7 @@ static bool f_terminate;
 void terminate (int rc)
 {
 #if AVRSPX
+	int i;
 	f_terminate = true;
 #if DEBUG
 	printf("Pause = %d, rc = %d\n", Pause, rc);
@@ -2381,7 +2573,33 @@ void terminate (int rc)
 	Device = NULL;
 
 #if AVRSPX
-	if (msg_pause_on_exit && *msg_pause_on_exit) {
+	/* close output file */
+	if (redirect_fp) {
+		fclose(redirect_fp);
+	}
+
+#if USER_BOOKMARKS
+	/* release User Bookmarks info. */
+	i = 0;
+	while (user_bookmarks[i].key) {
+		if (user_bookmarks[i].key)	free(user_bookmarks[i].key);
+		if (user_bookmarks[i].url)	free(user_bookmarks[i].url);
+		i++;
+	}
+#endif
+
+#if TIME_DISPLAY
+	{	double t;
+		t = (double)(clock() - job_start_time) / CLOCKS_PER_SEC;
+		if (t <= 0.1) t = 0.1;
+		if (total_rw_size != 0) {
+			fprintf(stderr, "Total read/write size = %ld B /%5.2lf s (%4.2lf kB/s)\n",
+				total_rw_size, t, total_rw_size/(t*1024.0));
+		}
+	}
+#endif
+
+	if (msg_pause_on_exit && msg_pause_on_exit[0]) {
 		MESS("\n");
 		MESS(msg_pause_on_exit);
  		getchar();
@@ -2410,6 +2628,7 @@ void terminate (int rc)
 		getchar();
 	}
 #endif
+
 }
 
 #if AVRSPX
@@ -2431,19 +2650,34 @@ int main (int argc, char **argv)
 	int rc = 0;
 
 #if AVRSPX
+#if TIME_DISPLAY
+	total_rw_size = 0;
+	job_start_time = clock();
+#endif
 	atexit(do_exit);
+
+	rc = load_commands(argc, argv);
+	if(rc != 0) {
+		if(rc == RC_SYNTAX) {
+			output_usage(true);
+		}
+		terminate(rc);
+		return rc;
+	}
 
     if (isatty (fileno(stderr))) {
       /* stderr のバッファリングを行わない */
       setvbuf( stderr, NULL, _IONBF, 0 );
     }
 
-	rc = load_commands(argc, argv);
-	if(rc != 0) {
-		if(rc == RC_SYNTAX) output_usage(true);
-		terminate(rc);
-		return rc;
-	}
+    if (out_filename) {	// @@@ by senshu
+		/* stdout を out_filename に変更 */
+		redirect_fp = freopen(out_filename, "wt", stdout);
+		if (redirect_fp == NULL) {
+			MESS("-ofilename Redirect error\n");
+			return RC_FILE;
+		}
+    }
 
     if (f_open_device_url) {	// @@@ by senshu
 		open_device_url(0);
@@ -2456,8 +2690,28 @@ int main (int argc, char **argv)
 		terminate(rc = 0);
 		return rc;
     }
-#ifdef USER_BOOKMARKS
-	{
+
+    if (f_list_device) {	// @@@ by senshu
+		int i = 0;
+		char name[32], *p;
+
+		while (strcmp(DevLst[i].Name, "Locked") !=0 ) {
+			strcpy(name, DevLst[i].Name);
+			p = strchr(name , '/');
+			if (p) *p = '\0';
+			printf("%s\n", name);
+			i++;
+		}
+		terminate(rc = 0);
+		return rc;
+    }
+#if USER_BOOKMARKS		/* @@@ by senshu */
+	if (f_list_bookmark) {
+		show_bookmarks();
+		terminate(rc = 0);
+        return rc;
+
+	} else {
 		int i , j;
 
 		i = j = 0;
@@ -2475,26 +2729,48 @@ int main (int argc, char **argv)
 	}
 #endif
 
+    if (f_version) {		/* @@@ by senshu */
+		show_version(0);
+		terminate(rc = 0);
+		return rc;
+    }
+
+    if (f_list_adapter) {		/* @@@ by senshu */
+   		MESS_OUT(
+   		" -pc<n>            \"Direct COM Port Access (giveio.sys)\"\n"
+		" -pl<n>            \"Direct LPT Port Access (giveio.sys)\"\n"
+		" -pv<n>            \"COM Port access (Win32API)\"\n"
+		" -pb<n>            \"SPI-Bridge (COM Port)\"\n"
+		" -pu<:XXXX>        \"USBasp/USBaspx\"\n"
+		" -ph<:XXXX>        \"HIDaspx\"\n"
+		" -pf<n>            \"COM Port Access (chicken & egg)\"\n"
+		" -ph?              \"List HIDaspx Programmers\"\n"
+		" -pu?              \"List USBasp  Programmers\"\n"
+		" -p?               \"Dump COM Port List.\"\n"
+		);
+		terminate(rc = 0);
+		return rc;
+    }
+
     if (f_detail_help) {
 		output_usage(true);
 		terminate(rc = 0);
 		return rc;
     }
 
-
-    if (f_usblist) {
-		if (CtrlPort.PortClass == TY_HIDASP) {
-	        if (hidasp_list(progname) < 1)
-	            return 1;
-			terminate(rc = 0);
-	        return rc;
-		} else if (CtrlPort.PortClass == TY_USBASP) {
-	        if (usbasp_list() < 1)
-	            return 1;
-			terminate(rc = 0);
-	        return rc;
-	    }
+	if (f_aspxlist) {	/* @@@ by senshu */
+        if (hidasp_list(progname) < 1)
+            return 1;
+		terminate(rc = 0);
+        return rc;
 	}
+
+	if (f_usbasp_list) {
+        if (usbasp_list() < 1)
+            return 1;
+		terminate(rc = 0);
+        return rc;
+    }
 
     if (f_portlist) {
 		dump_port_list();
@@ -2502,7 +2778,7 @@ int main (int argc, char **argv)
         return rc;
     }
 
-    if (new_serial[0]) {
+    if (new_serial && new_serial[0]) {
 		rc = usbasp_write_serial(CtrlPort.SerialNumber, new_serial);
         terminate(rc);
 		return rc;
@@ -2519,6 +2795,15 @@ int main (int argc, char **argv)
 		if(rc == RC_SYNTAX) output_usage(true);
 		terminate(rc);
 		return rc;
+	}
+#endif
+
+	/* Programmer start @@ by senshu */
+#if AVRSPX
+	if (msg_pause_on_start && msg_pause_on_start[0]) {
+		MESS("\n");
+		MESS(msg_pause_on_start);
+		getchar();
 	}
 #endif
 
