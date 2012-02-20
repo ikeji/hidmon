@@ -12,6 +12,9 @@
 #include "usbdrv.h"
 #include "hidcmd.h"
 
+#define OPTIMIZE_SIZE		1	// r4,r5,r6,r7を global変数として使用する.
+								// usbdrv側で同レジスタが使用されていないことが条件.
+
 /* ------------------------------------------------------------------------- */
 //	コンフィギュレーションスイッチ:
 #define	INCLUDE_FUSION		1	// 融合命令を実装.
@@ -74,7 +77,16 @@ PROGMEM char usbHidReportDescriptor[42] = {
 //
 //	受信バッファ.
 //
+#if OPTIMIZE_SIZE
+register uchar currentPosition asm("r5");
+register uchar bytesRemaining asm("r6");
+register uchar page_mode asm("r4");
+register uchar page_addr asm("r7");
+#else
 static uchar currentPosition, bytesRemaining; // Receive Data Pointer
+static uchar    page_mode;
+static uchar   page_addr;
+#endif
 
 typedef struct {
 	uchar id[1];
@@ -206,8 +218,8 @@ void hidasp_main()	//uchar *data)
 	// 本来なら引数.
 	uchar *data = report.buf;	//こうすると縮む.
 
-	static uchar    page_mode;
-	static uint16_t page_addr;
+//	static uchar    page_mode;
+//	static uint16_t page_addr;
 	uchar i;
 	uint8_t data0 = data[0];
 	uint8_t data1 = data[1];
@@ -250,8 +262,8 @@ void hidasp_main()	//uchar *data)
 		//
 		for(i=0;i<data1;i++) {
 			usi_trans(page_mode);
-			usi_trans(hbyte(page_addr));
-			usi_trans(lbyte(page_addr));
+			usi_trans(0);
+			usi_trans(page_addr);
 			usbData[i]=usi_trans(data[i+2]);
 			if (page_mode & 0x88) { // EEPROM or FlashH
 				page_addr++;
@@ -271,8 +283,8 @@ void hidasp_main()	//uchar *data)
 	else if ( cmd == HIDASP_PAGE_TX ) { // Page buf
 		for(i=0;i<data1;i++) {
 			usi_trans(page_mode);
-			usi_trans(hbyte(page_addr));
-			usi_trans(lbyte(page_addr));
+			usi_trans(0);
+			usi_trans(page_addr);
 			usbData[i]=usi_trans(data[i+2]);
 			if (page_mode & 0x88) { // EEPROM or FlashH
 				page_addr++;

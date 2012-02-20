@@ -4,7 +4,9 @@
 #include <windows.h>
 //----------------------------------------------------------------------------
 #ifdef __BORLANDC__
+# pragma warn -8004
 # pragma warn -8012
+# pragma warn -8057
 # pragma warn -8060
 # pragma warn -8065
 #endif

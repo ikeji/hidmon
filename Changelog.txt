@@ -1,3 +1,3 @@
-HIDaspx. 2008-09-29
+HIDaspx and hidspx. 2008-09-29
 -----------------
 - first public version

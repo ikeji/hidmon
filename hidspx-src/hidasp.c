@@ -25,7 +25,7 @@
 
 //  obdev
 #define MY_VID 0x16c0				/* 5824 in dec, stands for VOTI */
-#define MY_PID 0x05dc				/* 1500 in dec, obdev's free PID */
+#define MY_PID 0x05df				/* 1503 in dec, obdev's free PID */
 
 #define	MY_Manufacturer	"YCIT"
 #define	MY_Product		"HIDaspx"
