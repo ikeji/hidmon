@@ -1,6 +1,6 @@
 # TAB size = 8で編集しています。
 
-                                                             2009年 1月 9日
+                                                             2009年 1月10日
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -436,6 +436,12 @@ EEPROM Size       = 128 bytes
     * Objective Development Software GmbH … AVR-USB（AVRマイコン用のUSBドライバのサイト）
 	http://www.obdev.at/products/avrusb/index.html
 
+    * Atmel社のWebサイト（AVRマイコンの製造元）
+        http://www.atmel.com/products/AVR/  … データシートや公式情報はこちらから入手可能
+
+    * AVRマイコンのユーザーコミュニティ
+        http://www.avrfreaks.net/  … AVRstudio や avr-gccの各種情報はこちらから入手可能
+
 
 [6] 変更履歴
 2008-09-22 ... senshuとirukaさんが改造を実施	高速化対応実施
@@ -644,24 +650,63 @@ EEPROM Size       = 128 bytes
 	- mega325P/3250P/324PA, PWM216,316対応を追加
 
 
-2009-01-09
-	- -rFオプションを追加
-	  > hidspx -rF で以下のような情報を出力します。
+2009-01-10
+	- -rF, -riオプションを追加
 
-http://www.engbedded.com/cgi-bin/fc.cgi/?P=ATtiny2313&V_LOW=E4&V_HIGH=DF&V_EXTENDED=FF&O_HEX=Apply+user+values
+        * -rF (Read Fuse list) オプション
+        このオプションを指定すると、ヒューズ設定形式で出力します。
+        avrdudeなどで利用する場合にも、使いやすい形式です。
+        CMD窓のコピー機能を使って、加工してください。
 
-	> hidspx -rF | gclip <Enter> 
-	※ gclip はWinAVRに含まれるコマンドです。
+        > hidspx -rF
+	Detected device is ATtiny2313.
+        DEVICE=ATtiny2313 -fL0xE4 -fH0xDF -fX0xFF
 
-	この情報を、gclipコマンドで取り込み、ブラウザのURLにペーストすると
-	現在のヒューズ設定をGUIで確認することができます。
+        書き込済みの AVR のヒューズ情報設定時に利用できる形式で出力します。
+        -rf は従来と同様の機能ですので、内容を確認する場合には、-rf オプシ
+        ョンを使ってください。インターネットに繋がっている場合には、-ri オ
+        プションが便利です。
 
-	gclipが使えない場合には、
-	「hidspx -rF > url.txt」と入力し、url.txtに書きこまれた内容を
-	WebブラウザのURL窓にコピーするか、多くのエディタではこのURL情報を
-	クリックすることで、該当のページを開くことができます。
-	この機能を持ったエディタをお使いの方は、上のURLをクリックしてください。
+        * -ri (Read Fuse Infomation) オプション
+        このオプションを指定すると、Web ブラウザで、自動的に
+        http://www.engbedded.com/cgi-bin/fc.cgi/ ページを開き、該当する AVR
+        マイコンのヒューズ情報を表示します。
 
-	このアイディアは audin さんの BLOG から得たものです。どうもありがと
-	うございました。
+        > hidspx -ri (または -rI)
+
+        現在のところ提供されていない ATmega644P は、暫定的に ATmega644 を呼
+        び出すようにしました。Web ブラウザは、MS-IE, firefox,Sleipnir の 3
+        種類について、それぞれ標準ブラウザに設定した時に、正常動作すること
+        を確認しました。なお、-ri で情報を確認するたびに新たなページを開き
+        ますので、確認後にそのページを閉じ、開き過ぎに注意してください。
+
+        上記のWebサイトでfuse情報をサポートしているAVRマイコンの一覧
+        (2009年1月10日現在)
+        
+        AT86RF401       AT89S51         AT89S52         AT90CAN128
+        AT90CAN32       AT90CAN64       AT90PWM2        AT90PWM3
+        
+        AT90S1200       AT90S2313       AT90S2323       AT90S2343
+        AT90S4414       AT90S4433       AT90S4434       AT90S8515
+        AT90S8515comp   AT90S8535       AT90S8535comp   
+        
+        ATmega48        ATmega8         ATmega8515      ATmega8535
+        ATmega88        ATmega103       ATmega103comp   ATmega16
+        ATmega161       ATmega161comp   ATmega162       ATmega163
+        ATmega164P      ATmega165       ATmega168       ATmega169
+        ATmega32        ATmega323       ATmega325       ATmega3250
+        ATmega328P      ATmega329       ATmega3290      ATmega406
+        ATmega64        ATmega640       ATmega644       ATmega645
+        ATmega6450      ATmega649       ATmega6490      ATmega128
+        ATmega1280      ATmega1281      ATmega2560      ATmega2561
+        
+        ATtiny10        ATtiny11        ATtiny12        ATtiny13
+        ATtiny15        ATtiny167       ATtiny22        ATtiny24
+        ATtiny25        ATtiny26        ATtiny261       ATtiny28
+        ATtiny44        ATtiny45        ATtiny461       ATtiny48
+        ATtiny84        ATtiny85        ATtiny861       ATtiny88
+
+	長期にわたり有益な情報サイトを運営している www.engbedded.com さんと、
+	このアイディアを提供してくれた audin さんに感謝いたします。
+	どうもありがとうございました。
 

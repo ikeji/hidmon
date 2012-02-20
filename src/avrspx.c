@@ -240,6 +240,11 @@ static long total_size_kb = 0L;
 
 char report_msg[128];
 
+/* @@@ by senshu */
+#define FUSE_ORIG	0
+#define FUSE_LIST	1
+#define FUSE_WEB	2
+
 #define MAX_BYTES	8192
 
 int error_found_count;		/* verify error found */
@@ -410,7 +415,7 @@ void output_usage (bool detail)
 		"AVRSP - AVR Serial Programming tool R0.43b (C)ChaN, 2008  http://elm-chan.org/\n\n",
 		"Write code and/or data  : <hex file> [<hex file>] ...\n",
 		"Verify code and/or data : -V <hex file> [<hex file>] ...\n",
-		"Read code, data or fuse : -R{P|E|F}\n",
+		"Read code, data or fuse : -R{P|E|F|i|}\n",
 		"Write fuse byte         : -F{L|H|X}<bin>\n",
 		"Lock device             : -L[<bin>]\n",
 		"Copy calibration bytes  : -C\n",
@@ -497,14 +502,33 @@ void output_fuse (int mode)
 		return;
 	}
 #if 1	/* @@@ by senshu */
-	if (mode) {
-		printf("http://www.engbedded.com/cgi-bin/fc.cgi/?P=AT%s&V_LOW=%02X", Device->Name, FuseBuff[0]);
+	if (mode==FUSE_LIST) {
+		printf("DEVICE=AT%s -fL0x%02X", Device->Name, FuseBuff[0]);
 		if(Device->FuseType >= 5)
-			printf("&V_HIGH=%02X", FuseBuff[1]);
+			printf(" -fH0x%02X", FuseBuff[1]);
 		if(Device->FuseType >= 6)
-			printf("&V_EXTENDED=%02X", FuseBuff[2]);
+			printf(" -fX0x%02X", FuseBuff[2]);
+		printf("\n");
+		return;
 
-		printf("&O_HEX=Apply+user+values\n");
+	} else if (mode==FUSE_WEB) {
+		char url[512], *chip;
+		int len;
+
+		if (Device->Name == M644P) {
+			chip = "mega644";
+		} else {
+			chip = Device->Name;
+		}
+		len = sprintf(url, "start http://www.engbedded.com/cgi-bin/fc.cgi/?P=AT%s^&V_LOW=%02X",
+					chip, FuseBuff[0]);
+		if(Device->FuseType >= 5)
+			len += sprintf(url+len, "^&V_HIGH=%02X", FuseBuff[1]);
+		if(Device->FuseType >= 6)
+			len += sprintf(url+len, "^&V_EXTENDED=%02X", FuseBuff[2]);
+
+		sprintf(url+len, "^&O_HEX=Apply+user+values");
+		system(url);
 		return;
 	}
 #endif
@@ -827,7 +851,7 @@ int load_commands (int argc, char **argv)
 				case 'r' :	/* -r{p|e|f} */
 					Command[0] = 'r';
 #if AVRSPX	/* -rF ƒIƒvƒVƒ‡ƒ“‚ð’Ç‰Á, @@@ by senshu*/
-					if (*cp == 'f' || *cp == 'F') {
+					if (*cp == 'f' || *cp == 'F' || *cp == 'i') {
 						Command[1] = *cp++;
 					} else {
 						Command[1] = tolower(*cp++);
@@ -1764,12 +1788,17 @@ int read_device (char cmd)
 
 		case 'f' :	/* -rf : read fuses */
 			read_fuse();
-			output_fuse(0);
+			output_fuse(FUSE_ORIG);
 			break;
 
-		case 'F' :	/* -rf : read fuses */
+		case 'F' :	/* -rF : read fuses @@@ by senshu */
 			read_fuse();
-			output_fuse(1);
+			output_fuse(FUSE_LIST);
+			break;
+
+		case 'i' :	/* -ri : read fuses @@@ by senshu */
+			read_fuse();
+			output_fuse(FUSE_WEB);
 			break;
 
 		default :
