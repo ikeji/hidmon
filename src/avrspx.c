@@ -684,7 +684,7 @@ void output_usage (bool detail)
 
 void output_deviceinfo (void)
 {
-    printf("Device Signature  = %02X-%02x-%02X\n",
+    printf("Device Signature  = %02X-%02X-%02X\n",
             Device->Sign[0], Device->Sign[1], Device->Sign[2]);
     printf("Flash Memory Size = %d bytes\n", (int)Device->FlashSize);
     if(Device->FlashPage)
@@ -1090,15 +1090,15 @@ void store_buffer (
         } else {
             switch (addr) {
             case 0:
-                fprintf(stderr, "Low  Fuse = 0x%02x\n", dat);
+                fprintf(stderr, "Low  Fuse = 0x%02X\n", dat);
                 break;
 
             case 1:
-                fprintf(stderr, "High Fuse = 0x%02x\n", dat);
+                fprintf(stderr, "High Fuse = 0x%02X\n", dat);
                 break;
 
             case 2:
-                fprintf(stderr, "Ext  Fuse = 0x%02x\n", dat);
+                fprintf(stderr, "Ext  Fuse = 0x%02X\n", dat);
                 break;
             }
         }
@@ -1109,7 +1109,7 @@ void store_buffer (
             CmdFuse.Cmd.Flag.Lock = 1;
             CmdFuse.Data[LOCK] = dat;
         } else {
-            fprintf(stderr, "Lock bits = 0x%02x\n", dat);
+            fprintf(stderr, "Lock bits = 0x%02X\n", dat);
         }
     }
 }
@@ -2875,7 +2875,7 @@ int write_fuse (void)
         if (f_ISP_DISBL_prog == 0 && (Device->ISP_DISBL[ISP_DIS_BYTE] == 0 && Device->ISP_DISBL[ISP_DIS_RST] != 0)) {
             if ((CmdFuse.Data[LOW] & Device->ISP_DISBL[ISP_DIS_RST]) == 0) {
                 fprintf(stderr, "WARNING: ISP disable FUSE bit (RSTDISBL) detected.\n"
-                                "If you hope for the writing, Enter the -f#L0x%02x option.\n", CmdFuse.Data[LOW]);
+                                "If you hope for the writing, Enter the -f#L0x%02X option.\n", CmdFuse.Data[LOW]);
                 return RC_DEV;
             }
             vfuse = fuse = (CmdFuse.Data[LOW] & Device->FuseMask[LOW]) | Device->ISP_DISBL[ISP_DIS_RST];
@@ -2912,7 +2912,7 @@ int write_fuse (void)
         && Device->ISP_DISBL[ISP_DIS_RST] != 0)) {
             if ((CmdFuse.Data[HIGH] & Device->ISP_DISBL[ISP_DIS_RST]) == 0) {
                 fprintf(stderr, "WARNING: ISP disable FUSE bit (RSTDISBL) detected.\n"
-                                "If you hope for the writing, Enter the -f#H0x%02x option.\n",
+                                "If you hope for the writing, Enter the -f#H0x%02X option.\n",
                                 CmdFuse.Data[HIGH] | Device->ISP_DISBL[ISP_DIS_DWEN]);
                 return RC_DEV;
             }
@@ -2949,7 +2949,7 @@ int write_fuse (void)
         if (f_ISP_DISBL_prog == 0 && (Device->ISP_DISBL[ISP_DIS_BYTE] == 2 && Device->ISP_DISBL[ISP_DIS_RST] != 0)) {
             if ((CmdFuse.Data[EXT] & Device->ISP_DISBL[ISP_DIS_RST]) == 0) {
                 fprintf(stderr, "WARNING: ISP disable FUSE bit (RSTDISBL) detected.\n"
-                                "If you hope for the writing, Enter the -f#X0x%02x option.\n", CmdFuse.Data[EXT]);
+                                "If you hope for the writing, Enter the -f#X0x%02X option.\n", CmdFuse.Data[EXT]);
                 return RC_DEV;
             }
             vfuse = fuse = (CmdFuse.Data[EXT] & Device->FuseMask[EXT]) | Device->ISP_DISBL[ISP_DIS_RST];
@@ -3083,6 +3083,8 @@ void terminate (int rc)
 #if AVRSPX
 void do_exit(void)
 {
+	(void)usb_cleanup();			/* add by senshu */
+
     if (!f_terminate)
         terminate(-1);
 }

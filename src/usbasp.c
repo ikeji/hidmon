@@ -155,6 +155,7 @@ void usbasp_close(void)
 {
 	usbasp_disconnect();
 	usb_close(usbhandle);
+	(void)usb_cleanup();			/* add by senshu */
 }
 
 //----------------------------------------------------------------------------

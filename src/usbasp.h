@@ -42,4 +42,6 @@ int usbasp_list(void);
 int usbasp_write_serial(char *SerialNumber, char *NewSerialNumber);
 int usbasp_initialize(char *SerialNumber);
 
+int usb_cleanup(void);	/* libusb_dyn.c , add by senshu */
+
 #endif /* __usbasp_h__ */
