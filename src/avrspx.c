@@ -240,10 +240,10 @@ static long total_size_kb = 0L;
 
 char report_msg[128];
 
-/* @@@ by senshu */
-#define FUSE_ORIG	0
-#define FUSE_LIST	1
-#define FUSE_WEB	2
+/* 2009/01/11 @@@ by senshu */
+#define RD_DEV_OPT_f	0
+#define RD_DEV_OPT_F	1
+#define RD_DEV_OPT_i	2
 
 #define MAX_BYTES	8192
 
@@ -336,7 +336,12 @@ void output_usage (bool detail)
 		"AVRSP - AVR Serial Programming tool R0.44 (C)ChaN, 2008  http://elm-chan.org/\n",
 		"Write code and/or data  : <hex file> [<hex file>] ...\n",
 		"Verify code and/or data : -v <hex file> [<hex file>] ...\n",
-		"Read code, data or fuse : -r{p|e|f}\n",
+		"Read code, data or fuse : -r{p|e|f|F|i}\n",
+        "@  -rp                      Read Program(flash) memory\n",
+        "@  -re                      Read Eeprom\n",
+        "@  -rf                      Read Fuse (use fuse.txt)\n",
+        "@  -rF                      Read Fuse list (HEX style)\n",
+        "@  -ri                      Read Fuse Informasion (By Web browser)\n",
 		"Write fuse byte         : -f{l|h|x}<bin>\n",
 		"Lock device             : -l[<bin>]\n",
 		"Copy calibration bytes  : -c\n",
@@ -347,7 +352,7 @@ void output_usage (bool detail)
         "@  -pv<n>                   COM Port access (Win32API)\n",
         "@  -pb<n>                   SPI-Bridge (COM Port)\n",
         "@  -pu[:XXXX]               USBasp/USBaspx\n",
-        "@  -ph                      HIDasp\n",
+        "@  -ph                      HIDaspx\n",
         "@  -pf<n>                   COM Port Access (chicken & egg)\n",
         "@  -p?                      Dump COM Port List.\n",
 		"SPI control delay [-d3] : -d<n>\n",
@@ -502,7 +507,7 @@ void output_fuse (int mode)
 		return;
 	}
 #if 1	/* @@@ by senshu */
-	if (mode==FUSE_LIST) {
+	if (mode==RD_DEV_OPT_F) {
 		printf("DEVICE=AT%s -fL0x%02X", Device->Name, FuseBuff[0]);
 		if(Device->FuseType >= 5)
 			printf(" -fH0x%02X", FuseBuff[1]);
@@ -511,10 +516,11 @@ void output_fuse (int mode)
 		printf("\n");
 		return;
 
-	} else if (mode==FUSE_WEB) {
+	} else if (mode==RD_DEV_OPT_i) {
 		char url[512], *chip;
 		int len;
 
+		/* ATmega644PはATmega644で代用する */
 		if (Device->Name == M644P) {
 			chip = "mega644";
 		} else {
@@ -528,7 +534,9 @@ void output_fuse (int mode)
 			len += sprintf(url+len, "^&V_EXTENDED=%02X", FuseBuff[2]);
 
 		sprintf(url+len, "^&O_HEX=Apply+user+values");
-		system(url);
+		if (system(url) < 0) {
+			MESS("WARNING: Not open Web browser.\n");
+		}
 		return;
 	}
 #endif
@@ -851,7 +859,7 @@ int load_commands (int argc, char **argv)
 				case 'r' :	/* -r{p|e|f} */
 					Command[0] = 'r';
 #if AVRSPX	/* -rF オプションを追加, @@@ by senshu*/
-					if (*cp == 'f' || *cp == 'F' || *cp == 'i') {
+					if (*cp == 'f' || *cp == 'F') {
 						Command[1] = *cp++;
 					} else {
 						Command[1] = tolower(*cp++);
@@ -1788,17 +1796,17 @@ int read_device (char cmd)
 
 		case 'f' :	/* -rf : read fuses */
 			read_fuse();
-			output_fuse(FUSE_ORIG);
+			output_fuse(RD_DEV_OPT_f);
 			break;
 
 		case 'F' :	/* -rF : read fuses @@@ by senshu */
 			read_fuse();
-			output_fuse(FUSE_LIST);
+			output_fuse(RD_DEV_OPT_F);
 			break;
 
 		case 'i' :	/* -ri : read fuses @@@ by senshu */
 			read_fuse();
-			output_fuse(FUSE_WEB);
+			output_fuse(RD_DEV_OPT_i);
 			break;
 
 		default :

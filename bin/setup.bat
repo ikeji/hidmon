@@ -48,14 +48,15 @@ IF NOT EXIST %TARGET% (
 )
 echo ==== [COPY to %TARGET%] ====
 echo hidspx.exe, hidspx.ini, libusb0.dll, fuse.txt, usbtool.exe
-echo firmware\genserial.awk , firmware\main.hex , firmware\firmprog.bat
+echo firmware\genserial.awk , firmware\main-12.hex , firmware\firmprog.bat
 %COPY% hidspx.exe %TARGET% > NUL
 %COPY% hidspx.ini %TARGET% > NUL
 %COPY% libusb0.dll %TARGET% > NUL
 %COPY% fuse.txt %TARGET% > NUL
 %COPY% usbtool.exe %TARGET% > NUL
+%COPY% hidmon.exe %TARGET% > NUL
 %COPY% firmware\genserial.awk %TARGET% > NUL
-%COPY% firmware\main.hex %TARGET% > NUL
+%COPY% firmware\main-12.hex %TARGET% > NUL
 %COPY% firmware\firmprog.bat %TARGET% > NUL
 echo ==== %PROJECT% setup finished ====
 goto END

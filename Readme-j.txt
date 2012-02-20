@@ -1,6 +1,6 @@
 # TAB size = 8で編集しています。
 
-                                                             2009年 1月10日
+                                                             2009年 1月11日
 
         USB接続方式のドライバインストール不要なAVRライタ（HIDaspx）
         ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
@@ -17,6 +17,20 @@ hidspx コマンド共に互換性はありませんので区別して扱ってください。
 
 ※ HIDaspxは、エイチ・アイ・ディー アスペックスとお読みください。
 
+  ********************** 更新時の注意点 **********************
+  hidspx の更新時、ファームウェアの日付も更新されますが、更新履歴にファーム
+  ウェアに関する記載が無い場合にはファームの更新は不要です。bin フォルダの
+  setup.bat で一括更新ができます。[更新ディレクトリ名] を省略した場合には、
+  C:\binにコピーする仕様です。
+
+  XXXX\hidspx-2009-0111\bin> setup [更新ディレクトリ名] <Enter>
+  ================= hidspx をセットアップします ====================
+ C:\binフォルダ にコピーを希望する場合は、[Y]を大文字で入力のこと。
+ ↑にセットアップをしますか[Y/n]
+
+ 表示されるメッセージに従って、ご活用ください。
+
+
 【0】 アーカイブの構成
 
 .\
@@ -25,9 +39,11 @@ hidspx コマンド共に互換性はありませんので区別して扱ってください。
 │	hidspx-gcc.exe	… MinGW-GCCでコンパイルしたもの
 │	hidspx.exe	… Borland C++ ver 5.5.1でコンパイルしたもの
 │	hidspx.ini	… hidspxの初期化ファイル
-│	fuse.txt	… FUSE情報を詳細に表示する為のテキストファイル
+│	fuse.txt	… FUSE情報を詳細表示する為のテキストファイル
 │	fuse_en.txt
 │	fuse_j.txt
+│	hidmon.exe	… HIDaspxのテスト時に利用
+│
 ├─bin
 │  └─firmware	… main-12.hex（HIDaspx用）, main_libusb.hex（MacOS, Linux用）
 │			… main-small.hex(USB-IO専用のファームウェア)
@@ -55,7 +71,7 @@ hidspx コマンド共に互換性はありませんので区別して扱ってください。
 
 　hidspxのインストールには、特別なインストーラは不要です。
 bin ディレクトリにあるファイルを実行可能なディレクトリにコピーすることで利
-用可能になります。
+用可能になります。（ファイル日付は、改良により異なることがあります）
 
 **************************** 重要 ****************************
 2008/11/13  13:30             1,787 setup.bat
@@ -201,19 +217,22 @@ hidspx -d4 test.hex	8kB Write/Verify	13.26秒	9.98秒(821B/秒)
 ○ hidmonによるベンチマーク結果
 AVR> bench
 hid write start
-hid write end, 38000 bytes/11172 ms,  3401 bytes/s
+hid write end,   37.109 kB/   11.08 s,   3.350 kB/s
 
 ○ Write&Verify結果
 >timeit hidspx -d2 2kb.hex
 Elapsed Time:     0:00:25.703
 
-次に、1,000 円以内で買える HUB を介して、同様の計測を行ってみます。
+次に、1,000 円以内で買える USB 2.0 に準拠した HUB を介して、同様の計測を行
+ってみます。
 
 ○ hidmonによるベンチマーク結果
 >hidmon
+TARGET DEV_ID=55
+HIDaspx is USB-IO mode.
 AVR> bench
 hid write start
-hid write end, 38000 bytes/2468 ms,  15397 bytes/s
+hid write end,   37.109 kB/    2.47 s,  15.036 kB/s
 
 ○ Write&Verify結果
 >timeit hidspx -d2 2kb.hex
@@ -548,11 +567,11 @@ EEPROM Size       = 128 bytes
                   >hidspx -rf
                    Warnning: Please check HIDaspx mode.
                 - hidasp.c を最新に更新
-		- vendor, product の文字列の照合を無効にし、VID, PID とシリアル情報の
-		  照合を行います。
+		- vendor, product の文字列の照合を無効にし、VID, PID とシリアル情報のみを
+		  照合します（文字列照合を行いません）。
 
 		  [理由]
-		  以下のように、異なるvendor名やプロダクト名でも利用を可能にするため。
+		  以下の異なるvendor名やプロダクト名の装置を利用可能にするため。
 
                   VID=0x16c0 PID=0x05df vendor="YCIT" product="HIDaspx" serial="0000"
                   VID=0x16c0 PID=0x05df vendor="AVRetc" product="bmon" serial="0001"
@@ -654,8 +673,7 @@ EEPROM Size       = 128 bytes
 	- mega325P/3250P/324PA, PWM216,316対応を追加
 
 
-2009-01-10
-	- -rF, -riオプションを追加
+2009-01-10 ...	-rF, -riオプションを追加
 
         * -rF (Read Fuse list) オプション
         このオプションを指定すると、ヒューズ設定形式で出力します。
@@ -713,4 +731,9 @@ EEPROM Size       = 128 bytes
 	長期にわたり有益な情報サイトを運営している www.engbedded.com さんと、
 	このアイディアを提供してくれた audin さんに感謝いたします。
 	どうもありがとうございました。
+
+2009-01-11 ...	hidmonの追加とヘルプメッセージの修正
+        - hidspx , hidspx -? で表示するメッセージに、0110の機能追加分を反映
+        - この説明書に記載した hidmon の bench テストを実行できるように、
+          hidmon.exe コマンドを同梱
 
