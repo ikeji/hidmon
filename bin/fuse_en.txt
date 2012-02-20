@@ -1,0 +1,546 @@
+;This is a device fuse description file for avrsp.exe. Placing this file
+;with avr?p.exe will able to help recognizing the read fuse bits.
+;-----------------------------------------------------------------------------;
+Device: AT90S1200
+Mode: Parallel
+Low: --5----0
+       Ё    юдд RCEN (1:External CLK, 0:Internal CLK)
+       юдд SPIEN (1:Disable ISP, 0:Enable ISP)
+
+;-----------------------------------------------------------------------------;
+Device: AT90S2313
+Device: AT90S4414
+Device: AT90S8515
+Mode: Parallel
+Low: --5----0
+       Ё    юдд FSTRT (1:Slow start, 0:Fast start)
+       юдд SPIEN (1:Disable ISP, 0:Enable ISP)
+
+;-----------------------------------------------------------------------------;
+Device: AT90S4434
+Device: AT90S8535
+Mode: ISP/Parallel
+Low: --5----0
+       Ё    юдд FSTRT (1:Slow start, 0:Fast start)
+       юдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only parallel mode
+
+;-----------------------------------------------------------------------------;
+Device: AT90S2333
+Device: AT90S4433
+Mode: ISP/Parallel
+Low: --543210
+       ЁЁЁюаадд CKSEL[2:0] Clock source selection
+       ЁЁюдд BODEN (1:Disable BOD, 0:Enable BOD)
+       Ёюдд BODLEVEL (1:2.7V, 0:4.0V)
+       юдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only parallel mode
+
+;-----------------------------------------------------------------------------;
+Device: AT90S2323
+Mode: ISP/HVS
+Low: --5----0
+       Ё    юдд FSTRT (1:Slow start, 0:Fast start)
+       юдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only HVS mode
+
+;-----------------------------------------------------------------------------;
+Device: AT90S2343
+Mode: ISP/HVS
+Low: --5----0
+       Ё    юдд RCEN (1:External CLK, 0:Internal CLK)
+       юдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only HVS mode
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny10
+Device: ATtiny11
+Mode: HVS
+Low: ---43210
+        ЁЁюаадд CKSEL[2:0] Clock source selection
+        Ёюдд RSTDISBL (1:Use RESET pin, 0:Disable RESET(used as PB5))
+        юдд FSTRT (1:Slow start, 0:Fast start)
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny12
+Mode: ISP/HVS
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁЁюдд RSTDISBL (1:Use RESET pin, 0:Disable RESET(used as PB5))
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP)
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:1.8V, 0:2.7V)
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny15
+Mode: ISP/HVS
+Low: 7654--10
+     ЁЁЁЁ  юадд CKSEL[1:0] Clock source selection
+     ЁЁЁюдд RSTDISBL (1:Use RESET pin, 0:Disable RESET(used as PB5))
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP)
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:2.7V, 0:4.0V)
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny22
+Mode: ISP/HVS
+Low: --5----0
+       Ё    юдд RCEN (1:External CLK, 0:Internal CLK)
+       юдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only HVS mode
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny13
+Mode: ISP/HVS
+Low: 76543210
+     ЁЁЁЁЁЁюадд CKSEL[1:0] Clock selection
+     ЁЁЁЁюадд SUT[1:0] Startup time selection
+     ЁЁЁюдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+     ЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     Ёюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     юдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only HVS mode
+
+High:---43210
+        ЁЁЁЁюдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PB5))
+        ЁЁюадд BODLEVEL[1:0] (BOD 11:None, 10:1.8V, 01:2.7V, 00:4.3V)
+        Ёюдд DWEN (On-Chip Debugging via RESET pin 1:Disable, 0:Enable)
+        юдд SPMEN (SPM instruction 1:Disable, 0:Enable)
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny25
+Device: ATtiny45
+Device: ATtiny85
+Device: ATtiny24
+Device: ATtiny44
+Device: ATtiny84
+Mode: ISP/HVS
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time selection
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁюаадд BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3, 011:2.3, 010:2.2, 001:1.9, 000:2)
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only HVS mode
+     Ёюдд DWEN (On-Chip Debugging via RESET pin 1:Disable, 0:Enable)
+     юдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PORT))
+
+High:-------0
+            юдд SELFPRGEN *Refer to data sheet
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny2313
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time selection
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PA2))
+     ЁЁЁЁюаадд BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     юдд DWEN (On-Chip debugging via RESET pin 1:Disable, 0:Enable)
+
+Ext: -------0
+            юдд SPMEN (SPM instruction 1:Disable, 0:Enable)
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny26
+Mode: ISP
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOPT (36pF between PB4-GND  1:Disabled, 0:Enabled)
+     юдд PLLCK *Refer to data sheet
+
+High:---43210
+        ЁЁЁЁюдд BODEN (1:Disable BOD, 0:Enable BOD)
+        ЁЁЁюдд BODLEVEL (1:2.7V, 0:4.0V)
+        ЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+        Ёюдд SPIEN (1:Disable, 0:Enable) *Available only in Parallel mode
+        юдд RSTDISBL (1:Use RESET pin, 0:Disable RESET(used as PB7))
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny261
+Device: ATtiny461
+Device: ATtiny861
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time selection
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁюаадд BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only HVS mode
+     Ёюдд DWEN (On-Chip Debugging via RESET pin 1:Disable, 0:Enable)
+     юдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PORT))
+
+High:-------0
+            юдд SELFPRGEN *Refer to data sheet
+
+;-----------------------------------------------------------------------------;
+Device: ATtiny28
+Mode: Parallel
+Low: ---43210
+        Ёюааадд CKSEL[3:0] Clock source selection
+        юдд INTCAP (1:Disable CAP, 0:Enable CAP)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega161
+Mode: ISP/Parallel
+Low: -6543210
+      ЁЁЁЁюаадд CKSEL[2:0] Clock source selection
+      ЁЁЁюдд BODEN (1:Disable BOD, 0:Enable BOD)
+      ЁЁюдд BODLEVEL (1:2.7V, 0:4.0V)
+      Ёюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+      юдд BOOTRST *Refer to data sheet
+
+;-----------------------------------------------------------------------------;
+Device: ATmega162
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On chip debugging 1:Disable, 0:Enable)
+
+Ext: ---4321-
+        Ёюаадд BODLEVEL[2:0]  111:Disabled 110:1.8V 101:2.7V 100:4.3V 011:2.3V
+        юдд M161C (1:Native mode, 0:mega161 compatible mode)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega165
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+Ext: ----321-
+         ЁЁЁ
+         юаадд BODLEVEL[2:0]  111:Disabled, 110:1.8V, 101:2.7V, 100:4.5V
+
+;-----------------------------------------------------------------------------;
+Device: ATmega169
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+Ext: ----3210
+         ЁЁЁюдд RSTDISBL  1:Use RESET pin, 0:Disable RESET(used as PG5)
+         юаадд BODLEVEL[2:0]  111:Disabled, 110:1.8V, 101:2.7V, 100:4.5V
+
+;-----------------------------------------------------------------------------;
+Device: ATmega8515
+Device: ATmega8535
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:2.7V, 0:4.0V)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд CKOPT (Oscillation Mode  1:Low amplitude, 0:Full swing)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд WDTON (1:WDT normal, 0:WDT always on)
+     юдд S85x5C (1:Native mode, 0:90S compatible mode)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega163
+Mode: ISP/Parallel
+Low: 765-3210
+     ЁЁЁ юааадд CKSEL[3:0] Clock source selection
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:2.7V, 0:4.0V)
+
+High:-----210
+          ЁЁюдд BOOTRST *Refer to data sheet
+          юадд BOOTSZ[1:0] *Refer to data sheet
+
+;-----------------------------------------------------------------------------;
+Device: ATmega323
+Mode: ISP/Parallel
+Low: 765-3210
+     ЁЁЁ юааадд CKSEL[3:0] Clock source selection
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:2.7V, 0:4.0V)
+
+High:76--3210
+     ЁЁ  ЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁ  Ёюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁ  юдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega8
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:2.7V, 0:4.0V)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд CKOPT (Oscillation Mode  1:Low amplitude, 0:Full swing)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд WDTON (1:WDT normal, 0:WDT always on)
+     юдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PC6))
+
+;-----------------------------------------------------------------------------;
+Device: ATmega16
+Device: ATmega32
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:2.7V, 0:4.0V)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд CKOPT (Oscillation Mode  1:Low amplitude, 0:Full swing)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega48
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁюаадд BODLEVEL[2:0] (111:Disabled, 110:1.8V, 101:2.7V, 100:4.3V)
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд DWEN (On-Chip debugging via RESET pin 1:Disable, 0:Enable)
+     юдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PC6))
+
+Ext: -------0
+            юдд SELFPRGEN *Refer to data sheet
+
+;-----------------------------------------------------------------------------;
+Device: ATmega88
+Device: ATmega88P
+Device: ATmega168
+Device: ATmega168P
+Device: ATmega328P
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁюаадд BODLEVEL[2:0] (111:Disabled, 110:1.8V, 101:2.7V, 100:4.3V)
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд DWEN (On-Chip debugging via RESET pin 1:Disable, 0:Enable)
+     юдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PC6))
+
+Ext: -----210
+          ЁЁюдд BOOTRST *Refer to data sheet
+          юадд BOOTSZ[1:0] *Refer to data sheet
+
+;-----------------------------------------------------------------------------;
+Device: ATmega325/9
+Device: ATmega3250/90
+Device: ATmega645/9
+Device: ATmega6450/90
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+Ext: -----210
+          ЁЁюдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PG5))
+          юадд BODLEVEL[1:0] (11:Disabled, 10:1.8V, 01:2.7V, 00:4.3V)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega64
+Device: ATmega128
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд BODEN (1:Disable BOD, 0:Enable BOD)
+     юдд BODLEVEL (1:2.7V, 0:4.0V)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд CKOPT (Oscillation Mode  1:Low amplitude, 0:Full swing)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+Ext: ------10
+           Ёюдд WDTON (1:WDT normal, 0:WDT always on)
+           юдд M103C (1:Native mode, 0:mega603/103 compatible mode)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega603
+Device: ATmega103
+Mode: ISP/Parallel
+Low: ----3-10
+         Ё юадд SUT[1:0] Startup time
+         юдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+
+;-----------------------------------------------------------------------------;
+Device: AT90CAN32
+Device: AT90CAN64
+Device: AT90CAN128
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN On-Chip Debugging via JTAG (1:Disable, 0:Enable)
+
+Ext: ----3210
+         ЁЁЁюдд TA0SEL (Must be 1)
+         юаадд BODLEVEL[2:0] (111:Off, 110:4.1, 101:4, 100:3.9, 011:3.8, 010:2.7, 001:2.6, 000:2.5)
+
+;-----------------------------------------------------------------------------;
+Device: ATmega406
+Mode: Parallel
+Low: 76543210
+     |||||||+-- CKSEL Clock source selection
+     |||||++-- SUT[1:0] Startup time
+     ||||+-- BOOTRST *Refer to data sheet
+     ||++-- BOOTSZ[1:0]
+     |+-- EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     +-- WDTON (1:WDT normal, 0:WDT always on)
+
+High:76543210
+           |+-- JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+           +-- OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+;-----------------------------------------------------------------------------;
+Device: AT90PWM2/3
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁюаадд BODLEVEL[2:0] (111:Off, 110:4.5, 101:2.7, 100:4.3, 011:4.4, 010:4.2, 001:2.8, 000:2.6
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд DWEN (On-Chip debugging via RESET pin 1:Disable, 0:Enable)
+     юдд RSTDISBL (RESET pin 1:Enable, 0:Disable(PC6))
+
+Ext: 7654-210
+     |||| ||+-- BOOTRST *Refer to Data Sheet
+     |||| ++-- BOOTSZ[1:0] *Refer to Data Sheet
+     |||+-- PSCRV PSCOUT Reset Value
+     +++-- PSC[2:0]RB PSCn Reset Behaviour
+
+;-----------------------------------------------------------------------------;
+Device: ATmega164P
+Device: ATmega324P
+Device: ATmega644P
+Device: ATmega644
+Device: ATmega640
+Device: ATmega1280
+Device: ATmega1281
+Device: ATmega2560
+Device: ATmega2561
+Mode: ISP/Parallel
+Low: 76543210
+     ЁЁЁЁюааадд CKSEL[3:0] Clock source selection
+     ЁЁюадд SUT[1:0] Startup time
+     Ёюдд CKOUT (0:Output system clock on the CLKO pin)
+     юдд CKDIV8 Clock division ratio (1:1/1, 0:1/8)
+
+High:76543210
+     ЁЁЁЁЁЁЁюдд BOOTRST *Refer to data sheet
+     ЁЁЁЁЁюадд BOOTSZ[1:0] *Refer to data sheet
+     ЁЁЁЁюдд EESAVE (Retain EEPROM at chip erase 1:No, 0:Yes)
+     ЁЁЁюдд WDTON (1:WDT normal, 0:WDT always on)
+     ЁЁюдд SPIEN (1:Disable ISP, 0:Enable ISP) *Available only in Parallel mode
+     Ёюдд JTAGEN (1:Disable JTAG, 0:Enable JTAG)
+     юдд OCDEN (On-Chip Debugging via JTAG 1:Disable, 0:Enable)
+
+Ext: -----210
+          юаадд BODLEVEL[2:0] (111:Disabled, 110:1.8V, 101:2.7V, 100:4.3V)
+

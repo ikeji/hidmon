@@ -1,0 +1,214 @@
+diff -urw src_b10_10/avrspx.c avrspx/avrspx.c
+--- src_b10_10/avrspx.c	Sat Jun  2 21:29:12 2007
++++ avrspx/avrspx.c	Sat Mar 17 22:56:46 2007
+@@ -57,6 +56,7 @@
+ #include <ctype.h>
+ #include "avrspx.h"
+ #include "usbasp.h"
++#include "hidasp.h"
+ 
+ 
+ /*-----------------------------------------------------------------------
+@@ -709,6 +698,9 @@
+ 						case 'b' :
+ 							CtrlPort.PortClass = TY_BRIDGE;
+ 							break;
++						case 'h' :
++							CtrlPort.PortClass = TY_HIDASP;
++							break;
+ 						case 'u' :
+ 							CtrlPort.PortClass = TY_USBASP;	//@@@ by t.k
+ 							s = strchr(cp, ':');
+@@ -856,14 +848,22 @@
+ -----------------------------------------------------------------------*/
+ 
+ /* Enter the device to ISP mode */
+-
+ int enter_ispmode ()
+ {
+ 	BYTE rd;
+ 	int tried, scan;
+ 
+ 
+-	if (CtrlPort.PortClass == TY_USBASP)	//@@@ by t.k
++	if (CtrlPort.PortClass == TY_HIDASP) // ### k-k
++	{
++		if (hidasp_program_enable(CtrlPort.Delay) != 0)
++		{
++			MESS("Device connection failed.(PE)\n");
++			return 1;
++		}
++		return 0;
++	}
++	else if (CtrlPort.PortClass == TY_USBASP)	//@@@ by t.k
+ 	{
+ 		if (usbasp_program_enable() != 0)
+ 		{
+@@ -1119,6 +1119,9 @@
+ 		d &= wd[n];
+ 	if(d == 0xFF) return;
+ 
++	if (CtrlPort.PortClass = TY_HIDASP) {
++		hidasp_page_write(adr,wd,Device->FlashPage);
++	} else {
+ 	/* Load the page data into page buffer */
+ 	for(n = 0; n < Device->FlashPage; n++) {
+ 		spi_transmit(
+@@ -1127,7 +1130,7 @@
+ 			(BYTE)((adr + n) >> 1),
+ 			wd[n]);
+ 	}
+-
++	}
+ 	/* Load extended address if needed */
+ 	if(Device->FlashSize > (128*1024)) {
+ 		spi_transmit(
+@@ -1469,6 +1472,10 @@
+ 				usbasp_paged_load(FLASH, CodeBuff, Device->FlashPage,
+ 							 Device->FlashSize, Device->FlashSize > (128*1024));
+ 			}
++			else if (CtrlPort.PortClass == TY_HIDASP && Device->FlashSize < (128*1024))
++			{
++				hidasp_page_read(0, CodeBuff, Device->FlashSize);
++			}
+ 			else
+ 			{
+ 				for(adr = 0; adr < Device->FlashSize; adr += PIPE_WINDOW)
+@@ -1573,6 +1580,18 @@
+ 			if (rc != 0)
+ 				return RC_FAIL;
+ 		}
++		else if (CtrlPort.PortClass == TY_HIDASP) {
++			hidasp_page_read(0,rd,0);
++			for(adr = 0; adr < CmdWrite.CodeSize; adr += PIPE_WINDOW) {
++				hidasp_page_read(-1,rd,PIPE_WINDOW);
++				for(n = 0; n < PIPE_WINDOW; n++) {
++					if(rd[n] != CodeBuff[adr+n]) {
++						fprintf(stderr, "Failed at %04X:%02X-%02X\n", adr+n, CodeBuff[adr+n], rd[n]);
++						return RC_FAIL;
++					}
++				}
++			}
++		}
+ 		else
+ 		{
+ 			for(adr = 0; adr < CmdWrite.CodeSize; adr += PIPE_WINDOW) {
+diff -urw src_b10_10/avrspx.h avrspx/avrspx.h
+--- src_b10_10/avrspx.h	Thu Aug 31 09:43:30 2006
++++ avrspx/avrspx.h	Sat Mar 17 22:57:02 2007
+@@ -142,7 +142,7 @@
+ enum _portclass {	/* Port class */
+ 	TY_LPT, TY_COMM, TY_VCOM, TY_BRIDGE, TY_AVRSP,
+     TY_STK200, TY_XILINX, TY_LATTICE, TY_ALTERA,
+-    TY_USBASP, TY_RSCR
++    TY_USBASP, TY_RSCR, TY_HIDASP
+ };
+ 
+ 
+diff -urw src_b10_10/hwctrl.c avrspx/hwctrl.c
+--- src_b10_10/hwctrl.c	Sat Jun 10 14:57:54 2006
++++ avrspx/hwctrl.c	Sat Mar 17 22:58:20 2007
+@@ -9,6 +9,7 @@
+ #include "avrspx.h"
+ #include "hwctrl.h"
+ #include "usbasp.h"
++#include "hidasp.h"
+ 
+ 
+ #define COM_DAT	((WORD)(PortBase + C_DAT))
+@@ -551,6 +552,17 @@
+ 		return 0;
+ 	}
+ 
++	if (pc->PortClass == TY_HIDASP)	//@@+ by k-k
++	{
++		if (hidasp_init(pc->SerialNumber) != 0)
++		{
++			pc->Info1 = "HIDASP not fonud.\n";
++			return 1;
++		}
++		PortType = TY_HIDASP;
++		return 0;
++	}
++
+ 	/* Use COM port via API */
+ 	if (pc->PortClass == TY_RSCR)	//@@+ by t.k
+ 	{
+@@ -629,6 +641,10 @@
+ 			if (hComm != INVALID_HANDLE_VALUE)
+ 				rscr_close();
+ 			break;
++
++		case TY_HIDASP :	//@@@ by k-k
++			hidasp_close();
++			break;
+ 	}
+ 
+ 	if(hComm != INVALID_HANDLE_VALUE)
+@@ -648,6 +664,12 @@
+ 
+ 
+ 	switch (PortType) {
++		case TY_HIDASP :
++			{
++				unsigned char dat[]={0,0,0,0};
++				hidasp_cmd(dat,NULL);
++			}
++			break;
+ 		case TY_COMM :
+ 			_outp(COM_MCR, 0);		/* RESET,SCK = "L" */
+ 			delay_ms(10);			/* 10msec */
+@@ -779,6 +801,12 @@
+ 			iodly();
+ 			_outp(LPT_DAT, 0);
+ 			break;
++		case TY_HIDASP :
++			{
++				char cmd[]={0,0,0,0};
++				hidasp_cmd(cmd,NULL);
++			}
++			break;
+ 	}
+ 
+ }
+@@ -1053,7 +1081,17 @@
+ //@@@ by t.k
+ void spi_transmit(BYTE cmd1, BYTE cmd2,BYTE cmd3, BYTE cmd4)
+ {
+-	if (PortType == TY_USBASP)
++	if (PortType == TY_HIDASP)
++	{
++		unsigned char cmd[4];
++
++		cmd[0] = cmd1;
++		cmd[1] = cmd2;
++		cmd[2] = cmd3;
++		cmd[3] = cmd4;
++		hidasp_cmd(cmd, NULL);
++	}
++	else if (PortType == TY_USBASP)
+ 	{
+ 		unsigned char res[4];
+ 		unsigned char cmd[4];
+@@ -1081,7 +1119,20 @@
+ 
+ int spi_transmit_R(BYTE cmd1, BYTE cmd2,BYTE cmd3, BYTE mode)
+ {
+-	if (PortType == TY_USBASP)
++	if (PortType == TY_HIDASP) {
++		unsigned char res[4];
++		unsigned char cmd[4];
++
++		cmd[0] = cmd1;
++		cmd[1] = cmd2;
++		cmd[2] = cmd3;
++		cmd[3] = 0;
++		memset(res, 0, sizeof(res));
++		hidasp_cmd(cmd, res);
++		if (mode == RM_ASYNC)
++			fifo_put(res[3]);
++		return res[3];
++	} else if (PortType == TY_USBASP)
+ 	{
+ 		unsigned char res[4];
+ 		unsigned char cmd[4];
