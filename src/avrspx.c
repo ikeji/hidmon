@@ -1156,11 +1156,18 @@ int load_commands (int argc, char **argv)
 				case 'r' :	/* -r{p|e|f} */
 					Command[0] = 'r';
 #if AVRSPX	/* -rF, -rL オプション @@@ by senshu*/
-					if (*cp == 'F' || *cp=='L') {
-						/* 大文字・小文字を区別するコマンド */
-						Command[1] = *cp++;
-					} else {
-						Command[1] = tolower(*cp++);
+					if (*cp) {
+						switch (*cp) {
+						case 'F':
+						case 'L':
+							/* 大文字・小文字を区別するコマンド */
+							Command[1] = *cp++;
+							break;
+
+						default:
+							Command[1] = tolower(*cp++);
+							break;
+						}
 					}
 #else
 					if(*cp) Command[1] = tolower(*cp++);
