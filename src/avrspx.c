@@ -284,7 +284,7 @@ char *msg_pause_on_exit;    /* --pause-on-exit=msg */
 char *new_serial;           // USBaspx
 
 char usb_serial[8];         // Serial number of USBasp and HIDaspx device
-char DeviceName[20];        // -d check device type (compared to Device->Name)
+char DeviceName[20];        // -q query device type (compared to Device->Name)
 
 #if 1   /* 2010/01/21 10:36:43 */
 int hidaspx_type;
@@ -568,7 +568,7 @@ void output_usage (bool detail)
 
         "@\n",
         "@Miscellaneous Options:\n",
-        "@  -q<device>               Check device type\n",
+        "@  -q<device>               Query device type\n",
         "@  -t<device>               Force device type\n",
         "@  -w<num>                  Pause before exit\n",
         "@  -z                       1KHz pulse on SCK\n",
@@ -1069,28 +1069,48 @@ void store_buffer (
         if (addr > CmdWrite.DataSize) CmdWrite.DataSize = addr;
 
     } else if (addr >= BASE_FUSE && addr < BASE_FUSE + MAX_FUSE) {
+
         addr -= BASE_FUSE;
-        CmdFuse.Data[addr] = dat;
+        if (DeviceName[0]) {    // -q Query device type (compared to Device->Name)
+            CmdFuse.Data[addr] = dat;
 
-        switch (addr) {
-        case 0:
-            CmdFuse.Cmd.Flag.Low = 1;
-            break;
+            switch (addr) {
+            case 0:
+                CmdFuse.Cmd.Flag.Low = 1;
+                break;
 
-        case 1:
-            CmdFuse.Cmd.Flag.High = 1;
-            break;
+            case 1:
+                CmdFuse.Cmd.Flag.High = 1;
+                break;
 
-        case 2:
-            CmdFuse.Cmd.Flag.Extend = 1;
-            break;
+            case 2:
+                CmdFuse.Cmd.Flag.Extend = 1;
+                break;
+            }
+        } else {
+            switch (addr) {
+            case 0:
+                fprintf(stderr, "Low  Fuse = 0x%02x\n", dat);
+                break;
+
+            case 1:
+                fprintf(stderr, "High Fuse = 0x%02x\n", dat);
+                break;
+
+            case 2:
+                fprintf(stderr, "Ext  Fuse = 0x%02x\n", dat);
+                break;
+            }
         }
 
     } else if (addr == BASE_LOCK) {
         addr -= BASE_LOCK;
-        CmdFuse.Cmd.Flag.Lock = 1;
-        CmdFuse.Data[LOCK] = dat;
-
+        if (addr == 0 && DeviceName[0]) {    // -q Query device type (compared to Device->Name)
+            CmdFuse.Cmd.Flag.Lock = 1;
+            CmdFuse.Data[LOCK] = dat;
+        } else {
+            fprintf(stderr, "Lock bits = 0x%02x\n", dat);
+        }
     }
 }
 
@@ -1684,7 +1704,7 @@ int load_commands (int argc, char **argv)
                     break;
 #if AVRSPX
 
-                case 'q' :  /* -q<device> (check device type) */
+                case 'q' :  /* -q<device> (Query device type) */
                     for(ln = 0; ln < sizeof(DeviceName); ln++, cp++) {
                         if((DeviceName[ln] = *cp) == '\0') break;
                     }
@@ -2367,8 +2387,7 @@ int init_devices (void)
                 if (DeviceName[0]) {    //@@+ check device by t.k
                     DEVPROP *dev = search_device(DeviceName);
                     if (dev->ID != Device->ID) {
-                        fprintf(stderr, "Invalid Device %s != %s\n",
-                            DeviceName, Device->Name);
+                        fprintf(stderr, "Invalid Device %s != %s\n", DeviceName, Device->Name);
                         return RC_DEV;
                     }
                 }

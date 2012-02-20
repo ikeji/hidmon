@@ -822,3 +822,50 @@ Type = HIDaspx, Delay = 4
 	(3) hidspx -rd で開くWebページをATMEL社のページに変更
 
 
+■2010-08-05
+
+	(1) hidspx.exe 統合HEX ファイル（Fuse/Lock)への書込みは、-qDevice名を
+	    明示したときのみとし、指定無き場合には、Flash/EEPROM のみを対象にする。
+	    これにより、ある程度、誤操作によるFUSEの書き換えを防止出来る。
+
+使用例
+	>hidspx main.hex .... オプション指定なし
+	Low  Fuse = 0xff  ---
+	High Fuse = 0xde    | 統合HEXファイルに書かれている内容を表示
+	Ext  Fuse = 0xfd    |（ただし、書込みは行なわない）
+	Lock bits = 0x0f  ---
+	Detected device is ATmega644P.
+	Erase Flash memory.
+	Flash memory...
+	Writing   [##################################################]    650,   0.38s
+	Verifying [##################################################]    650,   0.39s
+	Passed.
+	EEPROM...
+	Writing   [##################################################]     10,   0.08s
+	Verifying [##################################################]     10,   0.42s
+	Passed.
+	Total read/write size = 1320 B / 1.53 s (0.84 kB/s)
+
+	>hidspx -qATmega644P main.hex .... -qオプションでデバイス名を明示
+	Detected device is ATmega644P.
+	Erase Flash memory.
+	Flash memory...
+	Writing   [##################################################]    650,   0.38s
+	Verifying [##################################################]    650,   0.39s
+	Passed.
+	EEPROM...
+	Writing   [##################################################]     10,   0.06s
+	Verifying [##################################################]     10,   0.42s
+	Passed.
+	Fuse Low byte was programmed (0xFF).   ----
+	Fuse High byte was programmed (0xDE).     | 統合HEXファイルの内容を書き込む
+	Fuse Extend byte was programmed (0x05).   |
+	Lock bits are programmed (0x0F).       ----
+	Total read/write size = 1320 B / 1.64 s (0.79 kB/s)
+
+	(2) libusb-win32 1.2.1.0 をリンク
+
+
+	(3) -qDeviceName には、m644pのような名称も指定可能にした（
+	    avrdudeとの互換性を高める為）
+

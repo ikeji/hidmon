@@ -1,5 +1,27 @@
 LibUsb-Win32 Change Log
 
+V1.2.1.0 (07/28/2010)
+=======================
+* Updated bulk.c to include async i/o example code.
+
+* Fixed usb_install_driver_np() issue with inf-wizard generated infs.
+
+* Fixed inf2cat.exe issue with inf-wizard generated infs.
+  
+* Added 'Install Now' feature to inf-wizard. (libwdi)
+
+* Added embedded libusb-win32 binaries to inf-wizard. (libwdi)
+
+* Added libwdi (http://www.libusb.org/wiki/libwdi) to inf-wizard. 
+
+* Added get cached configuration request to usb_open(). This is a new
+  control code that involves no device i/o and allows 
+  usb_set_configuration() to be omitted if the driver has already
+  configured it.
+
+* Fixed set_configuration() failure for devices that do not properly
+  support get_configuration().
+
 V1.2.0.0 (07/07/2010)
 =======================
 * First signed driver release! The libusb-win32 kernel driver (libusb0.sys)
@@ -30,10 +52,6 @@ V1.1.14.3 (06/12/2010)
 * Remove get_configuration() request from usb_open().  This caused claim
   interface to fail when used as a filter driver.
   
-
-PREVIOUS VERSIONS
-====================
-
 V1.1.14.0 (06/01/2010)
 =======================
 * Updated logging functions and standardized log message display format.
