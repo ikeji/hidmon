@@ -64,9 +64,10 @@
 /* b11.3  2009-08-14 DWEN のビットを考慮  */
 /* b11.4  2009-09-28 avrdudeとの互換性を強化（-e, Lock bit）*/
 /* b11.5  2010-02-13 HIDaspxのシリアル番号自動認識機能の追加 */
+/* b11.6  2010-04-13 ATtiny84追加, hidspx-gccへの対応強化 */
 /* TAB-SIZE = 4 */
 
-#define VERSION "b11.5"
+#define VERSION "b11.6"
 
 #include <stdio.h>
 #include <string.h>
@@ -136,8 +137,9 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "tiny261",     T261,  {0x1E, 0x91, 0x0C},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},142, "t261"}, /* DWEN */
 	{ "tiny44",      T44,   {0x1E, 0x92, 0x07},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},140, "t44"},  /* DWEN */
 	{ "tiny45",      T45,   {0x1E, 0x92, 0x06},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},101, "t45"},  /* DWEN */
-	{ "tiny461",     T461,  {0x1E, 0x92, 0x08},   4096,  64,  256,  4,  6, 10, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},141, "t461"}, /* DWEN */
-	{ "tiny85",      T85,   {0x1E, 0x93, 0x0B},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},102, "t85"},  /* DWEN */
+	{ "tiny461",     T461,  {0x1E, 0x92, 0x08},   4096,  64,  256,  4,  6, 10, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},143, "t461"}, /* DWEN */
+	{ "tiny84",	     T84,   {0x1E, 0x93, 0x0C},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},141, "t84"},  /* DWEN */
+ 	{ "tiny85",      T85,   {0x1E, 0x93, 0x0B},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},102, "t85"},  /* DWEN */
 	{ "tiny861",     T861,  {0x1E, 0x93, 0x0D},   8192,  64,  512,  4,  6, 10, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40},144, "t861"}, /* DWEN */
 //------- ATmega
 	{ "mega48",      M48,   {0x1E, 0x92, 0x05},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40}, 76, "m48"},  /* DWEN */
@@ -2465,7 +2467,9 @@ int read_device (char cmd)
 			output_deviceinfo();
 			break;
 	}
-
+#if 1
+	fflush(stdout);	/* 2010/03/26 15:28:48 by senshu */
+#endif
 	return 0;
 }
 

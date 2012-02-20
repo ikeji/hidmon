@@ -132,8 +132,8 @@ BEGIN {
 		}
 	}
 	if (cnt == 1) {
-		printf("Start adr=0x%04x, %s serial file Created.\n", adr, fname);
+		printf("Start adr=0x%04x, %s file was generated.\n", adr, fname);
 	} else {
-		printf("Start adr=0x%04x, %4d serial file(s) Created.\n", adr, cnt);
+		printf("Start adr=0x%04x, Created %4d files.\n", adr, cnt);
 	}
 }

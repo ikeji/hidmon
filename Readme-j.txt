@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2010年 2月16日（最新更新）
+                                                2010年 4月13日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -99,8 +99,7 @@ http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx00
 │  └─firmware
 │------------------------ (GPL2 *2) -----ここから-----------
 │			… main-12.hex（HIDaspx用, Windows/Mac/Linux兼用）
-│			… main_libusb.hex（libusb用、通常は使いません）
-｜　　　　　　　　　　　… genserial.awk（シリアル番号生成ツール）
+｜　　　　　　　　　　　… regserial.awk（シリアル番号生成ツール）
 ｜　　　　　　　　　　　… addserial.awk（シリアル番号生成ツール）
 ｜　　　　　　　　　　　… hexcleanup.bat  （生成したファイルのみを削除するツール）
 ｜　　　　　　　　　　　… firmprog.bat main12.hexを書き込むためのBATファイル
@@ -479,33 +478,71 @@ http://www.kt.rim.or.jp/%7ekbk/cgi-bin/download.cgi?dl-file1=gawk-mbcs-win32-200
  2008/07/03  17:22                9,588 readme.ja
 
 2008-1028 版以降、「-v adr= 」を指定することで、任意のアドレスに対するシリ
-アル情報を生成でき、また、複数のシリアル番号も瞬時に生成可能です。
+アル情報を生成でき、また、大量のシリアル番号生成も正規表現を使って、簡単に
+指定できます。
 
-usage: gawk -f genserial.awk -v t={aspx|mon88} start-number  [end-number]
-￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
+usage: gawk -f regserial.awk -v t={aspx|mon88} 生成パターン
+￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣
 
 使用例1：
- > gawk -f genserial.awk 0001
+ > gawk -f regserial.awk 0001
 
 のように実行すると、0001 のシリアル番号を設定する HEX ファイル（_0001.hex）
 を生成します。
 
-使用例2：0001～0100のシリアル番号のファイルを一括して生成します。
-         指定できる値は1～9999まで、これを超えるとエラーになります。
+使用例2：0000～0099のシリアル番号のファイルを一括して生成します。[0-9]
+         は、0～9の何れかの数字を意味します。
 
- > gawk -f genserial.awk 1 100
+ > gawk -f regserial.awk 00[0-9][0-9]
 
 
-使用例3：16進数や英大文字の指定も可能です。小文字は大文字に変換します。
+使用例3：英大文字の指定も可能です。小文字は大文字に変換します。
 ※　文字列を大文字化している理由は、Windows のファイルシステムが、大文字小
   文字を区別しないことによるファイルの上書きを避けるためです。この方法でシ
   リアル番号が不足する場合は、生成するファイル名を工夫し、小文字でも重複し
   ないファイル名の生成を行う必要があります）
 
- > gawk -f genserial.awk ABCD
+ > gawk -f regserial.awk ABCD
 
-このファイルを main.hex のファームと同時に書き込めば、HIDaspx はそのシリア
-ル番号を持ったものになります。
+なお、正規表現に不慣れな方は、「-v d=1」を指定すれば、生成するファイル名を
+確認できますので、事前に確認すれば、希望しないファイルの生成を回避でします。
+
+
+	>gawk -v d=1 -f regserial.awk [A-Z]000
+	regserial.awk: _A000.hex
+	regserial.awk: _B000.hex
+	regserial.awk: _C000.hex
+	regserial.awk: _D000.hex
+	regserial.awk: _E000.hex
+	regserial.awk: _F000.hex
+	regserial.awk: _G000.hex
+	regserial.awk: _H000.hex
+	regserial.awk: _I000.hex
+	regserial.awk: _J000.hex
+	regserial.awk: _K000.hex
+	regserial.awk: _L000.hex
+	regserial.awk: _M000.hex
+	regserial.awk: _N000.hex
+	regserial.awk: _O000.hex
+	regserial.awk: _P000.hex
+	regserial.awk: _Q000.hex
+	regserial.awk: _R000.hex
+	regserial.awk: _S000.hex
+	regserial.awk: _T000.hex
+	regserial.awk: _U000.hex
+	regserial.awk: _V000.hex
+	regserial.awk: _W000.hex
+	regserial.awk: _X000.hex
+	regserial.awk: _Y000.hex
+	regserial.awk: _Z000.hex
+	Start adr=0x0068,   26 generated.
+
+このコマンド指定では、26個のシリアル情報が得られることがわかります。
+
+こうして生成したシリアル番号ファイルを main.hex のファームと同時に書き込めば、
+HIDaspx はそのシリアル番号を持ったものになります。
+
+書き込み例）
 
  > hidspx main.hex _0001.hex
 
@@ -514,21 +551,22 @@ usage: gawk -f genserial.awk -v t={aspx|mon88} start-number  [end-number]
  で一括してシリアル番号用のファイルを削除できます。
 
 使用例4：
- > gawk -f genserial.awk -v t=mon88 0001
+ > gawk -f regserial.awk -v t=mon88 0001
 
 bootmon88用のシリアル番号を生成します。
 
 使用例5：
- > gawk -f genserial.awk -v t=1234 0001
+ > gawk -f regserial.awk -v t=1234 0001
 
-1234(10進数)番地から始まる4桁のシリアル番号を生成します。
+1234(10進数)番地から始まる4桁のシリアル番号を生成します。（主に開発者用）
+
 
 [3.1] もう一つのシリアル番号生成ツール… addserial.awk
 
-genserial.awk はシリアル番号だけの HEX ファイルを生成しますが、hidspx 用の
+regserial.awk はシリアル番号だけの HEX ファイルを生成しますが、hidspx 用の
 GUI ツールは、単一の HEX ファイルのみに対応であり、シリアル情報の書き込みに
 は利用できません。そこで、2010年 2月 10日の版から、addserial.awk を追加しま
-した。使い方は genserial.awk と同じですが、HIDaspx 用の HEX ファイルを含む
+した。使い方は regserial.awk と同じですが、HIDaspx 用の HEX ファイルを含む
 HEX を生成できます。
 
 使用例）
@@ -656,6 +694,7 @@ EEPROM Size       = 128 bytes
 
 
 [6] 変更履歴
+
 ■2008-09-22   senshuとirukaさんが改造を実施	高速化対応実施
 
 ■2008-09-24   senshu  firmware -d0オプションの最適化
@@ -712,7 +751,7 @@ EEPROM Size       = 128 bytes
 ■2008-10-20    * firmware (HID版に加え、libusb版を追加）
 	        * -ph:XXXX のシリアル番号をサポート
 	        * firmwareソースのクリーンアップを実施
-	        * bin フォルダにシリアル番号生成ツール(genserial.awk)を追加
+	        * bin フォルダにシリアル番号生成ツール(regserial.awk)を追加
 	        * 新アイコンに変更(RAINさん作成)
 
 ■2008-10-21    * シリアル番号生成ツールの強化
@@ -785,6 +824,7 @@ EEPROM Size       = 128 bytes
 	      0    1620       0    1620     654 main-small.hex
 	      0    2042       0    2042     7fa main.hex
 	      0    1958       0    1958     7a6 main_libusb.hex
+
 
 
 ■2008-12-03 usbdrvドライバを更新
@@ -861,790 +901,4 @@ EEPROM Size       = 128 bytes
 ■2008-12-10 サポートAVRを追加
         * mega325P/3250P/324PA, PWM216,316対応を追加
 
-
-■2009-01-10 -rF, -riオプションを追加
-
-        * -rF (Read Fuse list) オプション
-        このオプションを指定すると、ヒューズ設定形式で出力します。
-        avrdudeなどで利用する場合にも、使いやすい形式です。
-        CMD窓のコピー機能を使って、加工してください。
-
-        > hidspx -rF
-	Detected device is ATtiny2313.
-        DEVICE=ATtiny2313 -fL0xE4 -fH0xDF -fX0xFF
-
-        書き込済みの AVR のヒューズ情報設定時に利用できる形式で出力します。
-        -rf は従来と同様の機能ですので、内容を確認する場合には、-rf オプシ
-        ョンを使ってください。インターネットに繋がっている場合には、-ri オ
-        プションが便利です。
-
-        * -ri (Read Fuse Infomation) オプション
-        このオプションを指定すると、Web ブラウザで、自動的に
-        http://www.engbedded.com/cgi-bin/fc.cgi/ ページを開き、該当する AVR
-        マイコンのヒューズ情報を表示します。
-
-        > hidspx -ri (または -rI)
-
-        現在のところ提供されていない ATmega644P は、暫定的に ATmega644 を呼
-        び出すようにしました。Web ブラウザは、MS-IE, firefox,Sleipnir の 3
-        種類について、それぞれ標準ブラウザに設定した時に、正常動作すること
-        を確認しました。なお、-ri で情報を確認するたびに新たなページを開き
-        ますので、確認後にそのページを閉じ、開き過ぎに注意してください。
-
-        上記のWebサイトでfuse情報をサポートしているAVRマイコンの一覧
-        (2009年1月10日現在)
-
-        AT86RF401       AT89S51         AT89S52         AT90CAN128
-        AT90CAN32       AT90CAN64       AT90PWM2        AT90PWM3
-
-        AT90S1200       AT90S2313       AT90S2323       AT90S2343
-        AT90S4414       AT90S4433       AT90S4434       AT90S8515
-        AT90S8515comp   AT90S8535       AT90S8535comp
-
-        ATmega48        ATmega8         ATmega8515      ATmega8535
-        ATmega88        ATmega103       ATmega103comp   ATmega16
-        ATmega161       ATmega161comp   ATmega162       ATmega163
-        ATmega164P      ATmega165       ATmega168       ATmega169
-        ATmega32        ATmega323       ATmega325       ATmega3250
-        ATmega328P      ATmega329       ATmega3290      ATmega406
-        ATmega64        ATmega640       ATmega644       ATmega645
-        ATmega6450      ATmega649       ATmega6490      ATmega128
-        ATmega1280      ATmega1281      ATmega2560      ATmega2561
-
-        ATtiny10        ATtiny11        ATtiny12        ATtiny13
-        ATtiny15        ATtiny167       ATtiny22        ATtiny24
-        ATtiny25        ATtiny26        ATtiny261       ATtiny28
-        ATtiny44        ATtiny45        ATtiny461       ATtiny48
-        ATtiny84        ATtiny85        ATtiny861       ATtiny88
-
-	長期にわたり有益な情報サイトを運営している www.engbedded.com さんと、
-	このアイディアを提供してくれた audin さんに感謝いたします。
-	どうもありがとうございました。
-
-■2009-01-11 hidmonの追加とヘルプメッセージの修正
-
-        * hidspx , hidspx -? で表示するメッセージに、0110の機能追加分を反映
-
-        * この説明書に記載した hidmon の bench テストを実行できるように、
-          hidmon.exe コマンドを同梱
-
-        * -rFオプションの仕様を以下のように拡張
-        コピー＆ペーストで直接利用可能な形式を出力するに仕様とした。
-        以下のように、hidspxとavrdude用のコマンド行を表示する。
-        （海外ではavrdudeの使用が主流であり、参考のためにこの機能を追加した）
-
-        ※ FUSE 設定時には、エラーを避けるため、-d10 のように速度を落として
-           書き込むことをお勧めします。
-
-        >hidspx -rF
-        Detected device is ATtiny2313.
-
-        DEVICE=attiny2313
-        ### hidspx command line example ###
-        hidspx -d10 -fL0xE4 -fH0xDF -fX0xFF
-
-        ### avrdude command line example ###
-         avrdude -c avrdoper -P stk500v2  -p tiny2313 -U flash:w:main.hex:i \
-         -U lfuse:w:0xe4:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m
-
-        * -rd Docment view機能を追加
-        このオプションを指定することにより、該当する AVR マイコンの概要を
-        Web ブラウザに表示します。この機能は、http://www.avrfreaks.net/ さ
-        んが提供する情報を利用しています。
-
-■2009-01-12 Atmel社とAVR Freaks のURLを開く機能を追加
-
-        * 「--atmel-avr」「--avr-devices」オプションの追加
-
-        > hidspx --atmel-avr    ... Atmel社のAVRマイコンのページを開く
-        > hidspx --avr-devices  ... AVR FreaksのDevicesページを開く
-
-          私がよく利用している「Atmel 社の AVR のページ」と AVR Freaks の
-          AVR デバイス一覧のページを開く機能を追加しました。Web ブラウザの
-          ブックマークに登録しておけば済むことですが、AVR マイコンを開発す
-          る全ての PC にブックマークするのは手間がかかり（複数の PC を
-          利用する場合）ますので、メリットはあると思います。
-
-
-■2009-01-13 -rdオプションの不具合を修正
-	* 一部の AVR マイコン（AT90S2313 など）で -rd オプションを利用出来
-	  なかった点を改良（以下は、改良前のメッセージ）
-
-	>hidspx -rd
-	Detected device is AT90S8515.
-	Fuse bits are not accessible.
-
-	>hidspx -rd
-	Detected device is AT90S2313.
-	Fuse bits are not accessible.
-
-■2009-01-15 -rFオプションの改良、ユーザーブックマーク機能を追加
-
-	* avrdude -pオプションをavrdudeで指定可能なパーツ名で出力するように修正。
-
-	* hidspx.iniにブックマーク機能を追加
-	  「hidspx -- 登録した keyword」とすれば、対応の URL を開くことがで
-	  き、最大 100 件まで登録できます。登録内容は、以下のコマンドで確認
-	  できます。以下のように、HELP メッセージの後方に登録したブックマー
-	  クが表示できます。
-
-	> hidspx -? | more (あるいはless) で以下のように表示できます。
-
-  === user bookmarks ===
-  --avrlibc = [http://www11.ocn.ne.jp/~akibow/avr-libc-user-manual-1.4.3/]
-  --avrwiki = [http://avrwiki.jpn.ph/wiki.cgi]
-
-	  なお、この形式で ini ファイルにブックマークを登録した場合でも、従
-	  来の hidspx はコメントとして扱う為、バージョンを戻した場合でも不
-	  具合は生じません。
-
-	  setup.bat でバージョンアップする時、上書きで設定した内容を失うこ
-	  とがないように hidspx-save.ini に保存する仕組みを追加しました。
-	  更新時、設定内容をご確認ください。
-
-	* hidspx.iniへの登録方法
-	  以下のように「;# 」に続いて、keyword URL のペアを空白で区切って登
-	  録します。
-
-============= hidspx.ini ==================
-; AVR Book Marks
-;
-;# avrlibc   http://www11.ocn.ne.jp/~akibow/avr-libc-user-manual-1.4.3/
-;# avrwiki   http://avrwiki.jpn.ph/wiki.cgi
-;# hidaspx   http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx00
-
-	  keyword は、予約済みのオプションと区別できる 8 文字程度までの英字・
-	  数字から構成される文字列とし、入力容易なものをお薦めします。
-	  登録は利用者の使い慣れたエディタ（メモ帳も利用可能）を利用してく
-	  ださい。なお、大文字・小文字は 区別します。
-
-	  予約語は登録できませんが、以下のもの以外が利用できます。-- 以降の
-	  オプションには help を除き「-」を含めていますので、英字と数字のみ
-	  で登録すれば予約語との重複を避けることができます。
-
-	  注：URL の部分に & を含む場合、^& のように ^ を追加し、空白を含む
-	  URL は %20 に置き換え、さらに実行ファイルでは空白を含まない短いフ
-	  ァイル形式で登録してください。
-
-	 --pause-on-start=msg       Pause on Port Open
-	 --pause-on-exit=msg        Pause on exit
-	 --list-port or -p?       List COM Port
-	 --list-usbasp or -pu?    List USBasp devices
-	 --set-serial=XXXXXX      Set USBasp serial number
-	 --help
-	 --atmel-avr
-	 --avr-devices
-
-	 また、登録できるのはhttp以外も可能です。以下のように登録すれば、
-	 pdfファイルの参照や実行ファイルの起動も可能です。
-
-;# Help       file://c:/bin/HIDaspx.pdf
-;# hidspx     file://c:/bin/avrx-tool.txt
-
-	  と登録し、該当するファイルを所定の場所にコピーしておくことで、付
-	  属の文書を迅速・かつ容易に参照できます。
-
-;# avrstudio  C:\PROGRA~1\atmel\avrtoo~1\AVRSTU~1\AVRSTU~1.exe
-	  この例は、Atmel 社の AVRstudio を起動することができます。
-
-	 これらは非常に便利に使えますが、同時に危険なコマンドも登録も可能な
-	 ことを意味します。hidspx.ini を更新したあとは、必ず -? で登録状態
-	 を確認し、内容を理解した上でご利用ください。
-
-■2009-01-19 	実行時間表示ほか、各種の改良
-
-  「--」オプションの追加を容易にするため、avrspx.c内のコードを改良しました。
-        この修正によって、機能の追加が容易になると思います。また、あわせて
-        --new-mode （avrdude と類似の進捗表示機能）を追加しました。これがベ
-        ストは考えておりませんが、数字表示よりは穏やかに画面を書き換えるた
-        め、忙しさは感じません。実行時間の表示機能を追加し、処理速度の評価
-        が容易になりました。
-
- >hidspx -rp -onul -d4
- Detected device is ATmega88.
- RD  Flash [##################################################] 8192,   5.20s
- Passed.
- Total read/write size = 8192 B / 5.25 s (1.52 kB/s)
-
- >hidspx -rp -onul -d1
- Detected device is ATmega88.
- RD  Flash [##################################################] 8192,   1.52s
- Passed.
- Total read/write size = 8192 B / 1.61 s (4.97 kB/s)
-
-
-  「--new-mode-」
-	hidspx.iniに書いた設定を無効化することも可能です。
-	--new-mode- のように、最後に'-'をつけると、このオプションを設定しない
-	という意味になります。
-
-  「-!」ブックマーク一覧を表示します。-?での表示はヘルプ表示が見にくいと感じた
-        ので、仕様を変更しました。
-
-  「-o」書き込みファイルの指定できます。
-        従来は、'>' で書き込むファイルを指定しました。現在も使えますが、オ
-        プションで指定できると処理を効率化できることが確認できたので、「-oフ
-        ァイル」（空白で区切らないこと）でファイル指定を可能にしました。空
-        白を含むファイルは"file 123.hex"のように指定します。
-        -onul と指定すると、-rp コマンドを実行して、NUL デバイスに書き込む
-        ことが可能です。（速度の計測や動作テストに便利）
-
-	その他にもヘルプ表示を変更しています。詳細は「-?」で確認してください。
-
-■2009-01-21  -rFオプションでの表示を改良
-
-  「-rF」の改良
-        誤った FUSE データの書き込みは AVR チップを使用不能にする可能性があ
-        ります。そこで、-rF オプションで表示するコマンド行に -q(query) オプ
-        ションを追加し、チップを特定する仕様に改良しました。
-
- >hidspx -rF
- Detected device is ATtiny2313.
-
- DEVICE=attiny2313
- ### hidspx command line example ###
- hidspx -qtiny2313 -d10 -fL0xE4 -fH0xDF -fX0xFF
-
-        以下のように、ターゲットの AVR マイコンが指定したチップでなければ、
-        それ以降のコマンドを実行しません。
-
- >hidspx -qtiny26 -rp
- Detected device is ATtiny2313.
- Invalid Device tiny26 != tiny2313
-
-  「Makefile.gcc」の修正
-	hidspx-gcc.exe にアイコン情報が欠けていたのを修正
-
-■2009-01-21 ...	HIDaspx用のファームウェアを修正
-	* Linux上でmain-12.hexを利用するとエラーになり利用できないのを修正
-	  この不具合は、2008年11月27日に実施した変更の副作用です。それ以前の
-	  版を使っている場合には問題なく動作します。
-
-	#define USB_CFG_HAVE_INTRIN_ENDPOINT    1
-	#define USB_CFG_SUPPRESS_INTR_CODE      1
-	#define USB_CFG_INTR_POLL_INTERVAL      200 //無駄なので長いinterval
-
-	  この修正は、BSD OSやMac OSでの動作に対応する為の変更ですが、正しい解決方法が
-	  不明なので、以前の設定に戻しました。
-
-	#define USB_CFG_HAVE_INTRIN_ENDPOINT    0
-	#define USB_CFG_SUPPRESS_INTR_CODE      0
-	#define USB_CFG_INTR_POLL_INTERVAL      10
-
-
- Error hidWrite(): error sending control message: Device or resource busy ...
- Error hidRead(): error sending control message: Device or resource busy ...
-
-	* avrspx-doc.txt を追加
-	  kkk さんの書かれた avrsp に対する改良点の説明です。hidspx は、こ
-	  の改良点の全てを継承しています。
-
-■2009-01-23  細かな見直し
-
-	* ヘルプメッセージのtypoを修正
-	* libusbprog.batの対象ファイルの誤りを修正
-	* --new-mode の進捗表示を修正（表示のズレを修正）
-
- >hidspx -d1 main-12.hex main-12.eep
- Detected device is ATtiny2313.
- Erase Flash memory.
- Flash memory...
- Writing   [##################################################]   2002,   0.67s
- Verifying [##################################################]   2002,   0.39s
- Passed.
- EEPROM...
- Writing   [##################################################]      7,   0.05s
- Verifying [##################################################]      7,   0.25s
- Passed.
- Total read/write size = 4018 B / 1.52 s (2.59 kB/s)
-
-■2009-01-24 オプション指定の不具合を修正
-        * -rオプションの右側にオプションを指定するとコマンドエラーになる
-          （-rf, -rFコマンドを追加した時のコードが不完全でした）
-
-■2009-01-25 コマンド表示オプションを追加
-        * --show-optionsを指定すると、iniファイルを含めたオプション一式を
-          コマンドライン形式で表示します（宮前さんの提案）。
-          ただし、--show-options自体は表示しません。
-          また、iniファイルに設定することを配慮し、--show-options-で指定を
-          解除可能にしました。
-
-■2009-01-26 コマンド表示オプションを追加
-        * --show-optionsの出力は標準エラーに変更しました。
-          理由は、-rpで読み出したHEXファイルへのコマンドエコーの混入を
-          避けるためです。（仕様の検討が不十分でした）
-          なお、-oREAD.hexでは、この混入は起きません。
-
-■2009-03-07 「鶏と卵」の問題を解決する方法を追記しました
-        * bin\firmware\egg-write.batを追加
-        * 標準出力のバッファリングを行単位に変更しました（外部ツールへの配慮）
-        * HIDaspx.pdfを更新
-
-■2009-03-17 -rIオプションを追加
-	* 「Engbedded Atmel AVR(R) Fuse Calculator」の新版に対応
-	* hidspx_tips.pdfの追加（HIDaspx.pdfからhidspxのtipsを分離）
-
-■2009-03-30 空のHEXファイルを表示する機能を追加
-	* hidspx_tips.pdfの更新
-	* fuse_en.txtを日本語向けに修正(純英語環境用はfuse_en_orig.txt)
-	* 今までは、書き込みデータを含まないファイルを指定すると HELP メッセージ
-	  を表示していたが、これを以下のように修正
-	- この修正で、HEX ファイルは'.' を含むファイル名である（HEX以外も可）こと、
-	  EEPROM 用のファイルは、.EEP(大文字小文字は問わない) の拡張子であること
-	  をチェックする。（今まではファイル名の一部に含んでいれば EEPROM 用と判
-	  断していたため、ABC.EEP.HEX というファイルは、EEPROM 用のファイルに解釈
-	  された）
-
- >cat a.hex
- :00000001FF
-
- >cat a.eep
- :00000001FF
-
- これらの書き込みを実行すると
-
- >hidspx a.hex a.eep
- a.hex : HEX File is empty.
- a.eep : HEX File is empty.
-
-上記の表示を行ない書き込みをスキップします。従来の版も同じ動作ですが、usage メッ
-セージを表示するため、コマンド指定を間違ったと誤認する可能性があります。（私も、
-このメッセージの意味を理解するのにしばらく悩みました）
-
-■2009-04-03 hidspx-GUI.exeを追加
-	* ゆきの研究室で公開されている「avrdude-GUI」を参考に作成しました。
-	* まだ出来たばかりでチェックも不十分ですので、FUSEの書き込みは、
-	  もう少し動作テストを行ってから有効にします。
-
-■2009-04-06 hidspx-GUI.exeを追加
-	* FUSEの書き込みとHEXファイルとhidspx.exeのドロップを可能にしました。
-	* ISPではFUSEを操作できない場合でも認識を可能にしました（AT90S2313など）。
-
-
-■2009-04-07 hidspx-GUI.exeのBUGを修正
-	* コマンド起動時のファイル指定の不具合を修正
-	* 起動直後はFUSE READボタンをフォーカスする
-
-■2009-04-09
-	hidspx-GUI.exeの機能を拡張
-	* 実行の様子を示すログウインドウの追加
-	* 各種の修正
-
-	hidspx-gcc.exeをhidspx-GUIとの組合せた時に発生する表示の不具合を修正
-	（'#'を出力する都度、fflushすることで対応）
-
-■2009-04-10
-	hidspx-GUI.exe
-	* コマンド引数にてワイルドカード文字を展開
-	* ログ窓の表示フォントを等幅フォントに変更
-	* エラー処理を強化
-
-	hidspx.exe, hidspx-gcc.exe
-	* --new-mode を標準にした（旧モードは --new-mode- を指定する）
-
-■2009-04-11
-	hidspx.exe, hidspx-gcc.exe
-	* -rph, -reh （16進ダンプ機能の追加）
-
-使用例
->hidspx -reh
-Detected device is ATtiny2313.
-EEPROM...
-Reading   [##################################################]    128,   0.22s
-Passed.
-
-0000  1F C0 1F C1 37 C0 36 C0 - 35 C0 35 C0 33 C0 32 C0  |    7 6 5 5 3 2 |
-0010  31 C0 30 C0 2F C0 2E C0 - 2D C0 2C C0 2B C0 2A C0  |1 0 / . - , + * |
-0020  29 C0 28 C0 27 C0 02 23 - 24 23 22 22 02 23 23 03  |) ( '  #$#"" ## |
-0030  22 25 05 02 23 24 23 22 - 22 02 23 26 22 23 44 00  |"%  #$#"" #&"#D |
-0040  11 24 1F BE CF ED CD BF - 10 E0 A0 E6 B0 E0 E2 E3  | $              |
-0050  F3 E0 03 C0 C8 95 31 96 - 0D 92 A4 37 B1 07 D1 F7  |      1    7    |
-0060  10 E0 A4 E7 B0 E0 01 C0 - 1D 92 A6 38 B1 07 E1 F7  |           8    |
-0070  1A D1 5E C1 C5 CF 1F 92 - 0F 92 0F B6 0F 92 11 24  |  ^            $|
-Total read/write size = 128 B / 0.30 s (0.42 kB/s)
-
-■2009-04-12
-	hidspx-GUI.exe (ver 0.3.2)
-	* -rph, -reh などの表示で極端に速度が低下するのを改善
-          大量の文字列連結を効率化しました（2桁の速度向上）
-        * 高速化の副作用（文字化け）の改善
-        * ログテキスト窓の表示を適正化
-	* エラー処理を修正
-
-■2009-04-13
-	hidspx.exe, hidspx-gcc.exe
-	* -rph, -reh （64kB超の16進ダンプに対応）
-
-	hidspx-GUI.exe (ver 0.3.6)
-	* Flashの16進ダンプ用のRead(SCRN)ボタンを追加
-	* CLR LOGボタンを追加
-	* TAB オーダーの適正化
-	* ログテキストエリアの背景色を変更
-
-■2009-04-15
-	hidspx.exe, hidspx-gcc.exe
-	* -rph, -reh （ASCII文字表示形式を変更、上記のスタイルに戻した）
-
-	hidspx-GUI.exe (ver 0.4.2)
-	* Simpleモードでの処理を強化
-	1. Simpleモードでも違和感のないボタン配置に工夫しました。
-	2. Simpleモードは終了時に記憶します。
-	3. SimpleModeでは、「隠すのではなく、機能を無効にする」に変更
-	4. Simpleモードでは、Flash/EEPROMの書き込みを判断して書き込む
-
-	* 共通の改良点
-	1. 5秒以上時間を要する場合、ボタン操作をロックする
-	2. hidspx実行中でも、定期的に画面を再描画する
-	3. 起動直後にライタが接続されていれば、AVRマイコンを自動で認識
-	4. Flash/EEPROMの両方に[HEX dump]...画面への表示を追加。
-	5. ボタンをスリム化し、ログ表示エリヤを拡大（全体の大きさは同じです）
-	6. FuseCalcの新版対応のExtFuse表示を追加
-	7. エラーの検出を強化(-rp, -re にて例外処理を追加)
-
-■2009-04-19
-        setup.batの内容を修正（hidspx_tips.pdfファイルもコピーする）
-        hidspx.ini user_bookmarkのリンク切れを修正
-
-	hidspx.exe, hidspx-gcc.exe
-	* FuseやLock bit書き込み時、実際に書き込んだ値を表示する
-
-	hidspx-GUI.exe (ver 0.4.7)
-        1. FuseのRead時は、-rfコマンドも合わせて実行
-        2. Fuse Calcは、hidspx 内部のコマンドを呼び出す（mega644p対策）
-        3. ボタンの大きさを均等化（イメージ貼り付けにより、大きさを画一化）
-        4. 一時ファイルが消えない場合があったのを修正
-        5. Command Executeのコマンド補完を実現
-
-■2009-04-20
-	hidspx-GUI.exe (ver 0.4.8)
-        1. Command Executeにて、user bookmarkを指定時の時間待ちを追加（約3秒間）
-
-
-■2009-05-25
-	説明文の見直し（主にライセンス関係）
-
-■2009-06-23
-	hidspx-gcc.exeにて、-wオプションを指定した場合、メッセージ出力が遅くなるのを修正
-	hidspxGコマンドで、-w3のように指定した場合、内部エラーになるのを修正
-
-■2009-08-07
-	RST ピンを無効化ビットの書き込みをチェックし、警告します。RST ピンの無効
-	化（ポートへの割り付け）は、ISP （AVRSIP-mkII や hidspx での操作）が無効
-	になるので、これを避けるため、チェック機構を追加しました。
-	※ IO ピンが不足し、何としても IO ピンに割当てたい場合に限り、この書き込
-	   みを行ってください。この FUSE 情報を書き込むと ISP は無効になり、解除
-	   には高電圧パラレルプログラマが必要になります。
-
-	例）
-	>hidspx -fH0x07
-	Detected device is ATtiny26.
-	WARN: RST PIN disable detected. If you hope for the writing,
-	Enter the -f#H0x07 option.
-
-	-f#のように指定すれば、この書き込みを実行できる。（細心の注意が必要です）
-
-	なお、RSTDISBLビットは少ピンAVRマイコンにのみ、実装されています。
-	※ この改良に関しては、je1htm氏とkuga氏、kawana氏に助言をいただきました。
-
-■2009-08-17
-	(1) AVR マイコンのいくつかは DWEN(debugWire ENable) という FUSE ビット が
-	    利用できます。debugWire は、AVR Dragon などデバッグツールを利用するこ
-	    とで効率的な開発が可能になります、しかし、この FUSE ビットを書き込む
-	    と ISP （In Sysytem Programming）が無効になり、簡易な AVR ライタ
-	    （AVRISP-mkII や hidspx など） からの操作が不能になります。
-
-	    hidspx を利用して AVR マイコンのプログラム開発を行う場合には DWEN ビ
-	    ットを有効にする必要はなく、DWEN ビットをプログラムできるのは危険と考
-	    えました。そこで、DWEN ビットのプログラムを禁止する機構を追加しました。
-	    ※ DWEN ビットの解除には、AVR Dragon や高電圧パラレルプログラマが必要
-	       です。
-
-	例）
-	> hidspx -rf
-
-	Detected device is ATtiny2313.
-	:
-	High:11-11101
-	     |||||||+-- RSTDISBL (RESETピン 1:有効, 0:無効(PA2))
-	     ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
-	     |||+-- WDTON (WDT 0:常時ON, 1:通常)
-	     ||+-- SPIEN (1:ISP禁止, 0:ISP許可) ※Parallel時のみ
-	     |+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
-	     +-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
-	:
-	>hidspx -fH0x5d ... DWENビットのプログラムを指示
-	Detected device is ATtiny2313.
-	WARNING: ISP disable FUSE bit (DWEN) detected, Unprogrammed DWEN bit.
-	Fuse High byte was programmed (0xDD).
-	⇒ DWENビットはプログラムされず、無視する(0xddを書き込んでいる)
-
-	※ この改良に関しては、kuga氏、すん氏に助言をいただきました。
-
-	(2) hidspx-GUI.exe (ver 0.5.0) の改良
-	    - メニューバーの処理をサポート
-	    - -dオプションの扱いを修正
-
-	(3) hidspxG.exe の改良
-	    - -dオプションの扱いを修正
-
-■2009-08-26
-	(1) vusb-20090822.tar.gz にて提供されるusbdrvに差し替えました。
-	    この変更により、HIDaspx用ファームウェアが更新されています。
-	(2) hidspxG.exeとhidspx-GUIの複数起動時は '1' を返し、終了します。
-	    （今までは、不定の値を返していました）
-
-■2009-09-16
-	(1) 同梱のPDFファイルの内容を刷新しました。URLのリンク部分を点検し、
-	    クリックすることで、該当のページを開くことができるように配慮しました。
-	(2) 添付回路図を見直し、誤解の生じにくいものに修正しました。
-	(3) hidspx-GUI.exeのログ窓にて、右クリックメニューを有効にしました。
-
-■2009-09-25
-	(1) hidspx の -e コマンドを他のFUSEオプションと同様の扱いにしました。
-	    従来は、-e を実行すると、hidspx の処理を終了していましたが、この版か
-	    らはエラーが起きない限り、継続して処理を行います。この変更により、こ
-	    れは、avrdude との互換性が増し、avrdude からの移行を容易になりました。
-
-	(2) -rF オプションでのavrdude向けの表示を変更しました。Efuseの表示がhidspx
-	    の場合と異なる点に注目してください。
-
-	>hidspx -rF
-	Detected device is ATmega168.
-
-	DEVICE=ATmega168
-	### hidspx command line example ###
-	hidspx -qmega168 -d10 -fL0xFF -fH0xDD -fX0xF8
-	                                        ~~~~~
-	### avrdude command line example ###
-	avrdude -cavrdoper -Pstk500v2  -pm168 -u -Uflash:w:main.hex:i \
-	 -Ulfuse:w:0xff:m -Uhfuse:w:0xdd:m -Uefuse:w:0x00:m
-	                                             ~~~~~
-
-	(3) hidspx-GUI.exeのEfuse右の表示をavrdude互換表示を行います。
-	    （従来はマスク値でしたが、わかりにくかったので改めました）
-
-■2009-09-28
-	(1) -l<hex> により、Lock bitを設定時、未定義ビットの扱いをavrdudeと
-	    同様に、'0' として扱ってもエラーにはしない仕様にしました。
-
-	>hidspx -rl （最後のカラムに表示します）
-	Detected device is ATmega168.
-	ATmega168 FF:FF DD:DF F8:07 CF
-
-	(2) --show-options でオプション一覧を表示する時、空白を含む引数は、
-	    ""で囲むようにしました。（CMDへのCopy and Pasteを可能にする為）
-
-	※ バージョン表記を以下のように改めました。（b11.3 => b11.4）
-	hidspx (b11.4) by t.k & senshu, Borland C++ 5.5.1, Sep 28 2009
-
-■2009-09-29
-	(1) -l<hex> により、Lock bit を設定時、90S シリーズに関しては、書き込み時
-	    の行わない仕様とします。これは書き込みと読み出しのビットの対応がマイ
-	    コン毎にことなるため、プログラムが複雑化するのを避けるためです。なお、
-	    設定値は -rl オプションで確認できます。
-
-	(2) -ph で HIDaspx を指定したとき、-d の規定値 (4) が設定されない不具合を
-	    修正。これは 「hidspx.ini が無い状態で起動した場合に処理が遅い」とい
-	    う不具合を修正するものです。以前の版でも、推奨する使い方をしていた場
-	    合にはこの不具合は生じません。
-
-	(3) ディレイの設定値や参照する ini ファイルを確認する「--show-spec」オプ
-	    ションを追加しました。これにより、iniファイルが無い場合の設定状況を
-	    確認できます。
-
->hidspx-gcc --show-spec …（HIDaspxにATTiny2313を接続して実行）
-prog path name [hidspx-gcc]
-ini file name  [hidspx-gcc.ini]
-No SPI bridge on the \\.\COM1.
-Type = COM-SPI bridge, Delay = 4
-
->hidspx-gcc --show-spec -ph …（HIDaspxにATTiny2313を接続して実行）
-prog path name [hidspx-gcc]
-ini file name  [hidspx-gcc.ini]
-Detected device is ATtiny2313.
-Type = HIDaspx, Delay = 4
-
-
-■2009-11-16
-	(1) FUSE.txtのATmega328P用の記述を修正しました。
-
-	(2) HIDaspxに対するhidpsx.ini が無い時の初期値(-dNの値)を
-	    適正に処理しました。
-
-	(3) Norman Malware Cleaner(Version 1.5.0.5)にて、usbtool.exe
-	    が、以下のようにMalwareと誤認識される不具合を修正しました。
-		C:\bin\usbtool.exe (Infected with W32/Zlob.gen134)
-	    … upxによる圧縮を中止することで対応しました。
-
-■2009-11-25
-	(1) HIDaspx用のファームを avr-gcc vewr 3.4.6 で作り直しました。
-
-■2010-01-26
-	(1) HIDaspx用の商用ファームウェアに対応しました。
-	    -php を指定することで商用版のHIDaspxファームを操作できます。
-	    （機能は、無償版と全く同様です。）
-
-	無償版のPID/VID
-	VID=0x16c0 PID=0x05df vendor="YCIT" product="HIDaspx" serial="0000"
-
-	商用版のPID/VID
-	VID=0x20a0 PID=0x410e vendor="YCIT" product="HIDaspx" serial="0000"
-
-	(2) hidmonコマンドの改良
-	    -pp を指定することで商用版のHIDaspxファームを操作できます。
-	    （機能は、無償版と全く同様です。）
-
-	(3) ノートン2010による誤検出対策
-	  この版の実行ファイルは、upxによる圧縮を行わずに提供します。
-
-
-■2010-01-27
-	(1) hidmon.dllを商用ファームウェアに対応しました。
-
-  無償版 … UsbInit("*"), UsbInit("0123")のようなシリアル番号指定も可能
-  商用版 … UsbInit("#"), UsbInit("#0123")のようなシリアル番号指定も可能
-
-  どちらも、数字を省略すると、"0000"を指定したと見なします。
-
-■2010-02-01
-	(1) 実験レベルのファームウェアの添付を停止し、build-all.batの
-	    内容を修正し、不要なオブジェクトの生成を修正しました。
-	(2) 同梱のPDFファイルを最新に差し替えました。
-
-■2010-02-08
-	(1) HIDaspxのシリアル番号のワイルドカード指定を可能にしました。
-	    hidspx において、0000 以外のシリアル番号の HIDaspx に対しても、シリア
-	    ル番号の指定無しに認識できる仕様に変更しました。この自動認識機能は、
-	    HIDaspx を一個だけ挿入した場合に正しく機能しますが、複数の HIDaspx が
-	    挿入されている場合には、不安定な動作をする場合があります。そのため、
-	    複数の HIDaspx を同時に利用するには、従来通り、例 3 の様にシリアル番
-	    号を指定して利用してください。
-	    ※ シリアル番号は、例 1 の方法で調査できます。
-
-  例1）
-  >hidspx -ph? … HIDaspxの検索（接続対象のシリアル番号の調査方法）
-  VID=16c0, PID=05df, Manufacturer: [  YCIT], Product: [HIDaspx], serial number: [0999]
-
-  例2）
-  >hidspx -ph -r … 従来とは異なり、シリアル番号を省略しても動作可能
-  Detected device is ATtiny2313.
-  Device Signature  = 1E-91-0A
-  Flash Memory Size = 2048 bytes
-  Flash Memory Page = 32 bytes x 64 pages
-  EEPROM Size       = 128 bytes
-
-  例3）
-  >hidspx -ph:0999 -r … 複数のHIDaspxを同時に使用する場合の指定方法
-  Detected device is ATtiny2313.
-  Device Signature  = 1E-91-0A
-  Flash Memory Size = 2048 bytes
-  Flash Memory Page = 32 bytes x 64 pages
-  EEPROM Size       = 128 bytes
-
-	(2) hidmon.exe, hidmon.dll でも同様に、ワイルドカード指定を可能にしました。
-
-  シリアル番号を設定すれば、複数の HIDaspx を利用が可能になります。シリアル番号の
-  設定方法は、「[3] シリアル番号生成ツールの使い方」をご覧ください。
-
-■2010-02-09
-	(1) 「シリアル情報」を「シリアル番号」に統一
-	(2) シリアル番号の重要性に関する説明文を追加
-
-■2010-02-10
-	(1) シリアル番号生成ツール（addserial.awk）を追加
-	    main-12.hexとシリアル番号をマージしたHEXファイルを生成可能
-
-■2010-02-11
-	(1) -php オプションが hidspx.ini に設定されていた場合、コマンド行で
-	    -ph? を指定しても、無効になっていた不具合を修正
-	(2) -ph? 指定時の表示形式の簡略化（80文字を超えていたため）
-  > hidspx -ph?
-  VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000]
-
-■2010-02-12
-	(1) シリアル番号検索機能を厳格化（3回確認し、同一のものを採用）
-	(2) -ph? で複数のHIDaspxが接続されている場合、全てをリストする。
-  > hidspx -ph?　… 0100, 0007, 0000 の3台を挿入している場合
-  VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0100] (*)
-  VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0007]
-  VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000]
-  ※ シリアル指定省略時は、(*)の0100を選択します。
-
-  なお、無償版と商用版のファームは VID, PID が異なり、それぞれに省略時のシ
-  リアル番号を持ちます。したがって、以下のように利用してください。
-
-　○ hidspx -ph?   …　無償版のHIDaspxをリストする
-　○ hidspx -php?  …　商用版のHIDaspxをリストする
-　× hidspx -ph*?  …　この指定は無効です（個別に指定が必要です）
-
-
-■2010-02-13 ～ 2010-02-14
-	(1) -ph?にテスト回数指定機能を追加し、エラーメッセージの見直しを実施
-
-	-ph? に続いて数値を指定できます。この値は、シリアル番号の連続読み出
-	しテスト回数を指定できます。省略時の値は 3 で、2 以下やマイナスの値
-	を指定すると、2 と解釈します。
-
-	1 回の認識で 約 30m秒が必要なので、1000 を指定すれば、完了までに約
-	30秒間の時間が必要です。正常にシリアル番号が得られると、以下の形式
-	で検出したシリアル番号と共にを表示し、複数個セットされていれば、VID,
-	PID が同一の全てをリスト表示します。
-
-	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
-
-	指定回数のシリアル番号読み出し時、一回でも不一致があると
-
-	hidspx: HIDaspx(VID=16c0, PID=05df) serial check error (数字)
-	（カッコ内の数字は、エラー発生時のチェック回数）
-
-	と表示します。
-
-	なお、HIDaspx が装着されていない場合は以下のメッセージです。
-
-	hidspx: HIDaspx(VID=16c0, PID=05df) isn't found.
-
-	この機能により、HIDaspx と hidspx の安定度がテストできます。確実に
-	動作する HIDaspx なら、1000000 （100 万回）を指定しても、エラーは生
-	じません。（100 万回のテストには約 8時間以上の時間が必要です）
-
-	$ time hidspx -ph?
-	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
-	real    0m0.219s
-
-	$ time hidspx -ph?10
-	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
-	real    0m0.438s
-
-	$ time hidspx -ph?100
-
-	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
-	real    0m3.250s
-
-	$ time hidspx -ph?1000
-	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
-	real    0m31.969s
-
-	(2) この版から、build-exe.batを追加し、firmwareの更新と実行ファイルの
-	　　更新を区別するようにしました。
-
-	(3) hidmon.exe, hidmon.dll のシリアル番号検索機構をhidspxと同等に変更
-
-	> hidmon -p?
-	> hidmon -pp?
-
-	（↑）は、hidspx と同様ですが、hidmon には試行回数指定機能はありません。
-	シリアル番号読出しのテストには hidspxを利用してください。
-
-	(4) hidmon.exe のbenchコマンドのテスト機能を強化しました。
-	送受信のバイト数と全転送内容の突き合わせを実施します。
-
-■2010-02-16
-
-	(1) hidspxG.exe のレイアウトを修正（進捗窓の拡大）
-
-	(2) hidspx や hidmon は指定しなければ、省略時は、無償版に対応する仕様にな
-	    っています。商用版のファームを利用する場合には、オプションを追加する
-	    必要があります。(hidspx -php, hidmon -ppのように指定)
-	    hidspxG や hidspx-GUIでも同様です。 「Command line option」窓にて、
-	    「-php」を追加して利用してください。
-
+※ 長大になったので、2009年以降の変更点は、history-j.txtに記載します。

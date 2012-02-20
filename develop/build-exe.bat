@@ -18,4 +18,8 @@ echo ======= All update. =======
 popd
 avr-size ../bin/firmware/*.hex
 REM upx -9 ../bin/hid*.exe
+imagecfg -a 1 hidmon.dll
+imagecfg -a 1 hidmon.exe
+imagecfg -a 1 hidspx-gcc.exe
+imagecfg -a 1 hidspx.exe
 pause

@@ -29,10 +29,10 @@ make install
 make clean
 
 REM make default (HIDaspx) for PRO version
-make -f Makefile.pro clean
-make -f Makefile.pro
+REM make -f Makefile.pro clean
+REM make -f Makefile.pro
 REM make -f Makefile.pro install
-make -f Makefile.pro clean
+REM make -f Makefile.pro clean
 
 REM make HIDaspx (RC mode , MONITOR only)
 REM make MAIN=main-small F_CPU=12800000 clean
