@@ -1,6 +1,14 @@
 LibUsb-Win32 Change Log
 
-V1.2.3.0 (03/16/2010)
+V1.2.4.0 (04/11/2011)
+=======================
+* Removed get configuration request from the core driver 
+  set_configuration function.  This caused problems with
+  some non-compliant usb devices.
+
+* Added device descriptor dump to test applications.
+
+V1.2.3.0 (03/16/2011)
 =======================
 * Fixed bug-id 3117686 reported by Tim Schuerewegen.
 

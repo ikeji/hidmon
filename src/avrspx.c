@@ -152,7 +152,7 @@ const DEVPROP DevLst[] =    /* Device property list */
 //------- ATmega
     { "mega48",      M48,   {0x1E, 0x92, 0x05},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40}, 76, "m48"},  /* DWEN */
     { "mega48P",     M48P,  {0x1E, 0x92, 0x0A},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x01},{1, 0x80, 0x40}, 76, "m48p"}, /* DWEN */
-    { "mega8",       M8,    {0x1E, 0x93, 0x07},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 0x3F, 5, 4, {0xFF, 0xDF}      ,{1, 0x80, 0x00}, 52, "m8"},
+    { "mega8",       M8,    {0x1E, 0x93, 0x07},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 0x3F, 5, 4, {0xFF, 0xDF}      ,{0, 0x80, 0x00}, 52, "m8"},
     { "mega8515",    M8515, {0x1E, 0x93, 0x06},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 0x3F, 5, 4, {0xFF, 0xDF}      ,{0, 0x00, 0x00}, 63, "m8515"},
     { "mega8535",    M8535, {0x1E, 0x93, 0x08},   8192,  64,  512,  4,  6, 11, 0xFF, 0xFC, 0x3F, 5, 4, {0xFF, 0xDF}      ,{0, 0x00, 0x00}, 64, "m8535"},
     { "mega88",      M88,   {0x1E, 0x93, 0x0A},   8192,  64,  512,  4,  6,  5, 0xFF, 0xFC, 0x3F, 6, 1, {0xFF, 0xDF, 0x07},{1, 0x80, 0x40}, 77, "m88"},  /* DWEN */
@@ -2956,7 +2956,8 @@ int write_fuse (void)
         vfuse = fuse = CmdFuse.Data[HIGH] & Device->FuseMask[HIGH];
         if ((Device->ISP_DISBL[ISP_DIS_BYTE] != 0
         && (fuse & Device->ISP_DISBL[ISP_DIS_DWEN]) == 0) ) {
-            fprintf(stderr, "WARNING: ISP disable FUSE bit (DWEN) detected, Unprogrammed DWEN bit.\n");
+            fprintf(stderr, "WARNING: ISP disable FUSE bit (DWEN) detected.\n"
+            				"Unprogrammed DWEN bit.\n");
             vfuse = fuse = (fuse | Device->ISP_DISBL[ISP_DIS_DWEN]);
         } else {
             vfuse = fuse;

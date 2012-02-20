@@ -947,3 +947,10 @@ Type = HIDaspx, Delay = 4
 
 	Cal: 95
 
+
+■2011-06-28
+
+	(1) ATmega8のFUSE操作にて、不適切な警告表示が出るのを修正
+	　　(avrspx.c内のデータテーブルの誤り)
+
+	(2) Srecode関連の実行ファイルを更新【ver 1.47　→ ver 1.56】

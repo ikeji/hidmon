@@ -56,12 +56,11 @@ $(EXE): $(OBJS) $(RES) $(LIB)
 install:
 	install $(EXE) ../bin
 ###
-avrspx$(O): avrspx.h usbasp.h hidasp.h
-hidasp$(O): usbhid.h hidasp.h avrspx.h ../firmware/hidcmd.h
-hidasp_$(O): usbhid.h hidasp.h avrspx.h ../firmware/hidcmd.h
-hwctrl$(O): avrspx.h hwctrl.h
-rscr$(O): avrspx.h
-usbasp$(O): ./usb.h avrspx.h usbasp.h
-utils$(O): avrspx.h
-wronly$(O): avrspx.h
-libusb_dyn$(O): libusb_dyn.c
+avrspx$(O): avrspx.c avrspx.h usbasp.h hidasp.h
+hidasp$(O): hidasp.c usbhid.h hidasp.h avrspx.h ../firmware/hidcmd.h
+hwctrl$(O): hwctrl.c avrspx.h hwctrl.h usbasp.h hidasp.h
+libusb_dyn$(O): libusb_dyn.c usb.h
+rscr$(O): rscr.c avrspx.h
+usbasp$(O): usbasp.c avrspx.h usbasp.h
+utils$(O): utils.c avrspx.h
+wronly$(O): wronly.c avrspx.h
