@@ -377,13 +377,25 @@ GND     [10      11] PD6(NC)
 
 int main(void)
 {
-#if	1
-//	USB D+ D- の配線が瓶詰堂さんの新しい回路図用 HIDsphとも互換なのでこれを推奨.
-	DDRD = ~USBMASK;   /* all outputs except USB data */
-	PORTB = (1<<4)|(1<<3);	/* RESET=High, PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
-	DDRB = ~(1<<5);    /* all outputs except USI input data */
+#if	INCLUDE_MONITOR_CMD
+//	モニタコマンド有効の場合は、SCK,MOSIのHi-Z制御までホスト側から行う.
+	DDRD = ~USBMASK;        /* all outputs except USB data */
+	PORTB = (1<<3);			/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
+	DDRB = 0x0f;			/* PB7-4=in PB3-0=out */
 	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
 #else
+//	モニタコマンド無効の場合は、SCK,MOSIは常に出力になるのでターゲットMCUとのPIN出力競合に注意.
+	DDRD = ~USBMASK;        /* all outputs except USB data */
+	PORTB = (1<<4)|(1<<3);	/* RESET=High, PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
+	DDRB = ~(1<<5);         /* all outputs except USI input data */
+	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
+
+//	ToDo:	LEDコマンド内でDDRBの設定も変える.
+#endif
+
+
+#if	0
+	//参考用
 	//	未使用pinを入力設定にしておく.
 	DDRD = 0; 	// Ｄ＋、Ｄ－を含め、PORTDをすべて入力モードにする。
 	PORTB = (1<<4)|(1<<3);	/* RESET=High, PB3 LED(PWR) ON, PB2 LED(ACC) OFF */

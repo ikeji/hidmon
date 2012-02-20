@@ -54,7 +54,7 @@ static	int have_ledcmd = 0;	// LED制御の有無.
 //----------------------------------------------------------------------------
 //--------------------------    Tables    ------------------------------------
 //----------------------------------------------------------------------------
-//  HID Report のパケットはサイズ毎に ５種類用意されている.
+//  HID Report のパケットはサイズ毎に ３種類用意されている.
 #define	REPORT_ID1			1	// 8  REPORT_COUNT(6)
 #define	REPORT_ID2			2	// 32 REPORT_COUNT(30)
 #define	REPORT_ID3			3	// 40 REPORT_COUNT(38)
@@ -246,8 +246,12 @@ int hidPeekMem(int addr)
 	return buf[1];
 }
 
+#define	DDRB			0x37	// PB4=RST PB3=LED
+#define	DDRB_WR_MASK	0xf0	// 制御可能bit = 1111_0000
 #define	PORTB			0x38	// PB4=RST PB3=LED
-#define	PORTB_WR_MASK	0x1f	// 制御可能bit = 0001_1111
+#define	PORTB_WR_MASK	0		// 0 の場合はMASK演算は省略され、直書き.
+
+#define HIDASP_RST		0x10	// RST bit
 
 /*
  *	LEDの制御.
@@ -256,10 +260,20 @@ int hidPeekMem(int addr)
  */
 static void hidSetStatus(int ledstat)
 {
+	int ddrb;
 	if( have_ledcmd ) {
 		hidCommand(HIDASP_SET_STATUS,0,ledstat,0);	// cmd,portd(&0000_0011),portb(&0001_1111),0
 	}else{
+		if(ledstat & HIDASP_RST) {	// RST解除.
+			ddrb = 0x00;			// PORTB 全入力.
+									// PORTB.
+									// PORTB.RST=1 なので、RST のpull up のみ行われる.
+		}else{
+			ddrb = 0xd0;			// DDRB 1101_1100 : 1が出力ピン ただしbit3-0は影響しない.
+		}
+
 		hidPokeMem(PORTB,ledstat,PORTB_WR_MASK);
+		hidPokeMem(DDRB ,ddrb   ,DDRB_WR_MASK);
 	}
 }
 

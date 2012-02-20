@@ -114,6 +114,7 @@ AVR USBに準じてGPL2とします．
 2008-09-28 ... hidspxのコンパイルオプションに-Wallを追加し、警告メッセージに
                対する修正を実施(senshu)
                firmware -d0オプションをUSBasp互換性を高めた(iruka)
+               MOSI, SCK の競合を回避（Hi-Z化する）
 
 # TAB=4で編集しています。
 
