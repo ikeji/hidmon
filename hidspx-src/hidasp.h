@@ -5,6 +5,7 @@
 #define HIDASP_RST_L_BOTH			0x00
 #define HIDASP_SCK_PULSE 			0x80
 
+int hidasp_list(void);
 int hidasp_init(char *string);
 void hidasp_close();
 int hidasp_program_enable(int delay);

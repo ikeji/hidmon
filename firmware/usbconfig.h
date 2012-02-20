@@ -11,6 +11,7 @@
 #ifndef __usbconfig_h_included__
 #define __usbconfig_h_included__
 
+#include "hidconfig.h"	/* by senshu */
 /*
 General Description:
 This file is an example configuration (with inline documentation) for the USB
@@ -231,7 +232,11 @@ section at the end of this file).
 #ifdef USE_LIBUSB
 #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    0	// libusb
 #else
-#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    42	// !!! 51
+#if INCLUDE_POLL_CMD
+#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    51
+#else
+#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    42
+#endif
 #endif
 /* Define this to the length of the HID report descriptor, if you implement
  * an HID device. Otherwise don't define it or define it to 0.

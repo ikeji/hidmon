@@ -31,26 +31,28 @@
 #define	MY_Product		"HIDaspx"
 //	MY_Manufacturer,MY_Product のdefine を外すと、VID,PIDのみの照合になる.
 //	どちらかをはずすと、その照合を省略するようになる.
+static int found_hidaspx;
 
 
 // HID API (from w2k DDK)
-_HidD_GetAttributes HidD_GetAttributes;
-_HidD_GetHidGuid HidD_GetHidGuid;
-_HidD_GetPreparsedData HidD_GetPreparsedData;
-_HidD_FreePreparsedData HidD_FreePreparsedData;
-_HidP_GetCaps HidP_GetCaps;
-_HidP_GetValueCaps HidP_GetValueCaps;
-_HidD_GetFeature HidD_GetFeature;
-_HidD_SetFeature HidD_SetFeature;
-_HidD_GetManufacturerString HidD_GetManufacturerString;
-_HidD_GetProductString HidD_GetProductString;
+_HidD_GetAttributes 		HidD_GetAttributes;
+_HidD_GetHidGuid 			HidD_GetHidGuid;
+_HidD_GetPreparsedData 		HidD_GetPreparsedData;
+_HidD_FreePreparsedData 	HidD_FreePreparsedData;
+_HidP_GetCaps 				HidP_GetCaps;
+_HidP_GetValueCaps 			HidP_GetValueCaps;
+_HidD_GetFeature 			HidD_GetFeature;
+_HidD_SetFeature 			HidD_SetFeature;
+_HidD_GetManufacturerString	HidD_GetManufacturerString;
+_HidD_GetProductString 		HidD_GetProductString;
+_HidD_GetSerialNumberString HidD_GetSerialNumberString;	// add by senshu
 
 HINSTANCE hHID_DLL = NULL;		// hid.dll handle
 HANDLE hHID = NULL;				// USB-IO dev handle
 HIDP_CAPS Caps;
 
 static	int dev_id      = 0;	// ターゲットID: 0x55 もしくは 0x5a だけを許容.
-static	int have_ledcmd = 0;	// LED制御の有無.
+static	int have_isp_cmd = 0;	// ISP制御の有無.
 
 //----------------------------------------------------------------------------
 //--------------------------    Tables    ------------------------------------
@@ -278,9 +280,10 @@ int hidPeekMem(int addr)
 static void hidSetStatus(int ledstat)
 {
 	int ddrb;
-	if( have_ledcmd ) {
+	if (have_isp_cmd) {
 		hidCommand(HIDASP_SET_STATUS,0,ledstat,0);	// cmd,portd(&0000_0011),portb(&0001_1111),0
 	}else{
+		fprintf(stderr, "Warnning: Please update HIDaspx firmware.\n");
 		if(ledstat & HIDASP_RST) {	// RST解除.
 			ddrb = 0x10;			// PORTB 全入力.
 			hidPokeMem(USICR,0      ,0);
@@ -312,9 +315,7 @@ static int LoadHidDLL()
 #endif
 		return 0;
 	}
-	HidD_GetAttributes =
-		(_HidD_GetAttributes) GetProcAddress(hHID_DLL,
-											 "HidD_GetAttributes");
+	HidD_GetAttributes = (_HidD_GetAttributes)GetProcAddress(hHID_DLL, "HidD_GetAttributes");
 	if (!HidD_GetAttributes) {
 #if 1
 		fprintf(stderr, "Error at HidD_GetAttributes\n");
@@ -323,8 +324,7 @@ static int LoadHidDLL()
 #endif
 		return 0;
 	}
-	HidD_GetHidGuid =
-		(_HidD_GetHidGuid) GetProcAddress(hHID_DLL, "HidD_GetHidGuid");
+	HidD_GetHidGuid = (_HidD_GetHidGuid)GetProcAddress(hHID_DLL, "HidD_GetHidGuid");
 	if (!HidD_GetHidGuid) {
 #if 1
 		fprintf(stderr, "Error at HidD_GetHidGuid\n");
@@ -333,26 +333,17 @@ static int LoadHidDLL()
 #endif
 		return 0;
 	}
-	HidD_GetPreparsedData =
-		(_HidD_GetPreparsedData) GetProcAddress(hHID_DLL,
-												"HidD_GetPreparsedData");
-	HidD_FreePreparsedData =
-		(_HidD_FreePreparsedData) GetProcAddress(hHID_DLL,
-												 "HidD_FreePreparsedData");
-	HidP_GetCaps =
-		(_HidP_GetCaps) GetProcAddress(hHID_DLL, "HidP_GetCaps");
-	HidP_GetValueCaps =
-		(_HidP_GetValueCaps) GetProcAddress(hHID_DLL, "HidP_GetValueCaps");
+	HidD_GetPreparsedData =	(_HidD_GetPreparsedData)GetProcAddress(hHID_DLL, "HidD_GetPreparsedData");
+	HidD_FreePreparsedData = (_HidD_FreePreparsedData)GetProcAddress(hHID_DLL, "HidD_FreePreparsedData");
+	HidP_GetCaps = (_HidP_GetCaps)GetProcAddress(hHID_DLL, "HidP_GetCaps");
+	HidP_GetValueCaps =	(_HidP_GetValueCaps) GetProcAddress(hHID_DLL, "HidP_GetValueCaps");
 
 //
-	HidD_GetFeature =
-		(_HidD_GetFeature) GetProcAddress(hHID_DLL, "HidD_GetFeature");
-	HidD_SetFeature =
-		(_HidD_SetFeature) GetProcAddress(hHID_DLL, "HidD_SetFeature");
-	HidD_GetManufacturerString = (_HidD_GetManufacturerString)
-		GetProcAddress(hHID_DLL, "HidD_GetManufacturerString");
-	HidD_GetProductString = (_HidD_GetProductString)
-		GetProcAddress(hHID_DLL, "HidD_GetProductString");
+	HidD_GetFeature = (_HidD_GetFeature)GetProcAddress(hHID_DLL, "HidD_GetFeature");
+	HidD_SetFeature = (_HidD_SetFeature)GetProcAddress(hHID_DLL, "HidD_SetFeature");
+	HidD_GetManufacturerString = (_HidD_GetManufacturerString)GetProcAddress(hHID_DLL, "HidD_GetManufacturerString");
+	HidD_GetProductString = (_HidD_GetProductString)GetProcAddress(hHID_DLL, "HidD_GetProductString");
+	HidD_GetSerialNumberString = (_HidD_GetSerialNumberString)GetProcAddress(hHID_DLL, "HidD_GetSerialNumberString");
 
 #if	DEBUG
 	printf("_HidD_GetFeature= %x\n", (int) HidD_GetFeature);
@@ -373,15 +364,12 @@ static void GetDevCaps()
 
 	HidD_GetPreparsedData(hHID, &PreparsedData);
 	HidP_GetCaps(PreparsedData, &Caps);
-	HidP_GetValueCaps(HidP_Input, VCaps, &Caps.NumberInputValueCaps,
-					  PreparsedData);
+	HidP_GetValueCaps(HidP_Input, VCaps, &Caps.NumberInputValueCaps,  PreparsedData);
 	HidD_FreePreparsedData(PreparsedData);
 
 #if DEBUG
-	fprintf(stderr, " Caps.OutputReportByteLength = %d\n",
-			Caps.OutputReportByteLength);
-	fprintf(stderr, " Caps.InputReportByteLength = %d\n",
-			Caps.InputReportByteLength);
+	fprintf(stderr, " Caps.OutputReportByteLength = %d\n", Caps.OutputReportByteLength);
+	fprintf(stderr, " Caps.InputReportByteLength = %d\n", Caps.InputReportByteLength);
 #endif
 
 
@@ -418,11 +406,12 @@ static char *uni_to_string(char *t, unsigned short *u)
 /*  Manufacturer & Product name check.
  *  名前チェック : 成功=1  失敗=0 読み取り不能=(-1)
  */
-static int check_product_string(HANDLE handle)
+static int check_product_string(HANDLE handle, char *serial)
 {
 	unsigned short unicode[512];
 	char string1[256];
 	char string2[256];
+	char string3[256];
 
 	if (!HidD_GetManufacturerString(handle, unicode, sizeof(unicode))) {
 		return -1;
@@ -434,30 +423,37 @@ static int check_product_string(HANDLE handle)
 	}
 	uni_to_string(string2, unicode);
 
-#if	DUMP_PRODUCT
-	fprintf(stderr, "iManufacturer:%s\n", string1);
-	fprintf(stderr, "iProduct:%s\n", string2);
-#endif
+	if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
+		return -1;
+	}
+	uni_to_string(string3, unicode);
+
+	if (serial[0]=='*') {
+		fprintf(stderr, "Manufacturer: [%s], Product: [%s], serial number: [%s]\n", string1,  string2, string3);
+	}
 
 #ifdef	MY_Manufacturer
 	if (strcmp(string1, MY_Manufacturer) != 0)
-		return 0;
+		return 0;	// 一致せず
 #endif
 
 #ifdef	MY_Product
 	if (strcmp(string2, MY_Product) != 0)
-		return 0;
+		return 0;	// 一致せず
 #endif
 
-	return 1;					//合致した.
+	found_hidaspx++;
+	if (strcmp(string3, serial) != 0)
+		return 0;	// 一致せず
+
+	return 1;		//合致した.
 }
 
 ////////////////////////////////////////////////////////////////////////
 // HIDディバイス一覧からUSB-IOを検索
-static int OpenTheHid()
+static int OpenTheHid(char *serial)
 {
-	int f = 0;
-	int i = 0;
+	int f, i, rc;
 	ULONG Needed, l;
 	GUID HidGuid;
 	HDEVINFO DeviceInfoSet;
@@ -472,24 +468,19 @@ static int OpenTheHid()
 	HidD_GetHidGuid(&HidGuid);
 #if 1							/* For vista */
 	DeviceInfoSet =
-		SetupDiGetClassDevs(&HidGuid, NULL, NULL,
-							DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+		SetupDiGetClassDevs(&HidGuid, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 #else
 	DeviceInfoSet =
-		SetupDiGetClassDevs(&HidGuid, "", NULL,
-							DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+		SetupDiGetClassDevs(&HidGuid, "", NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 #endif
 
-	while (SetupDiEnumDeviceInterfaces
-		   (DeviceInfoSet, 0, &HidGuid, i++, &DevData)) {
-		SetupDiGetDeviceInterfaceDetail(DeviceInfoSet, &DevData, NULL, 0,
-										&Needed, 0);
+	f = i = 0;
+	while ((rc = SetupDiEnumDeviceInterfaces(DeviceInfoSet, 0, &HidGuid, i++, &DevData))!=0) {
+		SetupDiGetDeviceInterfaceDetail(DeviceInfoSet, &DevData, NULL, 0, &Needed, 0);
 		l = Needed;
-		DevDetail =
-			(SP_DEVICE_INTERFACE_DETAIL_DATA *) GlobalAlloc(GPTR, l + 4);
+		DevDetail = (SP_DEVICE_INTERFACE_DETAIL_DATA *) GlobalAlloc(GPTR, l + 4);
 		DevDetail->cbSize = sizeof(SP_INTERFACE_DEVICE_DETAIL_DATA);
-		SetupDiGetDeviceInterfaceDetail(DeviceInfoSet, &DevData, DevDetail,
-										l, &Needed, 0);
+		SetupDiGetDeviceInterfaceDetail(DeviceInfoSet, &DevData, DevDetail, l, &Needed, 0);
 
 		hHID = CreateFile(DevDetail->DevicePath,
 						  GENERIC_READ | GENERIC_WRITE,
@@ -505,11 +496,13 @@ static int OpenTheHid()
 		HidD_GetAttributes(hHID, &DeviceAttributes);
 
 		// HIDaspかどうか調べる.
-		if (DeviceAttributes.VendorID == MY_VID
-			&& DeviceAttributes.ProductID == MY_PID
-			&& (check_product_string(hHID) == 1)) {
-			f = 1;				// 発見された.
-			break;
+		if (DeviceAttributes.VendorID == MY_VID && DeviceAttributes.ProductID == MY_PID) {
+			int rc;
+			rc = check_product_string(hHID, serial);
+			if ( rc == 1) {
+				f++;				// 見つかった
+				break;
+			}
 		} else {
 			// 違ったら閉じる
 			CloseHandle(hHID);
@@ -537,18 +530,39 @@ void memdump(char *msg, char *buf, int len)
 #endif
 
 
+int hidasp_list()
+{
+	int r, rc;
+
+	LoadHidDLL();
+	found_hidaspx = 0;
+	r = OpenTheHid("*");
+	if (r == 0) {
+		rc = 1;
+	} else {
+		rc = 0;
+	}
+	if (found_hidaspx==0) {
+		fprintf(stderr, "HIDaspx not found.\n");
+	}
+	if (hHID_DLL) {
+		FreeLibrary(hHID_DLL);
+	}
+	return rc;
+}
+
 //----------------------------------------------------------------------------
 //  初期化.
 //----------------------------------------------------------------------------
-int hidasp_init(char *string)
+int hidasp_init(char *serial)
 {
 	unsigned char rd_data[128];
 	int i, r;
 
 	LoadHidDLL();
-	if (OpenTheHid() == 0) {
+	if (OpenTheHid(serial) == 0) {
 #if DEBUG
-		fprintf(stderr, "ERROR: fail to OpenTheHid()\n");
+		fprintf(stderr, "ERROR: fail to OpenTheHid(%s)\n", serial);
 #endif
 		return 1;
 	}
@@ -571,7 +585,7 @@ int hidasp_init(char *string)
 			return 1;
 		}
 		dev_id = rd_data[1];
-		if((dev_id != DEV_ID_FUSION)&&(dev_id != DEV_ID_STD)) {
+		if((dev_id != DEV_ID_FUSION) && (dev_id != DEV_ID_STD)) {
 			fprintf(stderr, "ERR. fail to ping test. (id = %x)\n",dev_id);
 			return 1;
 		}
@@ -582,18 +596,15 @@ int hidasp_init(char *string)
 	}
 	hidCommand(HIDASP_SET_STATUS,0,HIDASP_RST_H_GREEN,0);	// RESET HIGH
 	r = hidRead(hHID, rd_data ,REPORT_LENGTH1, REPORT_ID1);
-	if( rd_data[1] == 0xaa ) {	// LEDコマンド(isp_enable)が正常動作した.
-		have_ledcmd = 1;		// LED制御OK.
-#if DEBUG
-		fprintf(stderr, "LED OK.\n");
-#endif
-	}else{
-#if DEBUG
-		fprintf(stderr, "Don't have LED COMMAND.\n");
-#endif
+	if( rd_data[1] == 0xaa ) {	// ISPコマンド(isp_enable)が正常動作した.
+		have_isp_cmd = 1;		// ISP制御OK.
 	}
-
 #if DEBUG
+	if (have_isp_cmd) {
+		fprintf(stderr, "ISP CMD support.\n");
+	}else{
+		fprintf(stderr, "ISP CMD Not support.\n");
+	}
 	fprintf(stderr, "OK.\n");
 #endif
 	return 0;
@@ -607,8 +618,7 @@ int hidasp_program_enable(int delay)
 	unsigned char buf[128];
 	unsigned char res[4];
 	int i, rc;
-#if 1		//AVRSP type protocole
-	int tried;
+	int tried;	//AVRSP と同様のプロトコルを採用
 
 	rc = 1;
 	hidSetStatus(HIDASP_RST_H_GREEN);			// RESET HIGH
@@ -616,8 +626,8 @@ int hidasp_program_enable(int delay)
 	hidCommand(HIDASP_SET_DELAY,delay,0,0);		// SET_DELAY
 	Sleep(30);				// 30
 
-	for(tried = 1; tried <= 3; tried++) {
-		for(i = 1; i <= 32; i++) {
+	for(tried = 0; tried < 3; tried++) {
+		for(i = 0; i < 32; i++) {
 
 			buf[0] = 0xAC;
 			buf[1] = 0x53;
@@ -626,42 +636,17 @@ int hidasp_program_enable(int delay)
 			hidasp_cmd(buf, res);
 
 			if (res[2] == 0x53) {
-				rc = 0;
+				rc = 0;					// AVRマイコンと同期を確認
 				goto hidasp_program_enable_exit;
 			}
-			if (tried <= 2) {
+			if (tried < 2) {			// 2回までは通常の同期方法
 				break;
 			}
+			// AT90S用の同期方法で同期を取る
 			hidSetStatus(HIDASP_SCK_PULSE);			// RESET LOW SCK H PULSE shift scan point
 		}
 	}
-#else
-	// ISPモード移行が失敗したら再試行するように修正 by senshu(2008-9-16)
-	rc = 1;
-	for (i = 0; i < 3; i++) {
-		hidSetStatus(HIDASP_RST_H_GREEN);			// RESET HIGH
-		Sleep(2);				// 10 => 100
 
-		hidSetStatus(HIDASP_RST_L_BOTH);			// RESET LOW
-		hidCommand(HIDASP_SET_DELAY,delay,0,0);		// SET_DELAY
-		Sleep(30);				// 30
-
-		buf[0] = 0xAC;
-		buf[1] = 0x53;
-		buf[2] = 0x00;
-		buf[3] = 0x00;
-		hidasp_cmd(buf, res);
-
-		if (res[2] == 0x53) {
-			/* AVRマイコンからの同期(ISPモード)が確認できた */
-			rc = 0;
-			break;
-		} else {
-			/* AVRマイコンからの同期が確認できないので再試行 */
-			Sleep(50);
-		}
-	}
-#endif
 	hidasp_program_enable_exit:
 #if DEBUG
 	if (rc == 0) {
@@ -863,9 +848,9 @@ int hidasp_page_read(long addr, unsigned char *wd, int pagesize)
 		hidRead(hHID, buf, REPORT_LENGTHMAX, REPORT_IDMAX);
 		memcpy(wd + n, buf + 1, l);			// Copy result.
 
-#if 1
+#if 1	// 進捗状況を逐次表示する
 		report_update(l);
-#else
+#else	// 進捗状況を128バイト毎に表示する
 		if (n % 128 == 0) {
 			report_update(128);
 		}

@@ -1,4 +1,4 @@
-
+/* usbhid.h */
 
 #define USAGE short
 #include <SETUPAPI.H>
@@ -167,3 +167,7 @@ typedef NTSTATUS (__stdcall
 typedef NTSTATUS (__stdcall
 *_HidD_GetProductString) (IN HANDLE device, OUT void *buffer, IN ULONG bufferLen);
 
+typedef NTSTATUS (__stdcall
+*_HidD_GetSerialNumberString) (IN HANDLE device, OUT void *buffer, IN ULONG bufferLen);
+
+/* usbhid.h */

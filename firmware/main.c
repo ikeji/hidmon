@@ -2,6 +2,7 @@
 /* 高速化の改良は、irukaさんが行いました
    2008年9月12日～9月22日
    2008年9月22日 テスト公開開始
+   2008年10月19日 コードの見直し（CleanUpを実施）
  */
 
 #include <avr/io.h>
@@ -15,28 +16,7 @@
 #define OPTIMIZE_SIZE		1	// r4,r5,r6,r7,r8を global変数として使用する.
 								// usbdrv側で同レジスタが使用されていないことが条件.
 
-/* ------------------------------------------------------------------------- */
-//	コンフィギュレーションスイッチ:
-#define	INCLUDE_FUSION		1	// 融合命令を実装.
-#if		INCLUDE_FUSION			// 効果はOHCIに限定
-#define	FLOW_CONTROL		1	// FLOW_CONTROL 有効
-#else
-#define	FLOW_CONTROL		0	// FLOW_CONTROL 無効
-#endif
-#define	INCLUDE_POLL_CMD 	0	// ReportID:4  POLLING PORTを実装する.
-
-#define	INCLUDE_MONITOR_CMD 1	// 62:POKE(),63:PEEK()を実装する.
-#define	INCLUDE_ISP_CMD 	1	// 02:SET_STATUS()を実装する.
-//	↑ LED_CMD / MONITOR_CMD は、少なくともどちらかは必要ですが、
-//	HIDmonを使用しない場合は MONITOR_CMD は不要です.
-
-//	FUSIONをOffにした場合は、メモリーに余裕が出来るので追加機能の作成に便利.
-//	FUSIONをOffにしても、ライターソフトが自動判別して旧版互換で動作します.
-
-//	POLL_CMD はライターソフトでは使用しません. HIDmon専用です.
-
-/* ------------------------------------------------------------------------- */
-
+#include "hidconfig.h"			// usbconfig.h からもincludeするため分離
 
 //	REPORT_ID.
 #define ID1    1
@@ -83,7 +63,7 @@ PROGMEM char usbHidReportDescriptor[] = {
     0x09, 0x00,                    //   USAGE (Undefined)
     0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 
-#if 0	// code削減のため
+#if INCLUDE_POLL_CMD
     0x85, 0x04,                    //   REPORT_ID (4)
     0x95, 0x04,                    //   REPORT_COUNT (4)
     0x09, 0x00,                    //   USAGE (Undefined)
@@ -182,17 +162,19 @@ inline static uint8_t byte(uint8_t t) {return t;}
 void delay_10us(uchar d);
 void delay_7clk(void);
 
-//
+//	PORTB PIN Setting
 #define	ISP_DDR		DDRB
 #define	ISP_OUT		PORTB
-//	PORTB PIN ASSIGN
-#define	ISP_SCK		7
-#define	ISP_MOSI	6
-#define	ISP_MISO	5
-#define	ISP_RST		4
-#define	ISP_LED		3
-#define	ISP_RDY		2
 #define	ISP_DDR_DEFAULT	0x0f	/* PB7-4=in PB3-0=out */
+#define	ISP_OUT_DEFAULT	0x0b	/* PB7-4=0, ISP_RDY=0 */
+
+//	PORTB PIN ASSIGN
+#define	ISP_SCK		7			/* Target SCK */
+#define	ISP_MOSI	6			/* Target MISO */
+#define	ISP_MISO	5			/* Target MOSI */
+#define	ISP_RST		4			/* Target RESET */
+#define	ISP_RDY		3			/* Green LED */
+#define	ISP_RED		2			/* RED LED */
 
 
 /* ------------------------------------------------------------------------- */
@@ -214,9 +196,7 @@ void delay_7clk(void);
 //		2以上は 9 + (12 * wait) clk （CALL-RETを採用した場合も同様）
 //
 static uint8_t usi_trans(uint8_t data){
-#if 1
-	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
-#endif
+	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);	//by kuga
 	USIDR=data;
 	USISR=(1<<USIOIF);
 	if(wait==0) {
@@ -251,22 +231,13 @@ static uint8_t usi_trans(uint8_t data){
 		do {
 			uchar d=wait;		// 12clk * (wait-2)
 			while(d != 2) {		// 1+1: cpi,breq
-#if 1	/* code 削減のため、call-ret を利用 */
-				delay_7clk();	// 3+4: call,ret
-#else
-				DLY_2clk();		// 2clk
-				DLY_2clk();		// 2clk
-				DLY_2clk();		// 2clk
-				asm("nop");		// 1clk
-#endif
+				delay_7clk();	// 3+4: call,ret, code 削減のため、call-ret を利用
 				d--;			// 1+2: subi,rjmp
 			}
 			USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
 		} while(!(USISR&(1<<USIOIF)));
 	}
-#if 1
-	USICR=0;		/* SCKをポートに戻しておく */
-#endif
+	USICR=0;		/* SCKをポートに戻しておく by kuga */
 	return USIDR;
 }
 
@@ -277,6 +248,7 @@ static inline void isp_command(uint8_t *data){
 	}
 }
 
+#if INCLUDE_ISP_CMD
 
 static	void ispConnect(void)
 {
@@ -292,25 +264,36 @@ static	void ispConnect(void)
 	delay_10us(6);					//@@x  ispDelay();
 	ISP_OUT |= (1 << ISP_RST);		/* RST high */
 	delay_10us(100);				//@@x  ispDelay(); -> 1ms
-	ISP_OUT &= ~((1 << ISP_RST)|(1 << ISP_LED));	/* RST low , LED Low*/
+#if INCLUDE_LED_NON
+	ISP_OUT &= ~((1 << ISP_RST)|(1 << ISP_RDY));	/* RST low , LED Low*/
+#else
+	ISP_OUT &= ~((1 << ISP_RST));	/* RST low */
+#endif
 }
 
 static	void ispDisconnect(void)
 {
 	/* set all ISP pins inputs */
 	//ISP_DDR &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
-	ISP_DDR = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
+	ISP_DDR = ISP_DDR_DEFAULT;		/* PB7-4=in PB3-0=out */
+
 	/* switch pullups off */
 	//ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
-	ISP_OUT = 0b00001011;				// PB7-4=Hi-Z PB3-0=Hi
+#if INCLUDE_LED_NON
+	ISP_OUT = 0b00001011;			// PB7-4=Hi-Z,  PB3-0=Hi, LED(PWR)を除く
+#else
+	ISP_OUT = 0b00001111;			// PB7-4=Hi-Z,  PB3-0=Hi
+#endif
 }
 
 static	void ispSckPulse(void)
 {
 	ISP_OUT |= (1 << ISP_SCK);		/* SCK high */
-	delay_10us(100);			//@@x  ispDelay(); -> 1ms
-	ISP_OUT &= ~(1 << ISP_SCK);	/* SCK Low */
+	delay_10us(100);				//@@x  ispDelay(); -> 1ms
+	ISP_OUT &= ~(1 << ISP_SCK);		/* SCK Low */
 }
+#endif
+
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- execute Buffer ---------------------------- */
@@ -326,8 +309,6 @@ void hidasp_main()	//uchar *data)
 	// 本来なら引数.
 	uchar *data = report.buf;	//こうすると縮む.
 
-//	static uchar    page_mode;
-//	static uint16_t page_addr;
 	uchar i;
 	uint8_t data0 = data[0];
 	uint8_t data1 = data[1];
@@ -342,16 +323,14 @@ void hidasp_main()	//uchar *data)
 	}else
 #endif
 #if	INCLUDE_ISP_CMD
-	if ( data0 == HIDASP_SET_STATUS ) { // SET_LED
-
-#if	0	/* コード節約のため、処理をカット */
+	if ( data0 == HIDASP_SET_STATUS ) { // PORTへの出力制御
+#if	0	/* コード節約のため、PORTDの処理をカットする */
+		/* MONITOR機能が使える場合には、それで代用できる */
 		PORTD = (PORTD&~3)    | (data1 & 3);
-		// RESETピンを保持、それ以外をOR出力
-		PORTB = (PORTB&~0x1F) | (data[2]&0x1f) ;
 #endif
 		/* ISP用のピンをHi-Z制御 */
-#if 1	/* AT90Sシリーズをサポートする為、ISP移行モードを修正 */
-		if(data[2] & 0x10) {// RST解除の場合に:
+		/* ISP移行を完全に行うためのコードを、ファーム側で持つ */
+		if(data[2] & 0x10) {// RST解除の場合
 			ispDisconnect();
 		}else{
 			if(data[2] & 0x80) {// RST状態でSCK Hは SCKパルス要求
@@ -360,16 +339,13 @@ void hidasp_main()	//uchar *data)
 				ispConnect();
 			}
 		}
-#else
-		if(data[2] & 0x10) {// RST解除の場合に:
-			DDRB = 0x0f;	// 0000_1111 SCLK,MOSI,RST切り離し.
-		}else{
-			DDRB = 0xdf;	// 1101_1111 SCLK,MOSI,RSTを出力に.
-		}
-#endif
-		usbData[0] = 0xaa;	// コマンド実行完了をHOSTに知らせる.
+#if !INCLUDE_LED_NON
+		// ISP_OUT 3,2,1,0のみをOR出力
+		ISP_OUT |= (data[2]&0xf) ;
+#endif	/* INCLUDE_LED_NON */
+		usbData[0] = 0xaa;	/* コマンド実行完了をHOSTに知らせる. */
 	} else
-#endif
+#endif	/* INCLUDE_ISP_CMD */
 	if ( cmd == HIDASP_CMD_TX) { // SPI
 		isp_command(data+1);
 	} else if ( data0 == HIDASP_SET_PAGE ) { // Page set
@@ -380,13 +356,13 @@ void hidasp_main()	//uchar *data)
 #else
 		page_addr = 0;
 		page_addr_h = 0;
-#endif
+#endif	/* INCLUDE_POLL_CMD */
 	}
 #if	INCLUDE_FUSION
 	else if (cmdtx == HIDASP_PAGE_TX ) { // Page buf
 #if FLOW_CONTROL
         usbDisableAllRequests();
-#endif
+#endif /* FLOW_CONTROL */
 		//
 		//	page_write開始時にpage_addrをdata[1]で初期化.
 		//
@@ -419,9 +395,9 @@ void hidasp_main()	//uchar *data)
 		}
 #if FLOW_CONTROL
         usbEnableAllRequests();
-#endif
+#endif /* FLOW_CONTROL */
 	}
-#else
+#else	/* not INCLUDE_FUSION */
 	else if ( cmd == HIDASP_PAGE_TX ) { // Page buf
 		for(i=0;i<data1;i++) {
 			usi_trans(page_mode);
@@ -437,7 +413,7 @@ void hidasp_main()	//uchar *data)
 			}
 		}
 	}
-#endif
+#endif	/* INCLUDE_FUSION */
 	else if ( data0 == HIDASP_SET_DELAY ) { // Set wait
 		wait=data1;
 	}
@@ -445,7 +421,7 @@ void hidasp_main()	//uchar *data)
 	else if ( cmd == HIDASP_POKE ) {
 		cmd_peek_poke((MonCommand_t *)data,data0);
 	}
-#endif
+#endif /* INCLUDE_MONITOR_CMD */
 }
 
 
@@ -533,15 +509,10 @@ GND      [10      11] PD6(NC)
 
 int main(void)
 {
-#if 1
 	PORTD |= (1<<PD5);		/* PD5 USB D- pullup */
-#endif
 	DDRD = ~USBMASK;        /* all outputs except USB data */
-	PORTB = (1<<3);			/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
-	DDRB = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
-#if 0	// usi_trans関数に移動
-	USICR=(1<<USIWM0)|(1<<USICS1)|(1<<USICLK);
-#endif
+	ISP_OUT = ISP_OUT_DEFAULT;			/* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
+	ISP_DDR = ISP_DDR_DEFAULT;	/* PB7-4=in PB3-0=out */
     usbInit();
     sei();
     for(;;){    /* main event loop */

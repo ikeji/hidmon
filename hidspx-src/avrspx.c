@@ -199,7 +199,7 @@ char ForcedName[20];			/* -t Forced device type (compared to Device->Name)*/
 /* for USBasp */
 bool f_usblist;
 bool f_detail_help;
-char usb_serial[8];
+char usb_serial[8];				// USBasp, HIDaspx
 char new_serial[8];
 char DeviceName[20];			// -d check device type (compared to Device->Name)
 bool f_portlist;
@@ -339,8 +339,8 @@ void output_usage (bool detail)
 		"Supported Adapter:\n",
 		"AVRSP adapter (COM -pc<n>|-pv<n> / LPT -pl<n>), SPI Bridge (COM -pb<n>[:BAUD]),\n"
 		"STK200 ISP dongle, Xilinx JTAG, Lattice isp, Altera ByteBlasterMV (LPT -pl<n>)\n",
-		"USBasp(x) (USB -pu<n>[:XXXX]), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
-		"HIDaspx   (USB -ph<n>)\n",
+		"USBasp(x) (USB -pu[:XXXX]), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
+		"HIDaspx   (USB -ph[:XXXX])\n",
 		NULL
 	};
 
@@ -834,6 +834,18 @@ int load_commands (int argc, char **argv)
 #if AVRSPX
 						case 'h' :
 							CtrlPort.PortClass = TY_HIDASP;
+							s = strchr(cp, ':');
+							if (s) {
+								strncpy(usb_serial, s+1, sizeof(usb_serial));
+								CtrlPort.SerialNumber = usb_serial;
+								cp += strlen(cp);
+							} else  {
+								CtrlPort.SerialNumber = "0000";
+							}
+							if (*cp == '?') {
+							    f_usblist = true;
+							    ++cp;
+                            }
 							break;
 						case 'u' :
 							CtrlPort.PortClass = TY_USBASP;	//@@@ by t.k
@@ -2137,11 +2149,18 @@ int main (int argc, char **argv)
     }
 
     if (f_usblist) {
-        if (usbasp_list() < 1)
-            return 1;
-		terminate(rc = 0);
-        return rc;
-    }
+		if (CtrlPort.PortClass == TY_HIDASP) {
+	        if (hidasp_list() < 1)
+	            return 1;
+			terminate(rc = 0);
+	        return rc;
+		} else if (CtrlPort.PortClass == TY_USBASP) {
+	        if (usbasp_list() < 1)
+	            return 1;
+			terminate(rc = 0);
+	        return rc;
+	    }
+	}
 
     if (f_portlist) {
 		dump_port_list();
