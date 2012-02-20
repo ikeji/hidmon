@@ -2681,7 +2681,8 @@ void do_exit(void)
 /*-----------------------------------------------------------------------
   Main
 -----------------------------------------------------------------------*/
-
+#define LINE_BUFF_SIZE 512
+static char out_buff[LINE_BUFF_SIZE];
 
 int main (int argc, char **argv)
 {
@@ -2715,7 +2716,10 @@ int main (int argc, char **argv)
 			MESS("-ofilename Redirect error\n");
 			return RC_FILE;
 		}
-    }
+    } else {
+		setvbuf( stdout, out_buff, _IOLBF, sizeof(out_buff) );
+	}
+
 
     if (f_open_device_url) {	// @@@ by senshu
 		open_device_url(0);
