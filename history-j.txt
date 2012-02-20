@@ -889,4 +889,5 @@ Type = HIDaspx, Delay = 4
 
 	(1) hidspx-GUI.exe を修正
 	avrdude-GUIで採用した右クリックメニューを追加(srec_**.exeも添付)
+	1) のメニューは hidspx -rのみを実行します．
 
