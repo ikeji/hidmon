@@ -51,6 +51,10 @@ extern int _outp(unsigned short _port, int _value);
 #endif
 #endif
 
+#if 1	/* 2010/01/21 10:36:43 */
+extern int hidaspx_type;
+#endif
+
 
 /*----------------------------------------------------------------------
   Control Variables
@@ -445,8 +449,12 @@ int open_ifport (PORTPROP *pc)
 
 #if AVRSPX
 	if (pc->PortClass == TY_HIDASP)	{ //@@+ by k-k
-		if (hidasp_init(pc->SerialNumber) == HIDASP_MODE_ERROR)	{
-			sprintf(str_info, "HIDaspx(%s) not found.\n", pc->SerialNumber);
+		if (hidasp_init(hidaspx_type, pc->SerialNumber) == HIDASP_MODE_ERROR)	{
+			if (hidaspx_type) {
+				sprintf(str_info, "HIDaspx-pro(%s) not found.\n", pc->SerialNumber);
+			} else {
+				sprintf(str_info, "HIDaspx(%s) not found.\n", pc->SerialNumber);
+			}
 			pc->Info1 = str_info;
 			return 1;
 		}
@@ -620,7 +628,7 @@ int open_ifport (PORTPROP *pc)
 #if AVRSPX
 	if (pc->PortClass == TY_USBASP) {	//@@+ by t.k
 		if (usbasp_initialize(pc->SerialNumber) != 0) {
-			pc->Info1 = "USBasp not fonud.\n";
+			pc->Info1 = "USBasp not found.\n";
 			return 1;
 		}
 		PortType = TY_USBASP;

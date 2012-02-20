@@ -20,6 +20,11 @@ make clean
 make
 make install
 
+REM make default (HIDaspx)
+make -f Makefile.pro clean
+make -f Makefile.pro
+make -f Makefile.pro install
+
 REM make HIDaspx (MONITOR only)
 make MAIN=main-small F_CPU=12800000 clean
 make MAIN=main-small F_CPU=12800000 

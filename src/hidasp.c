@@ -33,8 +33,8 @@
 #endif
 
 //  obdev
-#define MY_VID 0x16c0				/* 5824 in dec, stands for VOTI */
-#define MY_PID 0x05df				/* 1503 in dec, obdev's free PID */
+static int MY_VID = 0x16c0;				/* 5824 in dec, stands for VOTI */
+static int MY_PID = 0x05df;				/* 1503 in dec, obdev's free PID */
 
 #if	HIDMON88
 	#define	MY_Manufacturer	"AVRetc"
@@ -617,12 +617,20 @@ int hidasp_list(char * string)
 //----------------------------------------------------------------------------
 //  èâä˙âª.
 //----------------------------------------------------------------------------
-int hidasp_init(const char *serial)
+int hidasp_init(int type, const char *serial)
 {
 	unsigned char rd_data[BUFF_SIZE];
 	int i, r, result;
 
 	result = 0;
+	if (type == 1) {	/* pro mode */
+		MY_VID = 0x20A0;				/* VID */
+		MY_PID = 0x410e;				/* PID */
+	} else {
+		MY_VID = 0x16c0;				/* 5824 in dec, stands for VOTI */
+		MY_PID = 0x05df;				/* 1503 in dec, obdev's free PID */
+	}
+
 	LoadHidDLL();
 	if (OpenTheHid(serial) == 0) {
 #if DEBUG

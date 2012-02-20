@@ -19,7 +19,7 @@ int hidReadPoll (char *buf, int Length, int id);
 int hidWriteBuffer (char *buf, int len);
 void hidasp_close (void);
 int hidasp_cmd (const unsigned char cmd[4], unsigned char res[4]);
-int hidasp_init (const char *serial);
+int hidasp_init (int type, const char *serial);
 int hidasp_list (char * string);
 int hidasp_page_read (long addr, unsigned char *wd, int pagesize);
 int hidasp_page_write (long addr, const unsigned char *wd, int pagesize, int flashsize);

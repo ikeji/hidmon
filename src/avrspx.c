@@ -274,6 +274,10 @@ char *new_serial;			// USBaspx
 char usb_serial[8];			// Serial number of USBasp and HIDaspx device
 char DeviceName[20];		// -d check device type (compared to Device->Name)
 
+#if 1	/* 2010/01/21 10:36:43 */
+int hidaspx_type;
+#endif
+
 enum {
 	OPT_bool,
 	OPT_web,
@@ -571,7 +575,7 @@ void output_usage (bool detail)
 		"AVRSP adapter (COM -pc<n>|-pv<n> / LPT -pl<n>), SPI Bridge (COM -pb<n>[:BAUD]),\n"
 		"STK200 ISP dongle, Xilinx JTAG, Lattice isp, Altera ByteBlasterMV (LPT -pl<n>)\n",
 		"USBasp(x) (USB -pu<:XXXX>), RSCR (COM -pf<n>),  (<n> == PORT Number)\n",
-		"HIDaspx   (USB -ph<:XXXX>)\n",
+		"HIDaspx   (USB -ph<:XXXX>), HIDaspx(pro) (USB -php<:XXXX>)\n",
 		NULL
 	};
 
@@ -1468,6 +1472,14 @@ int load_commands (int argc, char **argv)
 #if AVRSPX
 						case 'h' :
 							CtrlPort.PortClass = TY_HIDASP;
+#if 1	/* 2010/01/21 10:36:43 */
+							if (*cp == 'p') {	/* pro mode */
+							    hidaspx_type = 1;
+							    ++cp;
+							} else {
+							    hidaspx_type = 0;
+							}
+#endif
 							{
 								char *s;
 								s = cp;
@@ -3064,6 +3076,7 @@ int main (int argc, char **argv)
 		" -pb<n>            \"SPI-Bridge (COM Port)\"\n"
 		" -pu<:XXXX>        \"USBasp/USBaspx\"\n"
 		" -ph<:XXXX>        \"HIDaspx\"\n"
+		" -php<:XXXX>       \"HIDaspx(pro)\"\n"
 		" -pf<n>            \"COM Port Access (chicken & egg)\"\n"
 		" -ph?              \"List HIDaspx Programmers\"\n"
 		" -pu?              \"List USBasp  Programmers\"\n"

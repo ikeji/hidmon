@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年11月25日（最新更新）
+                                                2010年 1月21日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1422,4 +1422,15 @@ Type = HIDaspx, Delay = 4
 
 ■2009-11-25
 	(1) HIDaspx用のファームを avr-gcc vewr 3.4.6 で作り直しました。
+
+■2010-01-21
+	(1) HIDaspx用の商用バージョンに対応しました。
+	    -ph に代えて、-php を指定することで商用版のHIDaspxファーム
+	    を操作できます。（機能は、無償版と全く同様です。）
+
+商用版のPID/VID
+VID=0x20a0 PID=0x410e vendor="YCIT" product="HIDaspx" serial="0000"
+
+無償版のPID/VID
+VID=0x16c0 PID=0x05df vendor="YCIT" product="HIDaspx" serial="0000"
 

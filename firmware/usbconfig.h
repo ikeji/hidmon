@@ -182,8 +182,17 @@ section at the end of this file).
  */
 
 /* -------------------------- Device Description --------------------------- */
+/*
+ VID = 0x20A0
+ PID = 0x410e/0x410f
 
-#define  USB_CFG_VENDOR_ID       0xc0, 0x16
+ For support please visit http://www.obdev.at/vusb/
+ */
+#ifdef PRO
+  #define  USB_CFG_VENDOR_ID       0xA0, 0x20	/* VID */
+#else
+  #define  USB_CFG_VENDOR_ID       0xc0, 0x16	/* VID */
+#endif
 /* USB vendor ID for the device, low byte first. If you have registered your
  * own Vendor ID, define it here. Otherwise you use one of obdev's free shared
  * VID/PID pairs. Be sure to read USBID-License.txt for rules!
@@ -193,7 +202,11 @@ section at the end of this file).
 #if USE_LIBUSB
 #define  USB_CFG_DEVICE_ID       0xdc, 0x05 /* obdev's shared PID for libusb */
 #else
-#define  USB_CFG_DEVICE_ID       0xdf, 0x05 /* obdev's shared PID for HIDs */
+#ifdef PRO
+  #define  USB_CFG_DEVICE_ID       0x0e, 0x41 /* obdev's shared PID for HIDs */
+#else
+  #define  USB_CFG_DEVICE_ID       0xdf, 0x05 /* obdev's shared PID for HIDs */
+#endif
 #endif
 /* This is the ID of the product, low byte first. It is interpreted in the
  * scope of the vendor ID. If you have registered your own VID with usb.org
