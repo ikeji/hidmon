@@ -252,6 +252,7 @@ bool f_open_atmel_url;		/* @@@ by senshu */
 bool f_list_device;			/* @@@ by senshu */
 bool f_list_adapter;		/* @@@ by senshu */
 bool f_list_bookmark;		/* @@@ by senshu */
+bool f_show_opts;			/* @@@ by senshu */
 bool f_version;				/* @@@ by senshu */
 bool f_report_mode;		/* 0 = original, 1 = avrdude like */
 
@@ -281,17 +282,18 @@ struct opt_list {
 	{"    ",	"pause-on-start",	OPT_str,  &msg_pause_on_start,	"Pause on Port Open"},
 	{"    ",	"pause-on-exit",	OPT_str,  &msg_pause_on_exit,	"Pause on exit"},
 	{"    ",	"set-serial",		OPT_str,  &new_serial,			"Set USBaspx serial number"},
-	{"-!  ",	"list-bookmark",	OPT_bool, &f_list_bookmark,				"List user Bookmarks"},
-	{"-p? ", 	"list-port",		OPT_bool, &f_portlist,					"List COM Port"},
-	{"-pu?",	"list-usbasp",		OPT_bool, &f_usbasp_list,				"List USBasp  Programmer"},
-	{"-ph?",	"list-hidaspx",		OPT_bool, &f_aspxlist,					"List HIDaspx Programmer"},
-	{"    ",	"list-adapter",		OPT_bool, &f_list_adapter,				"List Support Adapters"},
-	{"    ",	"list-device",		OPT_bool, &f_list_device,				"List Support AVR Devices"},
-	{"    ",	"new-mode",			OPT_bool, &f_report_mode,				"New progress mode"},
-	{"    ",	"avr-devices",	 	OPT_web,  &f_open_device_url,			"AVR Devices list"	},
-	{"    ",	"atmel-avr",	 	OPT_web,  &f_open_atmel_url,			"Atmel (AVR 8-Bit RISC)"},
-	{"    ",	"version",			OPT_bool, &f_version,					NULL},
-	{"-?  ",	"help",				OPT_bool, &f_detail_help,				NULL},
+	{"    ",	"show-options",		OPT_bool, &f_show_opts,			"Show Option Values"},
+	{"-!  ",	"list-bookmark",	OPT_bool, &f_list_bookmark,		"List user Bookmarks"},
+	{"-p? ", 	"list-port",		OPT_bool, &f_portlist,			"List COM Port"},
+	{"-pu?",	"list-usbasp",		OPT_bool, &f_usbasp_list,		"List USBasp  Programmer"},
+	{"-ph?",	"list-hidaspx",		OPT_bool, &f_aspxlist,			"List HIDaspx Programmer"},
+	{"    ",	"list-adapter",		OPT_bool, &f_list_adapter,		"List Support Adapters"},
+	{"    ",	"list-device",		OPT_bool, &f_list_device,		"List Support AVR Devices"},
+	{"    ",	"new-mode",			OPT_bool, &f_report_mode,		"New progress mode"},
+	{"    ",	"avr-devices",	 	OPT_web,  &f_open_device_url,	"AVR Devices list"	},
+	{"    ",	"atmel-avr",	 	OPT_web,  &f_open_atmel_url,	"Atmel (AVR 8-Bit RISC)"},
+	{"    ",	"version",			OPT_bool, &f_version,			NULL},
+	{"-?  ",	"help",				OPT_bool, &f_detail_help,		NULL},
 	{NULL, NULL, 0, 0, NULL}
 };
 
@@ -1110,11 +1112,11 @@ int load_commands (int argc, char **argv)
 			cmdlst[cmd++] = cp; cp += strlen(cp) + 1;
 #endif
 		}
+		fclose(fp);
 #if USER_BOOKMARKS
 		user_bookmarks[url_index].key = NULL;
 		user_bookmarks[url_index].url = NULL;
 #endif
-		fclose(fp);
 	}
 
 	/* Get command line parameters */
@@ -1122,6 +1124,32 @@ int load_commands (int argc, char **argv)
 		cmdlst[cmd++] = *++argv;
 	}
 	cmdlst[cmd] = NULL;
+
+#if 1	/* Requst by miyamae , @@@ by senshu */
+	{	int i;
+
+#define MESS_STR	"#### %s command line ####\n"
+
+		for (i = 0; cmdlst[i]!= NULL; i++) {
+			if (strcmp(cmdlst[i], "--show-options") == 0) {
+				printf(MESS_STR, progname);
+				printf("%s ", progname);
+
+				for (i=0; i<cmd; i++){
+					if( cmdlst[i][0]) {
+						printf("%s ", cmdlst[i]);
+					}
+				}
+				printf("\n");
+				for (i=0; i < (strlen(MESS_STR) + strlen(progname) -3); i++) {
+					printf("#");
+				}
+				printf("\n");
+				break;
+			}
+		}
+	}
+#endif
 
 	/* Analyze command line parameters... */
 	for(cmd = 0; cmdlst[cmd] != NULL; cmd++) {
@@ -1361,10 +1389,10 @@ int load_commands (int argc, char **argv)
 								switch (long_opts[i].type) {
 								case OPT_bool:
 								case OPT_web:
-									if (cp[len] != '-') {
-										*(bool *)long_opts[i].opt = 1;
-									} else {
+									if (cp[len] == '-') {
 										*(bool *)long_opts[i].opt = 0;
+									} else {
+										*(bool *)long_opts[i].opt = 1;
 									}
 									break;
 
