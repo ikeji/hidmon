@@ -255,6 +255,8 @@ bool f_list_bookmark;		/* @@@ by senshu */
 bool f_show_opts;			/* @@@ by senshu */
 bool f_version;				/* @@@ by senshu */
 bool f_report_mode = 1;		/* 0 = original, 1 = avrdude like */
+bool f_hex_dump_mode;		/* 0 = Intel HEX, 1 = HEX dump */
+
 
 char *out_filename = NULL;	/* @@@ by senshu */
 FILE *redirect_fp;
@@ -506,8 +508,9 @@ void output_usage (bool detail)
 		"Write code and/or data  : <hex file> [<hex file>] ...\n",
 		"Verify code and/or data : -v <hex file> [<hex file>] ...\n",
 		"Read code, data or fuse : -r{p|e|f|F|l} [-oOUT_HEXFILE]\n",
-        "@  -rp                      Read Program(flash) memory\n",
-        "@  -re                      Read Eeprom\n",
+		"HEX dump (Flash/Eeprom) : -r{p|e}h      [-oOUT_HEXFILE]\n",
+        "@  -rp{h}                   Read Program(flash) memory\n",
+        "@  -re{h}                   Read Eeprom\n",
         "@  -rf                      Read Fuse (use fuse.txt)\n",
         "@  -rF                      Read Fuse list (HEX style)\n",
         "@  -rl                      Read Fuse and lock bits\n",
@@ -1106,21 +1109,57 @@ void put_hexline (
 	BYTE type			/* block type */
 ) {
 	BYTE sum;
+	int char_count;
+	const BYTE *p;
 
 	/* Byte count, Offset address and Record type */
-	fprintf(fp, ":%02X%04X%02X", count, ofs, type);
+	if (ofs % 256 == 0) {
+		/* hidspx-GUI対策(連続で大量の出力時のHabgUp対策) */
+		Sleep(1);
+	}
+	if (f_hex_dump_mode) {
+		if (ofs % 256 == 0) {
+			fprintf(fp, "\n");
+		}
+		fprintf(fp, "%04X  ", ofs);
+	} else {
+		fprintf(fp, ":%02X%04X%02X", count, ofs, type);
+	}
 	sum = count + (ofs >> 8) + ofs + type;
 
 	/* Data bytes */
+	char_count = count;
+	p = buffer;
 	while(count--) {
-		fprintf(fp, "%02X", *buffer);
+		if (f_hex_dump_mode) {
+			if (count == 8) {
+				fprintf(fp, "%02X - ", *buffer);
+			} else {
+				fprintf(fp, "%02X ", *buffer);
+			}
+		} else {
+			fprintf(fp, "%02X", *buffer);
+		}
 		sum += *buffer++;
 	}
-
+	if (f_hex_dump_mode) {
+		int ch;
+		fprintf(fp, " |");
+		while(char_count--) {
+			ch = *p++;
+			if (!isgraph(ch))
+				ch = ' ';
+			fprintf(fp, "%c", ch);
+		}
+		fprintf(fp, "|");
+	}
 	/* Check sum */
-	fprintf(fp, "%02X\n", (BYTE)-sum);
+	if (f_hex_dump_mode) {
+		fprintf(fp, "\n");
+	} else {
+		fprintf(fp, "%02X\n", (BYTE)-sum);
+	}
 }
-
 
 
 
@@ -1155,8 +1194,9 @@ void output_hexfile (
 			bc = 0;
 		}
 	}
-
-	put_hexline(fp, NULL, 0, 0, 1);	/* End block */
+	if (!f_hex_dump_mode) {
+		put_hexline(fp, NULL, 0, 0, 1);	/* End block */
+	}
 }
 
 
@@ -1282,7 +1322,7 @@ int load_commands (int argc, char **argv)
 				case 'z' :	/* -z */
 					Command[0] = 'z'; break;
 
-				case 'r' :	/* -r{p|e|f} */
+				case 'r' :	/* -r{p|e|f}{h} */
 					Command[0] = 'r';
 #if AVRSPX	/* -rF, -rl (Read Lock bits) オプション @@@ by senshu*/
 					if (*cp) {
@@ -1292,6 +1332,16 @@ int load_commands (int argc, char **argv)
 						case 'I':
 							/* 大文字・小文字を区別するコマンド */
 							Command[1] = *cp++;
+							break;
+
+						/* -rph, -reh をチェックする */
+						case 'p':
+						case 'e':
+							Command[1] = *cp++;
+							if (*cp == 'h') {
+								cp++;
+								f_hex_dump_mode = 1;
+							}
 							break;
 
 						default:
@@ -2256,7 +2306,11 @@ int read_device (char cmd)
 				read_multi(FLASH, adr, PIPE_WINDOW, &CodeBuff[adr]);
 #endif
 			MESS("Passed.\n");
-			output_hexfile(stdout, CodeBuff, Device->FlashSize, 32);
+			if (f_hex_dump_mode) {
+				output_hexfile(stdout, CodeBuff, Device->FlashSize, 16);
+			} else {
+				output_hexfile(stdout, CodeBuff, Device->FlashSize, 32);
+			}
 			break;
 
 		case 'e' :	/* -re : read eeprom */
@@ -2281,7 +2335,11 @@ int read_device (char cmd)
 				read_multi(EEPROM, adr, ws, &DataBuff[adr]);
 #endif
 			MESS("Passed.\n");
-			output_hexfile(stdout, DataBuff, Device->EepromSize, 32);
+			if (f_hex_dump_mode) {
+				output_hexfile(stdout, DataBuff, Device->EepromSize, 16);
+			} else {
+				output_hexfile(stdout, DataBuff, Device->EepromSize, 32);
+			}
 			break;
 
 		case 'f' :	/* -rf : read fuses */
