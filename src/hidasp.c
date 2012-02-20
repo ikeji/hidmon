@@ -473,16 +473,19 @@ static int check_product_string(HANDLE handle, const char *serial)
 	char string2[BUFF_SIZE];
 	char string3[BUFF_SIZE];
 
+	Sleep(20);
 	if (!HidD_GetManufacturerString(handle, unicode, sizeof(unicode))) {
 		return -1;
 	}
 	uni_to_string(string1, unicode);
 
+	Sleep(20);
 	if (!HidD_GetProductString(handle, unicode, sizeof(unicode))) {
 		return -1;
 	}
 	uni_to_string(string2, unicode);
 
+	Sleep(20);
 	if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
 		return -1;
 	}

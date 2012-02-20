@@ -62,6 +62,7 @@ IF EXIST %TARGET%\hidspx.ini (
 %COPY% fuse.txt %TARGET% > NUL
 %COPY% usbtool.exe %TARGET% > NUL
 %COPY% hidmon.exe %TARGET% > NUL
+%COPY% hidmon.dll %TARGET% > NUL
 %COPY% hidspx-GUI.exe %TARGET% > NUL
 %COPY% firmware\genserial.awk %TARGET% > NUL
 %COPY% firmware\main-12.hex %TARGET% > NUL

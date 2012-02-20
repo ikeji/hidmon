@@ -515,8 +515,7 @@ void output_usage (bool detail)
         "@  -rF                      Read Fuse list (HEX style)\n",
         "@  -rl                      Read Fuse and lock bits\n",
 		"Get AVR Information(Web): -r{I|i|d}\n",
-        "@  -rI                      Read Fuse Information (new)\n",
-        "@  -ri                      Read Fuse Information\n",
+        "@  -r{i|I}                  Read Fuse Information (new)\n",
         "@  -rd                      Read chip Datasheet\n",
 		"Write fuse byte         : -f{l|h|x}<bin>\n",
 		"Lock device             : -l[<bin>]\n",
@@ -2374,7 +2373,7 @@ int read_device (char cmd)
 
 		case 'i' :	/* -ri : read fuses @@@ by senshu */
 			read_fuse();
-			output_fuse(RD_DEV_OPT_i);
+			output_fuse(RD_DEV_OPT_I);
 			break;
 
 		case 'I' :	/* -rI : read fuses @@@ by senshu */
