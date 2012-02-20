@@ -286,6 +286,14 @@ static	void ispDisconnect(void)
 	//ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
 	ISP_OUT = 0b00001011;				// PB7-4=Hi-Z PB3-0=Hi
 }
+
+static	void ispSckPulse(void)
+{
+	ISP_OUT |= (1 << ISP_SCK);		/* SCK high */
+	delay_10us(100);			//@@x  ispDelay(); -> 1ms
+	ISP_OUT &= ~(1 << ISP_SCK);	/* SCK Low */
+}
+
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- execute Buffer ---------------------------- */
 /* ------------------------------------------------------------------------- */
@@ -332,7 +340,11 @@ void hidasp_main()	//uchar *data)
 		if(data[2] & 0x10) {// RST解除の場合に:
 			ispDisconnect();
 		}else{
-			ispConnect();
+			if(data[2] & 0x80) {// RST状態でSCK Hは SCKパルス要求
+				ispSckPulse();
+			} else {
+				ispConnect();
+			}
 		}
 #endif
 		usbData[0] = 0xaa;	// コマンド実行完了をHOSTに知らせる.

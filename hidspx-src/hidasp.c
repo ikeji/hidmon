@@ -259,7 +259,10 @@ int hidPeekMem(int addr)
  *	LEDの制御.
 #define HIDASP_RST_H_GREEN	0x18	// RST解除,LED OFF
 #define HIDASP_RST_L_BOTH	0x00	// RST実行,LED ON
+#define HIDASP_SCK_PULSE 	0x80	// RST-L SLK-pulse ,LED ON	@@kuga
  */
+
+
 static void hidSetStatus(int ledstat)
 {
 	int ddrb;
@@ -592,7 +595,33 @@ int hidasp_program_enable(int delay)
 	unsigned char buf[128];
 	unsigned char res[4];
 	int i, rc;
+#if 1		//AVRSP type protocole
+	int tried;
 
+	rc = 1;
+	hidSetStatus(HIDASP_RST_H_GREEN);			// RESET HIGH
+	hidSetStatus(HIDASP_RST_L_BOTH);			// RESET LOW (H PULSE)
+	hidCommand(HIDASP_SET_DELAY,delay,0,0);		// SET_DELAY
+	Sleep(30);				// 30
+
+	for(tried = 1; tried <= 3; tried++) {
+		for(i = 1; i <= 32; i++) {
+		
+			buf[0] = 0xAC;
+			buf[1] = 0x53;
+			buf[2] = 0x00;
+			buf[3] = 0x00;
+			hidasp_cmd(buf, res);
+
+			if (res[2] == 0x53) {
+				rc = 0;
+				return rc;
+			} 
+			if (tried <= 2) break;
+			hidSetStatus(HIDASP_SCK_PULSE);			// RESET LOW SCK H PULSE shift scan poin
+		}
+	}
+#else
 	// ISPモード移行が失敗したら再試行するように修正 by senshu(2008-9-16)
 	rc = 1;
 	for (i = 0; i < 3; i++) {
@@ -618,6 +647,7 @@ int hidasp_program_enable(int delay)
 			Sleep(50);
 		}
 	}
+#endif
 #if DEBUG
 	if (rc == 0) {
 		fprintf(stderr, "hidasp_program_enable() == OK\n");

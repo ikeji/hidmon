@@ -3,7 +3,7 @@
 #define HIDASP_RST_H_RED			0x14
 #define HIDASP_RST_L_GREEN			0x08
 #define HIDASP_RST_L_BOTH			0x00
-
+#define HIDASP_SCK_PULSE 			0x80
 
 int hidasp_init(char *string);
 void hidasp_close();

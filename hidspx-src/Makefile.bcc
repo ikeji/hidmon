@@ -4,6 +4,7 @@ PROG = hidspx
 LIB =  libusb/lib/bcc/libusb.lib
 EXE  = $(PROG)-bcc.exe
 SRCS = avrspx.c hidasp.c hwctrl.c rscr.c usbasp.c utils.c wronly.c icon.rc
+#WILDARGS = c:\borland\bcc55\lib\wildargs$(O)
 WILDARGS = c:\bcc55\lib\wildargs$(O)
 OBJS = avrspx$(O) hidasp$(O) hwctrl$(O) rscr$(O) usbasp$(O) utils$(O) wronly$(O)
 
@@ -51,4 +52,4 @@ $(EXE): $(OBJS) $(RES) $(LIB)
 #	$(RC) -i icon.rc -o icon$(O)
 
 install:
-	install $(EXE) c:/bin
+	install $(EXE) ../bin
