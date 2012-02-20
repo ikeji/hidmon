@@ -164,7 +164,7 @@ AVR USBに準じてGPL2とします．
                  0x5df(HID devide)に変更
                - firmwareの変更 （今のところサポートしているAVRデバイスでは）
                  page_addr は 256 以下なので、uint16 から uint8 に降格。
-               - 静的レジスタ割付を実施
+               - 静的レジスタ割付を実施(一時、中止)
 
 
 # TAB size = 8で編集しています。

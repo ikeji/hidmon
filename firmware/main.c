@@ -12,7 +12,7 @@
 #include "usbdrv.h"
 #include "hidcmd.h"
 
-#define OPTIMIZE_SIZE		1	// r4,r5,r6,r7を global変数として使用する.
+#define OPTIMIZE_SIZE		0	// r4,r5,r6,r7を global変数として使用する.
 								// usbdrv側で同レジスタが使用されていないことが条件.
 
 /* ------------------------------------------------------------------------- */
@@ -84,7 +84,7 @@ register uchar page_mode asm("r4");
 register uchar page_addr asm("r7");
 #else
 static uchar currentPosition, bytesRemaining; // Receive Data Pointer
-static uchar    page_mode;
+static uchar   page_mode;
 static uchar   page_addr;
 #endif
 

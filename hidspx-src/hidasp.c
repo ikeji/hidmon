@@ -591,10 +591,10 @@ int hidasp_program_enable(int delay)
 	for (i = 0; i < 3; i++) {
 		Sleep(2);
 		hidSetStatus(HIDASP_RST_H_GREEN);		// RESET HIGH
-		Sleep(10);				// 10 => 100
+		Sleep(20);				// 10 => 100 !!!
 		hidSetStatus(HIDASP_RST_L_BOTH);		// RESET LOW
 		hidCommand(HIDASP_SET_DELAY,delay,0,0);					// SET_DELAY
-		Sleep(30);				// 30
+		Sleep(50);				// 30 !!!
 
 		buf[0] = 0xAC;
 		buf[1] = 0x53;
