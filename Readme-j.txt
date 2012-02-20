@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2010年 2月13日（最新更新）
+                                                2010年 2月14日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -487,7 +487,8 @@ usage: gawk -f genserial.awk -v t={aspx|mon88} start-number  [end-number]
 使用例1：
  > gawk -f genserial.awk 0001
 
-のように実行すると、0001 のシリアル番号ファイル（_0001.hex）を生成できます。
+のように実行すると、0001 のシリアル番号を設定する HEX ファイル（_0001.hex）
+を生成します。
 
 使用例2：0001～0100のシリアル番号のファイルを一括して生成します。
          指定できる値は1～9999まで、これを超えるとエラーになります。
@@ -496,11 +497,15 @@ usage: gawk -f genserial.awk -v t={aspx|mon88} start-number  [end-number]
 
 
 使用例3：16進数や英大文字の指定も可能です。小文字は大文字に変換します。
+※　文字列を大文字化している理由は、Windows のファイルシステムが、大文字小
+  文字を区別しないことによるファイルの上書きを避けるためです。この方法でシ
+  リアル番号が不足する場合は、生成するファイル名を工夫し、小文字でも重複し
+  ないファイル名の生成を行う必要があります）
 
  > gawk -f genserial.awk ABCD
 
-このファイルを main.hex のファームとともに以下のように書き込めば、HIDaspx
-はそのシリアル番号を持ったものになります。
+このファイルを main.hex のファームと同時に書き込めば、HIDaspx はそのシリア
+ル番号を持ったものになります。
 
  > hidspx main.hex _0001.hex
 
@@ -1559,48 +1564,77 @@ Type = HIDaspx, Delay = 4
 ■2010-02-12
 	(1) シリアル番号検索機能を厳格化（3回確認し、同一のものを採用）
 	(2) -ph? で複数のHIDaspxが接続されている場合、全てをリストする。
-  > hidspx -ph?
+  > hidspx -ph?　… 0100, 0007, 0000 の3台を挿入している場合
   VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0100] (*)
   VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0007]
   VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000]
-  ※ シリアル指定を省略時は、(*)の0100が選択される。
+  ※ シリアル指定省略時は、(*)の0100を選択します。
 
-■2010-02-13
-	(1) -ph?にテスト回数指定機能を追加（エラーメッセージの見直し）
-	-ph? に続いて数値を指定できます。この値は、シリアル番号の連続読み出しテス
-	ト回数を指定できます。省略時の値は 3 です。1 回あたり 約 50m秒の時間が必
-	要なので、1000 を指定すれば、完了までに約 50秒間の時間が必要です。
-	正常にシリアル番号が得られると、検出したシリアル番号を表示し、一回でも不
-	一致があると
+  なお、無償版と商用版のファームは VID, PID が異なり、それぞれに省略時のシ
+  リアル番号を持ちます。したがって、以下のように利用してください。
 
-	hidspx: HIDaspx(VID=16c0, PID=05df) is not found.
+　○ hidspx -ph?   …　無償版のHIDaspxをリストする
+　○ hidspx -php?  …　商用版のHIDaspxをリストする
+　× hidspx -ph*?  …　この指定は無効です（個別に指定が必要です）
+
+
+■2010-02-13 ～ 2010-02-14
+	(1) -ph?にテスト回数指定機能を追加し、エラーメッセージの見直しを実施
+
+	-ph? に続いて数値を指定できます。この値は、シリアル番号の連続読み出
+	しテスト回数を指定できます。省略時の値は 3 で、2 以下やマイナスの値
+	を指定すると、2 と解釈します。
+
+	1 回の認識で 約 30m秒が必要なので、1000 を指定すれば、完了までに約
+	30秒間の時間が必要です。正常にシリアル番号が得られると、以下の形式
+	で検出したシリアル番号と共にを表示し、複数個セットされていれば、VID,
+	PID が同一の全てをリスト表示します。
+
+	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+
+	指定回数のシリアル番号読み出し時、一回でも不一致があると
+
+	hidspx: HIDaspx(VID=16c0, PID=05df) serial check error (数字)
+	（カッコ内の数字は、エラー発生時のチェック回数）
 
 	と表示します。
 
-	この機能により、HIDaspx と hidspx の安定度がテストできます。確実に動作す
-	る HIDaspx なら、1000000 （100 万回）を指定しても、エラーは生じません。
-	（100 万回のテストには約 12時間以上の時間が必要です）
+	なお、HIDaspx が装着されていない場合は以下のメッセージです。
 
- 1. > time hidspx -ph?
- VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+	hidspx: HIDaspx(VID=16c0, PID=05df) isn't found.
 
- real    0m0.266s
+	この機能により、HIDaspx と hidspx の安定度がテストできます。確実に
+	動作する HIDaspx なら、1000000 （100 万回）を指定しても、エラーは生
+	じません。（100 万回のテストには約 8時間以上の時間が必要です）
 
- 2. > time hidspx -ph?10
- VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+	$ time hidspx -ph?
+	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+	real    0m0.219s
 
- real    0m0.594s
+	$ time hidspx -ph?10
+	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+	real    0m0.438s
 
- 3. > time hidspx -ph?100
- VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+	$ time hidspx -ph?100
 
- real    0m4.813s
+	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+	real    0m3.250s
 
- 4. > time hidspx -ph?1000
- VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
-
- real    0m47.250s
+	$ time hidspx -ph?1000
+	VID=16c0, PID=05df, [  YCIT], [HIDaspx], serial=[0000] (*)
+	real    0m31.969s
 
 	(2) この版から、build-exe.batを追加し、firmwareの更新と実行ファイルの
 	　　更新を区別するようにしました。
+
+	(3) hidmon.exe, hidmon.dll のシリアル番号検索機構をhidspxと同等に変更
+
+	> hidmon -p?
+	> hidmon -pp?
+
+	（↑）は、hidspx と同様ですが、hidmon には試行回数指定機能はありません。
+	シリアル番号読出しのテストには hidspxを利用してください。
+
+	(4) hidmon.exe のbenchコマンドのテスト機能を強化しました。
+	送受信のバイト数と全転送内容の突き合わせを実施します。
 

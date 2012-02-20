@@ -50,6 +50,7 @@ static int MY_PID = 0x05df;				/* 1503 in dec, obdev's free PID */
 //	MY_Manufacturer,MY_Product のdefine を外すと、VID,PIDのみの照合になる.
 //	どちらかをはずすと、その照合を省略するようになる.
 static int found_hidaspx;
+static int serial_check_counts;
 
 extern int hidmon_mode;
 
@@ -489,16 +490,18 @@ static int check_product_string(HANDLE handle, const char *serial, int list_mode
 	uni_to_string(string2, unicode);
 
 	// シリアル番号のチェックを厳密化 (2010/02/12 13:24:08)
+	serial_check_counts = 0;
 	if (serial[0]=='*') {
 		extern int  f_auto_retry;		/* for HIDaspx (Auto detect, Retry MAX) */
 
 		for (i=0; i<f_auto_retry; i++) {
-			Sleep(40);
+			serial_check_counts++;
+			Sleep(20);
 			if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
 				return -1;
 			}
 			uni_to_string(tmp[i%2], unicode);
-			if (i>0 && ((i%2) == 1)) {
+			if ((i>0) && ((i%2) == 1)) {
 				if (strcmp(tmp[0], tmp[1])==0) {
 					strcpy(string3, tmp[0]);	// OK
 				} else {
@@ -508,16 +511,16 @@ static int check_product_string(HANDLE handle, const char *serial, int list_mode
 		}
 		if (list_mode) {
 			if (first) {
-				fprintf(stderr,
-				"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s] (*)\n", MY_VID, MY_PID, string1,  string2, string3);
+				fprintf(stderr,	"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s] (*)\n",
+						MY_VID, MY_PID, string1,  string2, string3);
 				first = 0;
 			} else {
-				fprintf(stderr,
-				"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s]\n", MY_VID, MY_PID, string1,  string2, string3);
+				fprintf(stderr,	"VID=%04x, PID=%04x, [%6s], [%7s], serial=[%s]\n",
+						MY_VID, MY_PID, string1,  string2, string3);
 			}
 		}
 	} else {
-		Sleep(40);
+		Sleep(20);
 		if (!HidD_GetSerialNumberString(handle, unicode, sizeof(unicode))) {
 			return -1;
 		}
@@ -633,7 +636,7 @@ void memdump(char *msg, char *buf, int len)
 #endif
 
 
-int hidasp_list(char * string)
+int hidasp_list(char * exe_name)
 {
 	int r, rc;
 
@@ -646,7 +649,13 @@ int hidasp_list(char * string)
 		rc = 0;
 	}
 	if (found_hidaspx==0) {
-		fprintf(stderr, "%s: HIDaspx(VID=%04x, PID=%04x) is not found.\n", string, MY_VID, MY_PID);
+		if (serial_check_counts != 0) {
+			fprintf(stderr, "%s: HIDaspx(VID=%04x, PID=%04x) serial check error (%d).\n",
+				exe_name, MY_VID, MY_PID, serial_check_counts);
+		} else {
+			fprintf(stderr, "%s: HIDaspx(VID=%04x, PID=%04x) isn't found.\n",
+				exe_name, MY_VID, MY_PID);
+		}
 	}
 	if (hHID_DLL) {
 		FreeLibrary(hHID_DLL);

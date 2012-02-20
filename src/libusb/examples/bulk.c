@@ -18,9 +18,9 @@ usb_dev_handle *open_dev(void)
   struct usb_bus *bus;
   struct usb_device *dev;
 
-  for(bus = usb_get_busses(); bus; bus = bus->next) 
+  for(bus = usb_get_busses(); bus; bus = bus->next)
     {
-      for(dev = bus->devices; dev; dev = dev->next) 
+      for(dev = bus->devices; dev; dev = dev->next)
         {
           if(dev->descriptor.idVendor == MY_VID
              && dev->descriptor.idProduct == MY_PID)
@@ -44,7 +44,7 @@ int main(void)
 
   if(!(dev = open_dev()))
     {
-      printf("error: device not found!\n");
+      printf("error: device isn't found!\n");
       return 0;
     }
 
@@ -61,14 +61,14 @@ int main(void)
       usb_close(dev);
       return 0;
     }
-  
-  if(usb_bulk_write(dev, EP_OUT, tmp, sizeof(tmp), 5000) 
+
+  if(usb_bulk_write(dev, EP_OUT, tmp, sizeof(tmp), 5000)
      != sizeof(tmp))
     {
       printf("error: bulk write failed\n");
     }
 
-  if(usb_bulk_read(dev, EP_IN, tmp, sizeof(tmp), 5000) 
+  if(usb_bulk_read(dev, EP_IN, tmp, sizeof(tmp), 5000)
      != sizeof(tmp))
     {
       printf("error: bulk read failed\n");
