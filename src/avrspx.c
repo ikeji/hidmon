@@ -1111,13 +1111,31 @@ void put_hexline (
 	BYTE sum;
 	int char_count;
 	const BYTE *p;
+	static int segment = 0;
 
+/*
+
+64kBを超える場合には、セグメント情報が付加される。
+
+:020000020000FC
+:020000021000EC
+
+この情報を元に、64kBを超えるアドレスを生成する。
+
+ */
+	if (f_hex_dump_mode) {
+		if (ofs == 0 && count == 2 && type ==2) {
+			segment = (buffer[0] << 8) + buffer[1];
+			segment *= 16;
+			return;
+		}
+	}
 	/* Byte count, Offset address and Record type */
 	if (f_hex_dump_mode) {
 		if (ofs % 256 == 0) {
 			fprintf(fp, "\n");
 		}
-		fprintf(fp, "%04X  ", ofs);
+		fprintf(fp, "%06X  ", segment + ofs);
 	} else {
 		fprintf(fp, ":%02X%04X%02X", count, ofs, type);
 	}
@@ -1140,14 +1158,14 @@ void put_hexline (
 	}
 	if (f_hex_dump_mode) {
 		int ch;
-		fprintf(fp, " |");
+		fprintf(fp, " [");
 		while(char_count--) {
 			ch = *p++;
 			if (!isgraph(ch))
-				ch = ' ';
+				ch = '.';
 			fprintf(fp, "%c", ch);
 		}
-		fprintf(fp, "|");
+		fprintf(fp, "]");
 	}
 	/* Check sum */
 	if (f_hex_dump_mode) {

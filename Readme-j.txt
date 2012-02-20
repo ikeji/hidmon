@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 4月12日（最新更新）
+                                                2009年 4月13日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1076,7 +1076,7 @@ EEPROM Size       = 128 bytes
 	* コマンド引数にてワイルドカード文字を展開
 	* ログ窓の表示フォントを等幅フォントに変更
 	* エラー処理を強化
-	
+
 	hidspx.exe, hidspx-gcc.exe
 	* --new-mode を標準にした（旧モードは --new-mode- を指定する）
 
@@ -1109,3 +1109,12 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
         * ログテキスト窓の表示を適正化
 	* エラー処理を修正
 
+■2009-04-11
+	hidspx.exe, hidspx-gcc.exe
+	* -rph, -reh （64kB超の16進ダンプに対応）
+
+	hidspx-GUI.exe (ver 0.3.6)
+	* Flashの16進ダンプ用のRead(SCRN)ボタンを追加
+	* CLR LOGボタンを追加
+	* TAB オーダーの適正化
+	* ログテキストエリアの背景色を変更
