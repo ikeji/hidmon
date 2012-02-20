@@ -775,3 +775,17 @@ EEPROM Size       = 128 bytes
           ブックマークに登録しておけば済むことですが、AVR マイコンを開発す
           る全ての PC にブックマークするのは手間がかかり（複数の PC を
           利用する場合）ますので、メリットはあると思います。
+
+
+2009-01-13 ...	-rdオプションの不具合を修正
+	- 一部の AVR マイコン（AT90S2313 など）で -rd オプションを利用出来
+	  なかった点を改良（以下は、改良前のメッセージ）
+
+	>hidspx -rd
+	Detected device is AT90S8515.
+	Fuse bits are not accessible.
+	
+	>hidspx -rd
+	Detected device is AT90S2313.
+	Fuse bits are not accessible.
+

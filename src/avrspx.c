@@ -120,7 +120,7 @@ const DEVPROP DevLst[] =	/* Device property list */
 	{ "tiny2313",    T2313, {0x1E, 0x91, 0x0A},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 2, {0xFF, 0xDF, 0x01}, 75},
 	{ "tiny24",      T24,   {0x1E, 0x91, 0x0B},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},139},
 	{ "tiny25",      T25,   {0x1E, 0x91, 0x08},   2048,  32,  128,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},100},
-	{ "tiny26",      T26,   {0x1E, 0x91, 0x09},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 5, 4, {0xFF, 0x17},       61},
+	{ "tiny26",      T26,   {0x1E, 0x91, 0x09},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 5, 4, {0xFF, 0x17},       60},
 	{ "tiny261",     T261,  {0x1E, 0x91, 0x0C},   2048,  32,  128,  4,  6, 10, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},142},
 	{ "tiny44",      T44,   {0x1E, 0x92, 0x07},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},140},
 	{ "tiny45",      T45,   {0x1E, 0x92, 0x06},   4096,  64,  256,  4,  6,  5, 0xFF, 0xFC, 6, 1, {0xFF, 0xDF, 0x01},101},
@@ -511,7 +511,9 @@ void open_device_url(int number)
 		sprintf(url, "start http://www.avrfreaks.net/index.php?module=Freaks%%20Devices"
 					"^&func=displayDev^&objectid=%d", number);
 	}
-	if (system(url) < 0) {
+	if (system(url) >= 0) {
+		MESS("start http://www.avrfreaks.net/");
+	} else {
 		MESS("WARNING: Web browser start error.\n");
 	}
 	return;
@@ -522,7 +524,9 @@ void open_atmel_url(char *str)
 	char url[512];
 
 	sprintf(url, "start http://www.atmel.com/products/AVR/");
-	if (system(url) < 0) {
+	if (system(url) >= 0) {
+		MESS("start http://www.atmel.com/products/AVR/");
+	} else {
 		MESS("WARNING: Web browser start error.\n");
 	}
 	return;
@@ -538,10 +542,22 @@ void output_fuse (int mode)
 	char Line[100], *cp;
 
 
+#if AVRSPX		/* @@@ by senshu */
+	if (mode==RD_DEV_OPT_d) {
+		open_device_url((int)Device->DocNumber);
+		return;
+	}
+	if(mode!=RD_DEV_OPT_i && Device->FuseType == 0) {
+		MESS("Fuse bits are not accessible.\n");
+		return;
+	}
+#else
 	if(Device->FuseType == 0) {
 		MESS("Fuse bits are not accessible.\n");
 		return;
 	}
+#endif
+
 #if AVRSPX		/* @@@ by senshu */
 	if (mode==RD_DEV_OPT_F) {
 
@@ -571,10 +587,6 @@ void output_fuse (int mode)
 
 		return;
 
-	} else if (mode==RD_DEV_OPT_d) {
-		open_device_url((int)Device->DocNumber);
-		return;
-
 	} else if (mode==RD_DEV_OPT_i) {
 		char url[512], *chip;
 		int len;
@@ -593,7 +605,9 @@ void output_fuse (int mode)
 			len += sprintf(url+len, "^&V_EXTENDED=%02X", FuseBuff[2]);
 
 		sprintf(url+len, "^&O_HEX=Apply+user+values");
-		if (system(url) < 0) {
+		if (system(url) >= 0) {
+			MESS("start http://www.engbedded.com/cgi-bin/fc.cgi/");
+		} else {
 			MESS("WARNING: Web browser start error.\n");
 		}
 		return;
