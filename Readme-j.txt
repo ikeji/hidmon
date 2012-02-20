@@ -2,7 +2,7 @@
 
                                                 2008年 9月22日（公開開始）
                                                           ｜
-                                                2009年 8月 7日（最新更新）
+                                                2009年 8月17日（最新更新）
 
                                       山形県立産業技術短期大学校  千秋広幸
                                  E-mail senshu(at)astro.yamatata-cit.ac.jp
@@ -1272,11 +1272,12 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 	hidspxGコマンドで、-w3のように指定した場合、内部エラーになるのを修正
 
 ■2009-08-07
-	RST ピンを無効化ビットの書き込みをチェックし、警告する。RST ピンの無効化
-	後は、hidspx からの書き込みは無効になるので、このチェック機構を追加した。
+	RST ピンを無効化ビットの書き込みをチェックし、警告します。RST ピンの無効
+	化（ポートへの割り付け）は、ISP （AVRSIP-mkII や hidspx での操作）が無効
+	になるので、これを避けるため、チェック機構を追加しました。
 	※ IO ピンが不足し、何としても IO ピンに割当てたい場合に限り、この書き込
-	   みを行うこと。この情報を書き込み後は ISP は無効になります。解除には高
-	   電圧パラレルプログラマが必要です。
+	   みを行ってください。この FUSE 情報を書き込むと ISP は無効になり、解除
+	   には高電圧パラレルプログラマが必要になります。
 
 	例）
 	>hidspx -fH0x07
@@ -1286,5 +1287,47 @@ Total read/write size = 128 B / 0.30 s (0.42 kB/s)
 
 	-f#のように指定すれば、この書き込みを実行できる。（細心の注意が必要です）
 
-	なお、RSTDISBLビットは、一部の少ピンAVRマイコンにのみ実装されています。
+	なお、RSTDISBLビットは少ピンAVRマイコンにのみ、実装されています。
 	※ この改良に関しては、je1htm氏とkuga氏、kawana氏に助言をいただきました。
+
+■2009-08-17
+	(1) AVR マイコンのいくつかは DWEN(debugWire ENable) という FUSE ビット が
+	    利用できます。debugWire は、AVR Dragon などデバッグツールを利用するこ
+	    とで効率的な開発が可能になります、しかし、この FUSE ビットを書き込む
+	    と ISP （In Sysytem Programming）が無効になり、簡易な AVR ライタ
+	    （AVRISP-mkII や hidspx など） からの操作が不能になります。
+
+	    hidspx を利用して AVR マイコンのプログラム開発を行う場合には DWEN ビ
+	    ットを有効にする必要はなく、DWEN ビットをプログラムできるのは危険と考
+	    えました。そこで、DWEN ビットのプログラムを禁止する機構を追加しました。
+	    ※ DWEN ビットの解除には、AVR Dragon や高電圧パラレルプログラマが必要
+	       です。
+
+	例）
+	> hidspx -rf
+
+	Detected device is ATtiny2313.
+	:
+	High:11-11101
+	     |||||||+-- RSTDISBL (RESETピン 1:有効, 0:無効(PA2))
+	     ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
+	     |||+-- WDTON (WDT 0:常時ON, 1:通常)
+	     ||+-- SPIEN (1:ISP禁止, 0:ISP許可) ※Parallel時のみ
+	     |+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
+	     +-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
+	:
+	>hidspx -fH0x5d ... DWENビットのプログラムを指示
+	Detected device is ATtiny2313.
+	WARNING: ISP disable FUSE bit (DWEN) detected, Unprogrammed DWEN bit.
+	Fuse High byte was programmed (0xDD).
+	⇒ DWENビットはプログラムされず、無視する(0xddを書き込んでいる)
+
+	※ この改良に関しては、kuga氏、すん氏に助言をいただきました。
+
+	(2) hidspx-GUI.exe (ver 0.5.0) の改良
+	    - メニューバーの処理をサポート
+	    - -dオプションの扱いを修正
+
+	(3) hidspxG.exe の改良
+	    - -dオプションの扱いを修正
+
