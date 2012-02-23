@@ -1,0 +1,108 @@
+# Name: Makefile
+# Project: HIDaspx
+# Author: iruka & senshu
+# Creation Date: 2008-09-02
+# Tabsize: 4
+# Copyright: (c) 2006 by OBJECTIVE DEVELOPMENT Software GmbH
+# License: GNU GPL v2 (see License.txt) or proprietary (CommercialLicense.txt)
+# This Revision: $Id: Makefile 566 2008-04-26 14:21:47Z cs $
+
+#DEVICE = atmega8
+DEVICE = attiny2313
+F_CPU = 12000000
+#F_CPU = 16000000
+FUSE_L  = # see below for fuse values for particular devices
+FUSE_H  = 
+PORT = avrdoper
+PROGRAMMER = stk500v2
+AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
+
+DEFINES = -DUSE_LIBUSB=1
+CFLAGS = $(DEFINES) -Iusbdrv -I. -DDEBUG_LEVEL=0 -DF_CPU=$(F_CPU)
+
+#OBJECTS = main.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
+OBJECTS = main.o crt.o delay.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
+
+COMPILE = avr-gcc -Wall -Os $(CFLAGS) -mmcu=$(DEVICE)
+
+############################## ATtiny2313 ##############################
+#Low: 10111111 (0xBF)
+#     ||||++++-- CKSEL[3:0] システムクロック選択
+#     ||++-- SUT[1:0] 起動時間
+#     |+-- CKOUT (0:PD2にシステムクロックを出力)
+#     +-- CKDIV8 クロック分周初期値 (1:1/1, 0:1/8)
+#
+#High:11-11011 (0xDB)
+#     |||||||+-- RSTDISBL (RESETピン 1:有効, 0:無効(PA2))
+#     ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
+#     |||+-- WDTON (WDT 0:常時ON, 1:通常)
+#     ||+-- SPIEN (1:ISP禁止, 0:ISP許可) ※Parallel時のみ
+#     |+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
+#     +-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
+#
+#Ext: -------1 (0xFF)
+#            +-- SPMEN (SPM命令 1:無効, 0:有効)
+#
+default: main_libusb.hex
+
+# symbolic targets:
+help:
+	@echo "This Makefile has no default rule. Use one of the following:"
+	@echo "make hex ......... to build main_libusb.hex for HIDaspx hardware"
+	@echo "make program ..... to flash fuses and firmware"
+	@echo "make fuse ........ to flash the fuses"
+	@echo "make flash ....... to flash the firmware"
+	@echo "make clean ....... to delete objects and hex file"
+
+hex: main_libusb.hex
+program: flash fuse
+
+.c.o:
+	$(COMPILE) -c $< -o $@
+
+.S.o:
+	$(COMPILE) -x assembler-with-cpp -c $< -o $@
+# "-x assembler-with-cpp" should not be necessary since this is the default
+# file type for the .S (with capital S) extension. However, upper case
+# characters are not always preserved on Windows. To ensure WinAVR
+# compatibility define the file type manually.
+
+.c.s:
+	$(COMPILE) -S $< -o $@
+
+flash:
+	$(AVRDUDE) -U flash:w:main_libusb.hex:i
+
+usbaspload:
+	$(MAKE) flash PROGRAMMER=usbasp DEVICE=atmega168
+
+fuse:
+	@[ "$(FUSE_H)" != "" -a "$(FUSE_L)" != "" ] || \
+		{ echo "*** Edit Makefile and choose values for FUSE_L and FUSE_H!"; exit 1; }
+	$(AVRDUDE) -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m
+
+clean:
+	rm -f main.dis main_libusb.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf *.o usbdrv/*.o main.s usbdrv/oddebug.s usbdrv/usbdrv.s time*.dat
+
+install:
+	cp -p main_libusb.hex ../bin/firmware
+
+# file targets:
+main.elf:	$(OBJECTS)
+	$(COMPILE) -o main.elf $(OBJECTS) -nostdlib
+#	$(COMPILE) -o main.elf $(OBJECTS)
+
+main_libusb.hex:	main.elf
+	rm -f main_libusb.hex main.eep.hex
+	avr-objcopy -j .text -j .data -O ihex main.elf main_libusb.hex
+	avr-size --mcu=$(DEVICE) main.elf
+#	sh checksize main.elf 2048 128
+#	checksize main.elf 8192 1024
+# do the checksize script as our last action to allow successful compilation
+# on Windows with WinAVR where the Unix commands will fail.
+
+disasm:	main.elf
+	avr-objdump -d main.elf
+
+cpp:
+	$(COMPILE) -E main.c
