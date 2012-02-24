@@ -12,6 +12,7 @@
 DEVICE = attiny2313
 F_CPU = 12000000
 #F_CPU = 16000000
+#F_CPU = 20000000
 
 OSC = 16
 ifeq ($(F_CPU),12000000)
@@ -33,10 +34,18 @@ FUSE_H  = 0xDB
 #AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
 PROGRAMMER = avrspx
 
-CFLAGS = $(DEFINES) -Iusbdrv -I. -DDEBUG_LEVEL=0 -DF_CPU=$(F_CPU)
+CFLAGS = $(DEFINES) -Iusbdrv -I. -DDEBUG_LEVEL=0 -DF_CPU=$(F_CPU) \
+				 -fdata-sections \
+				 -ffunction-sections \
+				 -ffreestanding \
+				 -fno-schedule-insns2 \
+				 -fno-tree-scev-cprop \
+				 -fno-split-wide-types \
+				 -Wl,--relax,--gc-sections
+
 
 #OBJS = $(TARGET).o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
-OBJS = $(TARGET).o crt.o delay.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
+OBJS = $(TARGET).o crt.o delay.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o
 
 COMPILE = avr-gcc -Wall -Os $(CFLAGS) -mmcu=$(DEVICE)
 
@@ -112,8 +121,9 @@ $(TARGET)-$(OSC).elf:	$(OBJS)
 $(TARGET)-$(OSC).hex:	$(TARGET)-$(OSC).elf
 	rm -f $(TARGET)-$(OSC).hex $(TARGET)-$(OSC).eep.hex
 	avr-objcopy -j .text -j .data -O ihex $(TARGET)-$(OSC).elf $(TARGET)-$(OSC).hex
-	avr-size --mcu=$(DEVICE) $(TARGET)-$(OSC).elf
-#	sh checksize main.elf 2048 128
+#	avr-size --mcu=$(DEVICE) $(TARGET)-$(OSC).elf
+	sh checksize $(TARGET)-$(OSC).elf
+#	sh checksize $(TARGET)-$(OSC).elf 2048 128
 #	checksize main.elf 8192 1024
 # do the checksize script as our last action to allow successful compilation
 # on Windows with WinAVR where the Unix commands will fail.
