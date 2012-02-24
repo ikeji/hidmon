@@ -1,11 +1,20 @@
-HIDaspx
+HIDmon Kai
 ===============
 
-このレポジトリは、HIDaspx本家サイトで公開されているアーカイブのミラーです。
-http://www-ice.yamagata-cit.ac.jp/ken/senshu/sitedev/index.php?AVR%2FHIDaspx
+HIDmon Kai is a modified version of HIDmon.
 
-ソースコードの変更点が見易くなるようにgitに入れるために作りました。
+This repository has these module.
+1. Firmware for ATTiny2313.
+2. Ruby module for control HIDmon Kai which is worked on Win32, Linux and mac.
+3. AVR Writter program.
 
-ライセンス
+Goal
 ---------------
-元ソースと同じくGPLです。
+
+HIDmon Kai is
+* USB-GPIO
+* AVR Writter
+
+Licence
+---------------
+GPL v2
