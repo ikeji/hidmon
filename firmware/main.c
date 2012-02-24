@@ -97,16 +97,20 @@ register uchar page_mode   asm("r6");
 register uchar page_addr   asm("r7");
 register uchar page_addr_h asm("r8");
 register uchar wait      asm("r9");
+#if PROGRAMMER_MODE_SWITCH
 register uchar programmer_mode    asm("r10");
-#else
+#endif  // PROGRAMMER_MODE_SWITCH
+#else  // OPTIMIZE_SIZE
 static uchar currentPosition;
 static uchar bytesRemaining; // Receive Data Pointer
 static uchar page_mode;
 static uchar page_addr;
 static uchar page_addr_h;
 static uchar wait;
+#if PROGRAMMER_MODE_SWITCH
 static uchar programmer_mode;
-#endif
+#endif  // PROGRAMMER_MODE_SWITCH
+#endif  // OPTIMIZE_SIZE
 
 //
 //    受信バッファ.
@@ -175,16 +179,24 @@ void delay_7clk(void);
 //    PORTB PIN Setting
 #define    ISP_DDR        DDRB
 #define    ISP_OUT        PORTB
+#if ENABLE_ISP_LED
 #define    ISP_DDR_DEFAULT    0x0f    /* PB7-4=in PB3-0=out */
 #define    ISP_OUT_DEFAULT    0x0b    /* PB7-4=0, ISP_RDY=0 */
+#else  // ENABLE_ISP_LED
+#define    ISP_DDR_DEFAULT    0x00    /* All input */
+#define    ISP_OUT_DEFAULT    0x00    /* Disable pullup */
+#endif  // ENABLE_ISP_LED
 
 //    PORTB PIN ASSIGN
 #define    ISP_SCK        7            /* Target SCK */
 #define    ISP_MOSI    6            /* Target MISO */
 #define    ISP_MISO    5            /* Target MOSI */
 #define    ISP_RST        4            /* Target RESET */
+
+#if ENABLE_ISP_LED
 #define    ISP_RDY        3            /* Green LED */
 #define    ISP_RED        2            /* RED LED */
+#endif  // ENABLE_ISP_LED
 
 
 /* ------------------------------------------------------------------------- */
@@ -274,7 +286,11 @@ static    void ispConnect(void)
   delay_10us(6);                    //@@x  ispDelay();
   ISP_OUT |= (1 << ISP_RST);        /* RST high */
   delay_10us(100);                //@@x  ispDelay(); -> 1ms
+#if ENABLE_ISP_LED
   ISP_OUT &= ~((1 << ISP_RST)|(1 << ISP_RDY));    /* RST low , LED Low*/
+#else  // ENABLE_ISP_LED
+  ISP_OUT &= ~(1 << ISP_RST);    /* RST low */
+#endif  // ENABLE_ISP_LED
 }
 
 static    void ispDisconnect(void)
@@ -285,7 +301,9 @@ static    void ispDisconnect(void)
 
   /* switch pullups off */
   //ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
-  ISP_OUT = 0b00001011;            // PB7-4=Hi-Z,  PB3-0=Hi, LED(PWR)を除く
+
+  ISP_OUT = ISP_OUT_DEFAULT;            // PB7-4=Hi-Z,  PB3-0=Hi, LED(PWR)を除く
+
 }
 
 static    void ispSckPulse(void)
@@ -322,9 +340,11 @@ void hidasp_main()    //uchar *data)
   if ( data0 == HIDASP_SET_STATUS ) { // PORTへの出力制御
     /* ISP用のピンをHi-Z制御 */
     /* ISP移行の手順を、ファーム側で持つ */
+#if PROGRAMMER_MODE_SWITCH
     if  (!programmer_mode) {
       usbData[0] = 0xba;    /* コマンド実行の実行不可をHOSTに知らせる. */
     } else {
+#endif  // PROGRAMMER_MODE_SWITCH
       if(data[2] & 0x10) {// RST解除の場合
         ispDisconnect();
       }else{
@@ -335,7 +355,9 @@ void hidasp_main()    //uchar *data)
         }
       }
       usbData[0] = 0xaa;    /* コマンド実行完了をHOSTに知らせる. */
+#if PROGRAMMER_MODE_SWITCH
     }
+#endif  // PROGRAMMER_MODE_SWITCH
   } else
 #endif    /* INCLUDE_ISP_CMD */
     if ( cmd == HIDASP_CMD_TX) { // SPI
@@ -530,6 +552,7 @@ int main(void)
   }
 #endif
 
+#if PROGRAMMER_MODE_SWITCH
 #if USB_IO_MODE_ENABLE                    /* USB-IOでは、初期化時にPORTBを入力モード */
 
   /* PD5は USB D-, PD2はmodeジャンパ用 pullup */
@@ -550,12 +573,28 @@ int main(void)
     //  TIMER0 の周期を設定する.
     OCR0A = 5;                        //  (12MHz / 2) / (5+1) = 1MHz
   }
-#else
+#else  // USB_IO_MODE_ENABLE
   PORTD |= (1<<PD5);                    /* PD5は USB D-の pullup */
   DDRD = ~USBMASK;                    /* all outputs except USB data */
   ISP_OUT = ISP_OUT_DEFAULT;            /* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
   ISP_DDR = ISP_DDR_DEFAULT;            /* PB7-4=in PB3-0=out */
-#endif
+
+  TCCR0A =(1<<COM0A0)|(1<<WGM01);    //  COM0A=01 : 比較一致でOC0Aトグル.
+  //  WGM210 = 010 : 比較一致タイマー、カウンタクリア.
+  TCCR0B = (1<<CS00);                //  fclk 1/1 分周.
+  //  TIMER0 の周期を設定する.
+  OCR0A = 5;                        //  (12MHz / 2) / (5+1) = 1MHz
+#endif  // USB_IO_MODE_ENABLE
+#else  // PROGRAMMER_MODE_SWITCH
+  PORTD |= (1<<PD5);                    /* PD5は USB D-の pullup */
+  DDRD = ~USBMASK;                    /* all outputs except USB data */
+#if ENABLE_ISP_LED
+  ISP_OUT = ISP_OUT_DEFAULT;            /* PB3 LED(PWR) ON, PB2 LED(ACC) OFF */
+  ISP_DDR = ISP_DDR_DEFAULT;            /* PB7-4=in PB3-0=out */
+#else  // ENABLE_ISP_LED
+  // We didn't set ISP_OUT and ISP_DDR. Because it already 0.
+#endif  // ENABLE_ISP_LED
+#endif  // PROGRAMMER_MODE_SWITCH
   usbInit();
   sei();
   for(;;){    /* main event loop */

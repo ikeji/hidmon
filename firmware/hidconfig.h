@@ -7,6 +7,10 @@
 #ifndef __hidconfig_h_included__
 #define __hidconfig_h_included__
 
+// Add by ikeji
+#define PROGRAMMER_MODE_SWITCH 0  // Switch to programmer mode by PIND2
+#define ENABLE_ISP_LED 0  // Disable LED on PINB2 and PINB3
+
 //	コンフィギュレーションスイッチ:
 // USE_LIBUSB は Makefile から指定するとソース変更が不要。
 //#define	USE_LIBUSB			0	// HID Class ではなく libusb を使用する(84バイトの節約)
