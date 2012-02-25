@@ -1,141 +1,141 @@
 # Name: Makefile
-# Project: HIDaspx
-# Author: iruka & senshu
-# Creation Date: 2008-09-02
-# Tabsize: 4
-# Copyright: (c) 2006 by OBJECTIVE DEVELOPMENT Software GmbH
-# License: GNU GPL v2 (see License.txt) or proprietary (CommercialLicense.txt)
-# This Revision: $Id: Makefile 566 2008-04-26 14:21:47Z cs $
+# Project: HIDmon Kai
+# Author: ikeji
+# License: GNU GPL v2 (see License.txt)
 
-# GNU make only
-#DEVICE = atmega8
-DEVICE = attiny2313
+# Config
+
 F_CPU = 12000000
+#F_CPU = 12800000
 #F_CPU = 16000000
 #F_CPU = 20000000
+TARGET = main
 
-OSC = 16
-ifeq ($(F_CPU),12000000)
- OSC = 12
-endif
+# default build target
 
-ifeq ($(F_CPU),12800000)
- OSC = RC
-endif
+default: $(TARGET).hex
 
-MAIN = main
-TARGET = $(MAIN)
+# dispatch all build target
 
-FUSE_L  = 0xBF
-FUSE_H  = 0xDB
+all: main-12.hex main-16.hex main-20.hex \
+	main-small-12.hex main-small-rc.hex main-small-16.hex main-small-20.hex
 
-#PORT = avrdoper
-#PROGRAMMER = stk500v2
-#AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
-PROGRAMMER = avrspx
+main-12.hex:
+	$(MAKE) F_CPU=12000000 TARGET=main clean main.hex
+	cp main.hex main-12.hex
+	cp main.elf main-12.elf
 
-CFLAGS = $(DEFINES) -Iusbdrv -I. -DDEBUG_LEVEL=0 -DF_CPU=$(F_CPU) \
+main-16.hex:
+	$(MAKE) F_CPU=16000000 TARGET=main clean main.hex
+	cp main.hex main-16.hex
+	cp main.elf main-16.elf
+
+main-20.hex:
+	$(MAKE) F_CPU=20000000 TARGET=main clean main.hex
+	cp main.hex main-20.hex
+	cp main.elf main-20.elf
+
+main-small-12.hex:
+	$(MAKE) F_CPU=12000000 TARGET=main-small clean main-small.hex
+	cp main-small.hex main-small-12.hex
+	cp main-small.elf main-small-12.elf
+
+main-small-rc.hex:
+	$(MAKE) F_CPU=12800000 TARGET=main-small clean main-small.hex
+	cp main-small.hex main-small-rc.hex
+	cp main-small.elf main-small-rc.elf
+
+main-small-16.hex:
+	$(MAKE) F_CPU=16000000 TARGET=main-small clean main-small.hex
+	cp main-small.hex main-small-16.hex
+	cp main-small.elf main-small-16.elf
+
+main-small-20.hex:
+	$(MAKE) F_CPU=20000000 TARGET=main-small clean main-small.hex
+	cp main-small.hex main-small-20.hex
+	cp main-small.elf main-small-20.elf
+
+.PHONY: allclean
+allchecksize: all
+	-sh checksize main-12.elf
+	-sh checksize main-16.elf
+	-sh checksize main-20.elf
+	-sh checksize main-small-12.elf
+	-sh checksize main-small-rc.elf
+	-sh checksize main-small-16.elf
+	-sh checksize main-small-20.elf
+
+.PHONY: allclean
+allclean: clean
+	rm -f *.hex *.elf
+
+# Constants
+
+DEVICE = attiny2313
+
+CFLAGS = $(DEFINES) \
+				 -Wall \
+				 -Os \
+				 -Iusbdrv -I. \
+				 -DDEBUG_LEVEL=0 \
+				 -DF_CPU=$(F_CPU) \
+				 -D__AVR_LIBC_DEPRECATED_ENABLE__ \
+				 -mmcu=$(DEVICE) \
 				 -fdata-sections \
 				 -ffunction-sections \
 				 -ffreestanding \
 				 -fno-schedule-insns2 \
 				 -fno-tree-scev-cprop \
 				 -fno-split-wide-types \
-				 -Wl,--relax,--gc-sections
+				 -Wl,--relax,--gc-sections -nostdlib
 
+ASFLAGS = $(CFLAGS)
 
-#OBJS = $(TARGET).o usbdrv/usbdrv.o usbdrv/usbdrvasm.o 
-OBJS = $(TARGET).o crt.o delay.o usbdrv/usbdrv.o usbdrv/usbdrvasm.o
+OBJS = \
+			 $(TARGET).o \
+			 crt.o \
+			 delay.o \
+			 usbdrv/usbdrv.o \
+			 usbdrv/usbdrvasm.o
 
-COMPILE = avr-gcc -Wall -Os $(CFLAGS) -mmcu=$(DEVICE)
+CC=avr-gcc
 
-############################## ATtiny2313 ##############################
-#Low: 10111111 (0xBF)
-#     ||||++++-- CKSEL[3:0] システムクロック選択
-#     ||++-- SUT[1:0] 起動時間
-#     |+-- CKOUT (0:PD2にシステムクロックを出力)
-#     +-- CKDIV8 クロック分周初期値 (1:1/1, 0:1/8)
-#
-#High:11-11011 (0xDB)
-#     |||||||+-- RSTDISBL (RESETピン 1:有効, 0:無効(PA2))
-#     ||||+++-- BODLEVEL[2:0] (111:Off, 110:1.8, 101:2.7, 100:4.3)
-#     |||+-- WDTON (WDT 0:常時ON, 1:通常)
-#     ||+-- SPIEN (1:ISP禁止, 0:ISP許可) ※Parallel時のみ
-#     |+-- EESAVE (消去でEEPROMを 1:消去, 0:保持)
-#     +-- DWEN (On-Chipデバッグ 1:無効, 0:有効)
-#
-#Ext: -------1 (0xFF)
-#            +-- SPMEN (SPM命令 1:無効, 0:有効)
-#
-default: $(TARGET)-$(OSC).hex
+version:
+	avr-gcc -v
 
-# symbolic targets:
-help:
-	@echo "This Makefile has no default rule. Use one of the following:"
-	@echo "make hex ......... to build main.hex for HIDaspx hardware"
-	@echo "make program ..... to flash fuses and firmware"
-	@echo "make fuse ........ to flash the fuses"
-	@echo "make flash ....... to flash the firmware"
-	@echo "make clean ....... to delete objects and hex file"
+.SUFFIXES: .hex .elf
 
-hex: $(TARGET)-$(OSC).hex
+# build
+
+hex: $(TARGET).hex
+
+$(TARGET).elf: $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@
+
+.elf.hex:
+	avr-objcopy -j .text -j .data -O ihex $< $@
+	-sh checksize $<
+
+.PHONY: clean
+clean:
+	rm -f $(TARGET).hex $(TARGET).elf *.o usbdrv/*.o
+
+# Flash
+
+PROGRAMMER=hidspx
+
+FUSE_L  = 0xBF
+FUSE_H  = 0xDB
+
 program: flash fuse
 
-.c.o:
-	$(COMPILE) -c $< -o $@
-
-.S.o:
-	$(COMPILE) -x assembler-with-cpp -c $< -o $@
-# "-x assembler-with-cpp" should not be necessary since this is the default
-# file type for the .S (with capital S) extension. However, upper case
-# characters are not always preserved on Windows. To ensure WinAVR
-# compatibility define the file type manually.
-
-.c.S:
-	$(COMPILE) -S $< -o $@
-
-flash:
-#	$(AVRDUDE) -U flash:w:$(TARGET).hex:i
-	$(PROGRAMMER) -d1 $(TARGET).hex
-
-#usbaspload:
-#	$(MAKE) flash PROGRAMMER=usbasp DEVICE=atmega168
+flash: $(TARGET).hex
+	$(PROGRAMMER) $<
 
 fuse:
-#	@[ "$(FUSE_H)" != "" -a "$(FUSE_L)" != "" ] || \
-#		{ echo "*** Edit Makefile and choose values for FUSE_L and FUSE_H!"; exit 1; }
-#	$(AVRDUDE) -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m
-	$(PROGRAMMER) -d10 -FL$(FUSE_L) -FH$(FUSE_H)
+	$(PROGRAMMER) -FL$(FUSE_L) -FH$(FUSE_H)
 
-clean:
-	rm -f $(TARGET)-$(OSC).hex *.o *.dis *.lst *.cof *.map *.elf time*.dat usbdrv/*.o usbdrv/oddebug.s usbdrv/usbdrv.s
+depend:
+	$(CC) $(CFLAGS) -MM *.c *.S usbdrv/*.S usbdrv/*.c > makefile.depend
 
-install:
-	cp -p $(TARGET)-$(OSC).hex ../bin/firmware
-
-# file targets:
-$(TARGET)-$(OSC).elf:	$(OBJS)
-	$(COMPILE) -o $(TARGET)-$(OSC).elf $(OBJS) -nostdlib
-#	$(COMPILE) -o $(TARGET)-$(OSC).elf $(OBJS)
-
-$(TARGET)-$(OSC).hex:	$(TARGET)-$(OSC).elf
-	rm -f $(TARGET)-$(OSC).hex $(TARGET)-$(OSC).eep.hex
-	avr-objcopy -j .text -j .data -O ihex $(TARGET)-$(OSC).elf $(TARGET)-$(OSC).hex
-#	avr-size --mcu=$(DEVICE) $(TARGET)-$(OSC).elf
-	sh checksize $(TARGET)-$(OSC).elf
-#	sh checksize $(TARGET)-$(OSC).elf 2048 128
-#	checksize main.elf 8192 1024
-# do the checksize script as our last action to allow successful compilation
-# on Windows with WinAVR where the Unix commands will fail.
-
-disasm:	$(TARGET)-$(OSC).elf
-	avr-objdump -d $(TARGET)-$(OSC).elf
-
-cpp:
-	$(COMPILE) -E $(TARGET).c
-
-###
-$(TARGET)-$(OSC).o: $(TARGET).c usbconfig.h hidconfig.h hidcmd.h osctune.h\
- usbdrv/usbdrv.h usbdrv/usbportability.h
-crt.o:	crt.S
-delay.o:	delay.S
+include makefile.depend
