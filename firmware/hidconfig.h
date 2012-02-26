@@ -22,7 +22,7 @@
 
 // Add by iruka
 #define	INCLUDE_FUSION		1	// 融合命令を実装.(76バイトの増加)
-#define	INCLUDE_POLL_CMD 	1	// ReportID:4  POLLING PORTを実装する.(32バイトの増加)
+#define	INCLUDE_POLL_CMD 	0	// ReportID:4  POLLING PORTを実装する.(32バイトの増加)
 
 // これらは、必ず指定すること
 #define	INCLUDE_MONITOR_CMD 1	// 62:POKE(),63:PEEK()を実装する.
