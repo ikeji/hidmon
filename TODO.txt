@@ -1,0 +1,2 @@
+* register hid module to gem.
+* register hidmon module to gem.
