@@ -1,3 +1,8 @@
+2012-02-26  ikeji <syun@ikejima.org>
+
+	* Import buildtool for avr-gcc.
+	* Implement Feature system on ruby-hidmon.
+
 2012-02-24  ikeji <syun@ikejima.org>
 
 	* Initial import ruby-hidmon.
