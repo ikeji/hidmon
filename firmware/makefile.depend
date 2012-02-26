@@ -1,11 +1,11 @@
 main-small.o: main-small.c usbdrv/usbdrv.h usbconfig.h hidconfig.h \
-  usbdrv/usbportability.h hidcmd.h
+ usbdrv/usbportability.h hidcmd.h
 main.o: main.c usbdrv/usbdrv.h usbconfig.h hidconfig.h \
-  usbdrv/usbportability.h hidcmd.h hidconfig.h
+ usbdrv/usbportability.h hidcmd.h hidconfig.h
 crt.o: crt.S macros.inc
 delay.o: delay.S
 usbdrvasm.o: usbdrv/usbdrvasm.S usbdrv/usbportability.h usbdrv/usbdrv.h \
-  usbconfig.h hidconfig.h usbdrv/usbdrvasm12.inc usbdrv/asmcommon.inc
+ usbconfig.h hidconfig.h usbdrv/usbdrvasm12.inc usbdrv/asmcommon.inc
 oddebug.o: usbdrv/oddebug.c usbdrv/oddebug.h usbdrv/usbportability.h
 usbdrv.o: usbdrv/usbdrv.c usbdrv/usbportability.h usbdrv/usbdrv.h \
-  usbconfig.h hidconfig.h usbdrv/oddebug.h
+ usbconfig.h hidconfig.h usbdrv/oddebug.h
