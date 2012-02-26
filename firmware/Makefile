@@ -20,42 +20,49 @@ default: $(TARGET).hex
 all: main-12.hex main-16.hex main-20.hex \
 	main-small-12.hex main-small-rc.hex main-small-16.hex main-small-20.hex
 
+.PHONY: main-12.hex
 main-12.hex:
 	$(MAKE) F_CPU=12000000 TARGET=main clean main.hex
 	cp main.hex main-12.hex
 	cp main.elf main-12.elf
 
+.PHONY: main-16.hex
 main-16.hex:
 	$(MAKE) F_CPU=16000000 TARGET=main clean main.hex
 	cp main.hex main-16.hex
 	cp main.elf main-16.elf
 
+.PHONY: main-20.hex
 main-20.hex:
 	$(MAKE) F_CPU=20000000 TARGET=main clean main.hex
 	cp main.hex main-20.hex
 	cp main.elf main-20.elf
 
+.PHONY: main-small-12.hex
 main-small-12.hex:
 	$(MAKE) F_CPU=12000000 TARGET=main-small clean main-small.hex
 	cp main-small.hex main-small-12.hex
 	cp main-small.elf main-small-12.elf
 
+.PHONY: main-small-rc.hex
 main-small-rc.hex:
 	$(MAKE) F_CPU=12800000 TARGET=main-small clean main-small.hex
 	cp main-small.hex main-small-rc.hex
 	cp main-small.elf main-small-rc.elf
 
+.PHONY: main-small-16.hex
 main-small-16.hex:
 	$(MAKE) F_CPU=16000000 TARGET=main-small clean main-small.hex
 	cp main-small.hex main-small-16.hex
 	cp main-small.elf main-small-16.elf
 
+.PHONY: main-small-20.hex
 main-small-20.hex:
 	$(MAKE) F_CPU=20000000 TARGET=main-small clean main-small.hex
 	cp main-small.hex main-small-20.hex
 	cp main-small.elf main-small-20.elf
 
-.PHONY: allclean
+.PHONY: allchecksize
 allchecksize: all
 	-sh checksize main-12.elf
 	-sh checksize main-16.elf
