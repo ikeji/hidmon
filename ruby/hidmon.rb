@@ -55,7 +55,18 @@ class HIDmon
   end
 
   def peek_byte(addr)
-    addr = RegisterMap[addr] if (RegisterMap.has_key?(addr))
+    if(RegisterMap.has_key?(addr))
+      reg = RegisterMap[addr]
+      if(reg.size == 1)
+        return peek_byte(reg.addr)
+      elsif(reg.size == 2)
+        # Read lower byte before higher byte.
+        return ((peek_byte(reg.addr    )) |
+                (peek_byte(reg.addr + 1) << 8))
+      else
+        raise Exception.new("Unknown register size")
+      end
+    end
     raise Exception.new("Address error") if addr > 0xffff || addr < 0
     buf = create_buf(REPORT_ID1)
     buf[BYTE_CMD] = CMD_PEEK
@@ -74,12 +85,26 @@ class HIDmon
   end
 
   def peek_bit(addr, bit)
-    raise Exception.new("bit error") unless 0 <= bit && bit < 8
+    max_bit = RegisterMap.has_key?(addr) ? RegisterMap[addr].size * 8 : 8
+    raise Exception.new("bit error") unless 0 <= bit && bit < max_bit
     return peek_byte(addr) & (1<<bit)
   end
 
   def poke_byte(addr, val)
-    addr = RegisterMap[addr] if (RegisterMap.has_key?(addr))
+    if(RegisterMap.has_key?(addr))
+      reg = RegisterMap[addr]
+      if(reg.size == 1)
+        return poke_byte(reg.addr, val)
+      elsif(reg.size == 2)
+        # Write high byte before lower byte.
+        return (
+          poke_byte(reg.addr + 1, (val >> 8) & 0xff) &&
+          poke_byte(reg.addr    ,  val       & 0xff) &&
+          true)
+      else
+        raise Exception.new("Unknown register size")
+      end
+    end
     raise Exception.new("Address error") if addr > 0xffff || addr < 0
     val = val & 0xff
     buf = create_buf(REPORT_ID1)
@@ -93,7 +118,16 @@ class HIDmon
   end
 
   def poke_bit(addr, bit, bool)
-    addr = RegisterMap[addr] if (RegisterMap.has_key?(addr))
+    if(RegisterMap.has_key?(addr))
+      reg = RegisterMap[addr]
+      if(reg.size == 1)
+        return poke_bit(reg.addr, bit, val)
+      elsif(reg.size == 2)
+        raize NotImplementedError.new()
+      else
+        raise Exception.new("Unknown register size")
+      end
+    end
     raise Exception.new("Address error") if addr > 0xffff || addr < 0
     raise Exception.new("bit error") unless 0 <= bit && bit < 8
     buf = create_buf(REPORT_ID1)
@@ -106,81 +140,95 @@ class HIDmon
     return @handle.set(buf)
   end
 
+  class SFR
+    attr_reader :addr, :size
+    def initialize(addr, size=1)
+      @addr = addr + 0x20
+      @size = size
+    end
+  end
   RegisterMap = {
-    "DIDR" => 0x20 + 0x01,
-    "UBRRH" => 0x20 + 0x02,
-    "UCSRC" => 0x20 + 0x03,
-    "ACSR" => 0x20 + 0x08,
-    "UBRRL" => 0x20 + 0x09,
-    "UCSRB" => 0x20 + 0x0A,
-    "UCSRA" => 0x20 + 0x0B,
-    "UDR" => 0x20 + 0x0C,
-    "RXB" => 0x20 + 0x0C,
-    "TXB" => 0x20 + 0x0C,
-    "USICR" => 0x20 + 0x0D,
-    "USISR" => 0x20 + 0x0E,
-    "USIDR" => 0x20 + 0x0F,
-    "PIND" => 0x20 + 0x10,
-    "DDRD" => 0x20 + 0x11,
-    "PORTD" => 0x20 + 0x12,
-    "GPIOR0" => 0x20 + 0x13,
-    "GPIOR1" => 0x20 + 0x14,
-    "GPIOR2" => 0x20 + 0x15,
-    "PINB" => 0x20 + 0x16,
-    "DDRB" => 0x20 + 0x17,
-    "PORTB" => 0x20 + 0x18,
-    "PINA" => 0x20 + 0x19,
-    "DDRA" => 0x20 + 0x1A,
-    "PORTA" => 0x20 + 0x1B,
-    "EECR" => 0x20 + 0x1C,
-    "EEDR" => 0x20 + 0x1D,
-    "EEAR" => 0x20 + 0x1E,
-    "EEARL" => 0x20 + 0x1E,
-    "PCMSK" => 0x20 + 0x20,
-    "WDTCSR" => 0x20 + 0x21,
-    "TCCR1C" => 0x20 + 0x22,
-    "GTCCR" => 0x20 + 0x23,
-    "ICR1L" => 0x20 + 0x24,
-    "ICR1H" => 0x20 + 0x25,
-    "CLKPR" => 0x20 + 0x26,
-    "OCR1BL" => 0x20 + 0x28,
-    "OCR1BH" => 0x20 + 0x29,
-    "OCR1L" => 0x20 + 0x2A,
-    "OCR1H" => 0x20 + 0x2B,
-    "OCR1AL" => 0x20 + 0x2A,
-    "OCR1AH" => 0x20 + 0x2B,
-    "TCNT1L" => 0x20 + 0x2C,
-    "TCNT1H" => 0x20 + 0x2D,
-    "TCCR1B" => 0x20 + 0x2E,
-    "TCCR1A" => 0x20 + 0x2F,
-    "TCCR0A" => 0x20 + 0x30,
-    "OSCCAL" => 0x20 + 0x31,
-    "TCNT0" => 0x20 + 0x32,
-    "TCCR0B" => 0x20 + 0x33,
-    "MCUSR" => 0x20 + 0x34,
-    "MCUCR" => 0x20 + 0x35,
-    "OCR0A" => 0x20 + 0x36,
-    "SPMCSR" => 0x20 + 0x37,
-    "TIFR" => 0x20 + 0x38,
-    "TIMSK" => 0x20 + 0x39,
-    "EIFR" => 0x20 + 0x3A,
-    "GIMSK" => 0x20 + 0x3B,
-    "OCR0B" => 0x20 + 0x3C,
+    "DIDR" => SFR.new(0x01),
+    "UBRRH" => SFR.new(0x02),
+    "UCSRC" => SFR.new(0x03),
+    "ACSR" => SFR.new(0x08),
+    "UBRRL" => SFR.new(0x09),
+    "UCSRB" => SFR.new(0x0A),
+    "UCSRA" => SFR.new(0x0B),
+    "UDR" => SFR.new(0x0C),
+    "RXB" => SFR.new(0x0C),
+    "TXB" => SFR.new(0x0C),
+    "USICR" => SFR.new(0x0D),
+    "USISR" => SFR.new(0x0E),
+    "USIDR" => SFR.new(0x0F),
+    "PIND" => SFR.new(0x10),
+    "DDRD" => SFR.new(0x11),
+    "PORTD" => SFR.new(0x12),
+    "GPIOR0" => SFR.new(0x13),
+    "GPIOR1" => SFR.new(0x14),
+    "GPIOR2" => SFR.new(0x15),
+    "PINB" => SFR.new(0x16),
+    "DDRB" => SFR.new(0x17),
+    "PORTB" => SFR.new(0x18),
+    "PINA" => SFR.new(0x19),
+    "DDRA" => SFR.new(0x1A),
+    "PORTA" => SFR.new(0x1B),
+    "EECR" => SFR.new(0x1C),
+    "EEDR" => SFR.new(0x1D),
+    "EEAR" => SFR.new(0x1E),
+    "EEARL" => SFR.new(0x1E),
+    "PCMSK" => SFR.new(0x20),
+    "WDTCSR" => SFR.new(0x21),
+    "TCCR1C" => SFR.new(0x22),
+    "GTCCR" => SFR.new(0x23),
+    "ICR1" => SFR.new(0x24, 2),
+    "ICR1L" => SFR.new(0x24),
+    "ICR1H" => SFR.new(0x25),
+    "CLKPR" => SFR.new(0x26),
+    "OCR1B" => SFR.new(0x28, 2),
+    "OCR1BL" => SFR.new(0x28),
+    "OCR1BH" => SFR.new(0x29),
+    "OCR1A" => SFR.new(0x2A, 2),
+    "OCR1AL" => SFR.new(0x2A),
+    "OCR1AH" => SFR.new(0x2B),
+    "TCNT1" => SFR.new(0x2C, 2),
+    "TCNT1L" => SFR.new(0x2C),
+    "TCNT1H" => SFR.new(0x2D),
+    "TCCR1B" => SFR.new(0x2E),
+    "TCCR1A" => SFR.new(0x2F),
+    "TCCR0A" => SFR.new(0x30),
+    "OSCCAL" => SFR.new(0x31),
+    "TCNT0" => SFR.new(0x32),
+    "TCCR0B" => SFR.new(0x33),
+    "MCUSR" => SFR.new(0x34),
+    "MCUCR" => SFR.new(0x35),
+    "OCR0A" => SFR.new(0x36),
+    "SPMCSR" => SFR.new(0x37),
+    "TIFR" => SFR.new(0x38),
+    "TIMSK" => SFR.new(0x39),
+    "EIFR" => SFR.new(0x3A),
+    "GIMSK" => SFR.new(0x3B),
+    "OCR0B" => SFR.new(0x3C),
   }
 
-  def byte2bin(n)
+  def byte2bin(n,size=1)
     r = "0b"
-    (0..7).each do |i|
-      r += ( (1 << (7-i)) & n == 0) ? "0" : "1"
+    bits = size * 8
+    bits.times do |i|
+      r += ( (1 << (bits-1-i)) & n == 0) ? "0" : "1"
     end
     return r
   end
 
   def dump_one_sfr(sfr, hasCr = true)
+    size = 1
+    if(RegisterMap.has_key?(sfr))
+      size = RegisterMap[sfr].size
+    end
     val = peek_byte(sfr)
     print "#{sfr}#{" " * (6-sfr.size)} :"
-    print " #{sprintf("0x%02X", val)} :"
-    print " #{byte2bin(val)}  "
+    print " #{sprintf("0x%0#{size*2}X", val)} #{" "*(4-size*2)}:"
+    print " #{byte2bin(val,size)} #{" "*(16-size*8)}"
     puts if hasCr
   end
 

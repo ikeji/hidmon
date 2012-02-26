@@ -6,7 +6,7 @@ mon = HIDmon.new()
 #   mon.ping i
 # end
 
-mon.dump_port_sfrs
+mon.dump_all_sfrs
 # loop do
 #   mon.poke_bit("PORTB", 2, false)
 #   sleep(1)
