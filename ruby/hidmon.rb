@@ -1,14 +1,20 @@
 require 'hid'
 
+$hidmon_debug = false
+
 class HIDmon
 
-  attr :PORTB, :TIMER1
+  attr :PORTB
+  attr :TIMER0
+  attr :TIMER1
   def initialize(handle = HID::open(0x16c0,0x05df))
     @handle = handle
     @PORTB = PortB.new(self)
+    @TIMER0 = Timer0.new(self)
     @TIMER1 = Timer1.new(self)
   end
 
+  BYTE_TYPE = 0
   BYTE_CMD = 1
   BYTE_SIZE = 2
   BYTE_ADRL = 3
@@ -26,7 +32,7 @@ class HIDmon
   REPORT_ID2 = 2 # length = 31
   REPORT_ID3 = 3 # length = 39
 
-  def create_buf(type)
+  def self.create_buf(type)
     buf = nil
     case(type)
     when REPORT_ID1
@@ -38,18 +44,18 @@ class HIDmon
     else
       raise Exception.new("Unknown report type")
     end
-    buf[0] = REPORT_ID1
+    buf[BYTE_TYPE] = type
     return buf
   end
 
   def ping(i = 11)
-    buf = create_buf(REPORT_ID1)
+    buf = HIDmon.create_buf(REPORT_ID1)
     buf[BYTE_CMD] = CMD_PING
     (2..6).each do |p|
       buf[p] = i
     end
     @handle.set(buf)
-    rbuf = create_buf(REPORT_ID2)
+    rbuf = HIDmon.create_buf(REPORT_ID2)
     @handle.get(rbuf)
     (2..6).each do |p|
       raise Exception.new("Ping error") if(rbuf[p] != i)
@@ -74,14 +80,14 @@ class HIDmon
       end
     end
     raise Exception.new("Address error") if addr > 0xffff || addr < 0
-    buf = create_buf(REPORT_ID1)
+    buf = HIDmon.create_buf(REPORT_ID1)
     buf[BYTE_CMD] = CMD_PEEK
     buf[BYTE_SIZE] = 1
     buf[BYTE_ADRL] = addr & 0xff
     buf[BYTE_ADRH] = (addr >> 8) & 0xff
     return nil if(!@handle.set(buf))
 
-    rbuf = create_buf(REPORT_ID1)
+    rbuf = HIDmon.create_buf(REPORT_ID1)
     r = @handle.get(rbuf)
     if(r)
       if $hidmon_debug
@@ -121,7 +127,7 @@ class HIDmon
       end
     end
     raise Exception.new("Address error") if addr > 0xffff || addr < 0
-    buf = create_buf(REPORT_ID1)
+    buf = HIDmon.create_buf(REPORT_ID1)
     buf[BYTE_CMD] = CMD_POKE
     buf[BYTE_SIZE] = 1
     buf[BYTE_ADRL] = addr & 0xff
@@ -213,7 +219,7 @@ class HIDmon
     "OCR0B" => SFR.new(0x3C),
   }
 
-  def byte2bin(n,size=1)
+  def self.byte2bin(n,size=1)
     r = "0b"
     bits = size * 8
     bits.times do |i|
@@ -230,7 +236,7 @@ class HIDmon
     val = peek_byte(sfr)
     print "#{sfr}#{" " * (6-sfr.size)} :"
     print " #{sprintf("0x%0#{size*2}X", val)} #{" "*(4-size*2)}:"
-    print " #{byte2bin(val,size)} #{" "*(16-size*8)}"
+    print " #{HIDmon.byte2bin(val,size)} #{" "*(16-size*8)}"
     puts if hasCr
   end
 
@@ -260,6 +266,12 @@ $mock_hid_debug = false
 
 class MockHIDmon < HIDmon
   class MockHID
+    def initialize()
+      @feature_buffer = []
+      @memory = "\0" * (0x20 + 0x3C)
+      @addr2sfr = nil
+    end
+    # TODO: Implement mock memory model such as SFR.
     def method_missing(name, *args)
       if args.size != 1 && args[0].class == String
         # FixMe
@@ -269,6 +281,50 @@ class MockHIDmon < HIDmon
         puts "#{name.to_s} called with #{args[0].unpack("C*").inspect }"
       end
       return args[0]
+    end
+    def set(buf)
+      if buf[HIDmon::BYTE_TYPE] != HIDmon::REPORT_ID1
+        raise NotImplementedError.new
+      end
+      case(buf[HIDmon::BYTE_CMD])
+      when HIDmon::CMD_PING:
+        # TODO: more readabile output
+        puts "Ping: #{buf.unpack("C*")[2,4].inspect}" if $mock_hid_debug
+        @feature_buffer = buf.dup()
+      when HIDmon::CMD_PEEK:
+        if buf[HIDmon::BYTE_SIZE] != 1
+          raise NotImplementedError.new
+        end
+        addr = buf[HIDmon::BYTE_ADRH] << 8 |
+          buf[HIDmon::BYTE_ADRL]
+        @feature_buffer = HIDmon::create_buf(HIDmon::REPORT_ID1)
+        @feature_buffer[1] = @memory[addr]
+        if $mock_hid_debug
+          # TODO: more readabile output
+          puts("Read: addr-0x#{addr.to_s(16)}"+
+           "val-#{HIDmon.byte2bin(@memory[addr])}")
+        end
+      when HIDmon::CMD_POKE:
+        if buf[HIDmon::BYTE_SIZE] != 1
+          raise NotImplementedError.new
+        end
+        addr = buf[HIDmon::BYTE_ADRH] << 8 |
+          buf[HIDmon::BYTE_ADRL]
+        data = buf[HIDmon::BYTE_DATA0]
+        mask = buf[HIDmon::BYTE_DATA1]
+        @memory[addr] = @memory[addr] & mask | data
+        if $mock_hid_debug
+          puts("Write: addr-0x#{addr.to_s(16)} "+
+               "val-#{HIDmon.byte2bin(@memory[addr])}")
+        end
+      else
+        puts "Unknown command" if $mock_hid_debug
+      end
+      return true
+    end
+    def get(buf)
+      buf[0, buf.size] = @feature_buffer
+      return buf
     end
   end
   def initialize()
@@ -371,9 +427,9 @@ class PortB
       end.reject {|i| i == nil}
     end
   end
-  def captured_or_die(mask)
+  def captured_or_die(mask, label=nil)
     each_bit(mask) do |pin|
-      pin.captured_or_die
+      pin.captured_or_die(label)
     end
   end
   def capture_byte(mask, label=nil)
@@ -393,11 +449,11 @@ class PortB
     release_byte(0xff, label)
   end
   def set_input_output_byte(byte, mask, label=nil)
-    captured_or_die(mask)
+    captured_or_die(mask,label)
     @mon.poke_byte("DDRB", byte, mask)
   end
   def set_byte(byte, mask, label=nil)
-    captured_or_die(mask)
+    captured_or_die(mask,label)
     @mon.poke_byte("PORTB", byte, mask)
   end
   alias set_pullup_byte set_byte
@@ -411,47 +467,130 @@ end
 
 class Timer0 < Feature
   def initialize(mon)
+    super()
     @mon = mon
   end
 
-  # NOTE: Output Pin A is not supported on HIDmon
-  # def set_output_mode_a(mode)
-  #   captured_or_die
+  # for TCCR0A
+  COM0A1 = 1 << 7
+  COM0A0 = 1 << 6
+  COM0B1 = 1 << 5
+  COM0B0 = 1 << 4
+  NA3    = 1 << 3
+  NA2    = 1 << 2
+  WGM01  = 1 << 1
+  WGM00  = 1 << 0
+  # for TCCR0B
+  FOC0A = 1 << 7
+  FOC0B = 1 << 6
+  NA5   = 1 << 5
+  NA4   = 1 << 4
+  WGM02 = 1 << 3
+  CS02  = 1 << 2
+  CS01  = 1 << 1
+  CS00  = 1 << 0
+
+  #output mode
+  OUTPUT_DISABLE    = 0
+  OUTPUT_TOGGLE     = 1
+  OUTPUT_MATCH_DOWN = 2
+  OUTPUT_MATCH_UP   = 3
+  def set_output_mode_a(mode, label=nil)
+    captured_or_die(label)
+    @mon.poke_byte("TCCR0A", mode << 6, 0b1100_0000)
+  end
+  # NOTE: Output Pin B is not supported on HIDmon
+  # def set_output_mode_b(mode, label=nil)
+  #   captured_or_die(label)
+  #   @mon.poke_byte("TCCR0A", mode << 4, 0b0011_0000)
   # end
-  def set_output_mode_b(mode)
-    captured_or_die
+
+  PIN_OC0A = 2
+  PIN_OC0B = 5 # PORTD
+  def enable_output_a(label=nil)
+    captured_or_die(label)
+    @mon.PORTB[PIN_OC0A].capture(label)
+    @mon.PORTB[PIN_OC0A].output(label)
+    @mon.PORTB[PIN_OC0A].set(true, label)
+  end
+  # # NOTE: Output Pin B is not supported on HIDmon
+  # def enable_output_b(label=nil)
+  #   captured_or_die(label)
+  #   @mon.PORTD[PIN_OC0B].capture(label)
+  #   @mon.PORTD[PIN_OC0B].set(true, label)
+  # end
+  def disable_output_a()
+    @mon.PORTB[PIN_OC0A].release
+  end
+  # NOTE: Output Pin B is not supported on HIDmon
+  # def disable_output_b()
+  #   @mon.PORTD[PIN_OC0B].release
+  # end
+
+  # div
+  STOP     = 0
+  NO_DIV   = 1
+  DIV_8    = 2
+  DIV_64   = 3
+  DIV_256  = 4
+  DIV_1024 = 5
+  T1_DOWN  = 6
+  T1_UP    = 7
+  def set_div_mode(val, label=nil)
+    captured_or_die(label)
+    @mon.poke_byte("TCCR0B", val, 0b0000_0111)
   end
 
-  # NOTE: Output Pin A is not supported on HIDmon
-  # def enable_output_a()
-  #   captured_or_die
-  # end
-  def enable_output_b()
-    captured_or_die
-  end
-  # NOTE: Output Pin A is not supported on HIDmon
-  # def disable_output_a()
-  #   captured_or_die
-  # end
-  def disable_output_b()
-    captured_or_die
-    @mon.portb.release_bit(PIN_OC1A)
+  # mode
+  DEFAULT_MODE        = 0
+  FAST_8BIT_PWM_MODE  = 3
+  FAST_PWM_MODE       = 7
+  def set_timer_mode(mode, label=nil)
+    captured_or_die(label)
+    wgm02   = mode >> 2 & 0b01
+    wgm0100 = mode & 0b11
+    @mon.poke_byte("TCCR0B", wgm02 << 3, 0b0000_1000)
+    @mon.poke_byte("TCCR0A", wgm0100   , 0b0000_0011)
   end
 
-  def set_timer_mode(mode)
-    captured_or_die
+  def set_a_counter(val, label=nil)
+    captured_or_die(label)
+    @mon.poke_byte("OCR0A", val)
+  end
+  def set_b_counter(val, label=nil)
+    captured_or_die(label)
+    @mon.poke_byte("OCR0B", val)
   end
 end
 
-class PWM0 < Feature
-  def initialize(mon)
+# This class output PINB2
+class FastPWM0 < Feature
+  def initialize(mon, label="")
+    super()
     @mon = mon
-    @timer = Timer0.new(mon)
+    @timer = mon.TIMER0
+    capture(label)
+  end
+  def capture(label=nil)
+    super(label)
+    @timer.capture(@label)
+    @timer.set_timer_mode(Timer0::FAST_8BIT_PWM_MODE, @label)
+    @timer.enable_output_a(@label)
+    @timer.set_output_mode_a(Timer0::OUTPUT_MATCH_DOWN, @label)
+    @timer.set_div_mode(Timer0::NO_DIV)
+  end
+  def release()
+    super(label)
+    @timer.release()
+  end
+  def set_value(val)
+    @timer.set_a_counter(val, @label)
   end
 end
 
 class Timer1 < Feature
   def initialize(mon)
+    super()
     @mon = mon
   end
 
@@ -476,32 +615,48 @@ class Timer1 < Feature
   OUTPUT_TOGGLE     = 1
   OUTPUT_MATCH_DOWN = 2
   OUTPUT_MATCH_UP   = 3
-  def set_output_mode_a(mode)
-    captured_or_die
+  def set_output_mode_a(mode, label)
+    captured_or_die(label)
+    @mon.poke_byte("TCCR1A", mode << 6, 0b1100_0000)
   end
-  def set_output_mode_b(mode)
-    captured_or_die
+  def set_output_mode_b(mode, label)
+    captured_or_die(label)
+    @mon.poke_byte("TCCR1A", mode << 4, 0b0011_0000)
   end
 
   PIN_OC1A = 3
   PIN_OC1B = 4
-  def enable_output_a()
-    captured_or_die
-    @mon.portb.capture_bit(PIN_OC1A, @label)
-    @mon.portb.set_input_output_bit(PIN_OC1A, true)
+  def enable_output_a(label=nil)
+    captured_or_die(label)
+    @mon.PORTB[PIN_OC1A].capture(label)
+    @mon.PORTB[PIN_OC1A].output(label)
+    @mon.PORTB[PIN_OC1A].set(true, label)
   end
-  def enable_output_b()
-    captured_or_die
-    @mon.portb.capture_bit(PIN_OC1B, @label)
-    @mon.portb.set_input_output_bit(PIN_OC1B, true)
+  def enable_output_b(label=nil)
+    captured_or_die(label)
+    @mon.PORTB[PIN_OC1B].capture(label)
+    @mon.PORTB[PIN_OC1B].output(label)
+    @mon.PORTB[PIN_OC1B].set(true, label)
   end
   def disable_output_a()
-    captured_or_die
-    @mon.portb.release_bit(PIN_OC1A)
+    @mon.PORTB[PIN_OC1A].release()
   end
   def disable_output_b()
-    captured_or_die
-    @mon.portb.release_bit(PIN_OC1A)
+    @mon.PORTB[PIN_OC1B].release()
+  end
+
+  # div
+  STOP     = 0
+  NO_DIV   = 1
+  DIV_8    = 2
+  DIV_64   = 3
+  DIV_256  = 4
+  DIV_1024 = 5
+  T1_DOWN  = 6
+  T1_UP    = 7
+  def set_div_mode(val, label=nil)
+    captured_or_die(label)
+    @mon.poke_byte("TCCR1B", val, 0b0000_0111)
   end
 
   # timer mode
@@ -511,15 +666,57 @@ class Timer1 < Feature
   FAST_10BIT_PWM_MODE = 7
   FAST_PWM_MODE_ICR   = 14
   FAST_PWM_MODE       = 15
-  def set_timer_mode(mode)
-    captured_or_die
+  def set_timer_mode(mode, label=nil)
+    captured_or_die(label)
+    wgm0302 = mode >> 2 & 0b11
+    wgm0100 = mode & 0b11
+    @mon.poke_byte("TCCR1B", wgm0302 << 3, 0b0001_1000)
+    @mon.poke_byte("TCCR1A", wgm0100     , 0b0000_0011)
+  end
+  def set_a_counter(val, label=nil)
+    captured_or_die(label)
+    @mon.poke_byte("OCR1A", val)
+  end
+  def set_b_counter(val, label=nil)
+    captured_or_die(label)
+    @mon.poke_byte("OCR1B", val)
   end
 end
 
+# This class outputs PORTB4
 class Servo < Feature
+  F_CLK = 12 * 1000 * 1000
+  CLK_DIV = 8
+  TIMER_CLK = F_CLK / CLK_DIV
+  SERVO_PERIOD = 1000 / 20
+  SERVO_TOP = TIMER_CLK / SERVO_PERIOD
+  MID = TIMER_CLK / (10000 / 15) #= 2252
+  LO = TIMER_CLK / (10000 / 7) #= 1050
+  HIGH = TIMER_CLK / (10000 / 22) #= 3303
+  RANGE = HIGH - LO
   def initialize(mon, label="Unknown")
+    super()
     @mon = mon
-    @label = "Servo:#{label}"
+    @timer = mon.TIMER1
+    capture(label)
+  end
+  def capture(label=nil)
+    super(label)
+    @timer.capture(@label)
+    @timer.set_timer_mode(Timer1::FAST_PWM_MODE, @label)
+    @timer.enable_output_b(@label)
+    @timer.set_output_mode_b(Timer1::OUTPUT_MATCH_DOWN, @label)
+    @timer.set_div_mode(Timer1::DIV_8)
+    set_value(MID)
+    @timer.set_a_counter(SERVO_TOP)
+  end
+  def release()
+    super(label)
+    @timer.release()
+  end
+  def set_value(val)
+    val = (RANGE * val).to_i + LO
+    @timer.set_b_counter(val, @label)
   end
 end
 
