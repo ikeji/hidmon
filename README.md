@@ -41,7 +41,7 @@ You can install by this command
     sudo apt-get install autogen
 
 In cygwin,
-`devtool/build.sh` requires wget, m4 package.
+`devtool/build.sh` requires wget, m4, libguile-dev package.
 You can install by `setup.exe`
 
 Host software

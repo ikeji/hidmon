@@ -1,5 +1,7 @@
 #!/bin/sh
 
+AUTOGEN_PKG=autogen-5.11.1.tar.bz2
+AUTOGEN_DIR=`basename $AUTOGEN_PKG .tar.bz2`
 BINUTIL_PKG=binutils-2.22.tar.gz
 BINUTIL_DIR=`basename $BINUTIL_PKG .tar.gz`
 GMP_PKG=gmp-5.0.4.tar.bz2
@@ -32,6 +34,15 @@ echo SRCDIR=$SRCDIR
 WORKDIR=`pwd`/obj
 echo WORKDIR=$WORKDIR
 
+IS_CYGWIN=FALSE
+if [ `uname` = 'CYGWIN_NT-5.1' ]; then
+  IS_CYGWIN=TRUE
+fi
+
+echo IS_CYGWIN=$IS_CYGWIN
+
+echo AUTOGEN_PKG=$AUTOGEN_PKG
+echo AUTOGEN_DIR=$AUTOGEN_DIR
 echo BINUTIL_PKG=$BINUTIL_PKG
 echo BINUTIL_DIR=$BINUTIL_DIR
 echo GMP_PKG=$GMP_PKG
@@ -48,6 +59,13 @@ echo LIBC_DIR=$LIBC_DIR
 # unpack
 if [ ! -d $SRCDIR ]; then
   echo get packages
+ 
+  if [ $IS_CYGWIN = 'TRUE' ]; then
+    if [ ! -r $AUTOGEN_PKG ]; then
+      wget http://ftp.yz.yamagata-u.ac.jp/pub/GNU/autogen/autogen-5.11.1.tar.bz2
+    fi
+    md5sum --check md5.win || exit
+  fi
 
   if [ ! -r $BINUTIL_PKG ]; then
     wget http://ftp.tsukuba.wide.ad.jp/software/binutils/binutils-2.22.tar.gz
@@ -75,6 +93,9 @@ if [ ! -d $SRCDIR ]; then
   mkdir -p $SRCDIR
   cd $SRCDIR
 
+  if [ $IS_CYGWIN = 'TRUE' ]; then
+    tar xf $DEVTOOLDIR/$AUTOGEN_PKG
+  fi
   tar xf $DEVTOOLDIR/$BINUTIL_PKG
   tar xf $DEVTOOLDIR/$GMP_PKG
   tar xf $DEVTOOLDIR/$MPFR_PKG
@@ -87,6 +108,23 @@ fi
 echo Start build
 rm -rf $WORKDIR
 mkdir -p $WORKDIR
+
+cygwin doesn't have autogen, build...
+build autogen
+if [ $IS_CYGWIN = 'TRUE' ]; then
+  mkdir -p $WORKDIR/$AUTOGEN_DIR
+  cd $WORKDIR/$AUTOGEN_DIR
+
+  ac_cv_func_funopen=no \
+    ac_cv_func_fopencookie=no \
+    $SRCDIR/$AUTOGEN_DIR/configure \
+    --prefix=$DEVTOOLDIR \
+    --disable-nls \
+    || exit
+
+  make || exit
+  make install || exit
+fi
 
 # build binutils
 mkdir -p $WORKDIR/$BINUTIL_DIR
