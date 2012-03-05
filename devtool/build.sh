@@ -22,10 +22,13 @@ echo start devtool build
 cd `dirname $0`
 DEVTOOLDIR=`pwd`
 echo DEVTOOLDIR=$DEVTOOLDIR
-PATH=$DEVTOOLDIR/bin:$PATH
+DISTDIR=$DEVTOOLDIR
+# DISTDIR=/opt/avr
+echo DISTDIR=$DISTDIR
+PATH=$DISTDIR/bin:$PATH
 export PATH
 
-LD_RUN_PATH=$DEVTOOLDIR/lib
+LD_RUN_PATH=$DISTDIR/lib
 export LD_RUN_PATH
 
 SRCDIR=`pwd`/src
@@ -109,8 +112,8 @@ echo Start build
 rm -rf $WORKDIR
 mkdir -p $WORKDIR
 
-cygwin doesn't have autogen, build...
-build autogen
+# cygwin doesn't have autogen, build...
+# build autogen
 if [ $IS_CYGWIN = 'TRUE' ]; then
   mkdir -p $WORKDIR/$AUTOGEN_DIR
   cd $WORKDIR/$AUTOGEN_DIR
@@ -118,7 +121,7 @@ if [ $IS_CYGWIN = 'TRUE' ]; then
   ac_cv_func_funopen=no \
     ac_cv_func_fopencookie=no \
     $SRCDIR/$AUTOGEN_DIR/configure \
-    --prefix=$DEVTOOLDIR \
+    --prefix=$DISTDIR \
     --disable-nls \
     || exit
 
@@ -131,7 +134,7 @@ mkdir -p $WORKDIR/$BINUTIL_DIR
 cd $WORKDIR/$BINUTIL_DIR
 
 $SRCDIR/$BINUTIL_DIR/configure \
-  --prefix=$DEVTOOLDIR \
+  --prefix=$DISTDIR \
   --target=$TARGET \
   --disable-nls \
   || exit
@@ -145,7 +148,7 @@ mkdir -p $WORKDIR/$GMP_DIR
 cd $WORKDIR/$GMP_DIR
 
 $SRCDIR/$GMP_DIR/configure \
-  --prefix=$DEVTOOLDIR \
+  --prefix=$DISTDIR \
   || exit
 
 make || exit
@@ -158,8 +161,8 @@ mkdir -p $WORKDIR/$MPFR_DIR
 cd $WORKDIR/$MPFR_DIR
 
 $SRCDIR/$MPFR_DIR/configure \
-  --prefix=$DEVTOOLDIR \
-  --with-gmp=$DEVTOOLDIR \
+  --prefix=$DISTDIR \
+  --with-gmp=$DISTDIR \
   || exit
 
 make || exit
@@ -172,8 +175,8 @@ mkdir -p $WORKDIR/$MPC_DIR
 cd $WORKDIR/$MPC_DIR
 
 $SRCDIR/$MPC_DIR/configure \
-  --prefix=$DEVTOOLDIR \
-  --with-gmp=$DEVTOOLDIR \
+  --prefix=$DISTDIR \
+  --with-gmp=$DISTDIR \
   || exit
 
 make || exit
@@ -186,9 +189,9 @@ mkdir -p $WORKDIR/$GCC_DIR
 cd $WORKDIR/$GCC_DIR
 
 $SRCDIR/$GCC_DIR/configure \
-  --prefix=$DEVTOOLDIR \
-  --with-mpfr=$DEVTOOLDIR \
-  --with-gmp=$DEVTOOLDIR \
+  --prefix=$DISTDIR \
+  --with-mpfr=$DISTDIR \
+  --with-gmp=$DISTDIR \
   --target=$TARGET \
   --enable-languages=c \
   --enable-multilib \
@@ -206,7 +209,7 @@ mkdir -p $WORKDIR/$LIBC_DIR
 cd $WORKDIR/$LIBC_DIR
 
 $SRCDIR/$LIBC_DIR/configure \
-  --prefix=$DEVTOOLDIR \
+  --prefix=$DISTDIR \
   --host=$TARGET \
   || exit
 
@@ -217,6 +220,12 @@ make install || exit
 # clean up
 
 echo Build complete
-echo clean up
+if [ $IS_CYGWIN = 'TRUE' ]; then
+  echo clean up autogen
+  cd $WORKDIR/$AUTOGEN_DIR
+  make uninstall || exit
+fi
+
+echo clean up workdir
 rm -rf $WORKDIR
 
